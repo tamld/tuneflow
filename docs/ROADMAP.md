@@ -12,14 +12,12 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                                 TUNEFLOW ROADMAP MATRIX                                │
-├──────────┬──────────────────────────────────────────┬─────────────┬────────────────────┤
-│ Phase    │ Tên Chặng & Trọng Tâm Kỹ Thuật           │ Phiên Bản   │ Trạng Thái         │
 ├──────────┼──────────────────────────────────────────┼─────────────┼────────────────────┤
 │ Phase 1  │ Core Engine & Giao Diện Người Lớn Tuổi   │ v1.0.0      │ ✅ Completed (SSoT)│
-│ Phase 2  │ Container Engine, Multi-Arch & GHCR CI/CD│ v1.1.1      │ 🚀 In Implementation│
-│ Phase 3  │ Tải Playlist, Batch Selection & Checksum │ v1.2.0      │ 📋 Planned         │
-│ Phase 4  │ Phân Loại Ba/Mẹ, Curation & Zero-Login   │ v1.3.0      │ 📋 Planned         │
-│ Phase 5  │ Hybrid Client-Server Compute & Web Stream│ v1.4.0      │ 📋 Planned         │
+│ Phase 2  │ Container Engine, Multi-Arch & GHCR CI/CD│ v1.1.1      │ ✅ Completed       │
+│ Phase 3  │ Tải Playlist, Batch Selection & Checksum │ v1.2.0      │ ✅ Completed       │
+│ Phase 4  │ Phân Loại Bố & Mẹ, Curation & Zero-Login │ v1.3.0      │ ✅ Completed       │
+│ Phase 5  │ Hybrid Client-Server Compute & Web Stream│ v1.4.0      │ 📋 Next            │
 │ Phase 6  │ Browser Extension MV3 & Pháp Lý Bản Quyền│ v2.0.0      │ 📋 Planned         │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
@@ -71,7 +69,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 
 ---
 
-### CHẶNG 4: Phân Loại Ba/Mẹ, Curation Thông Minh & Zero-Login Anchor (v1.3.0)
+### CHẶNG 4: Phân Loại Bố & Mẹ, Curation Thông Minh & Zero-Login Anchor (v1.3.0)
 - **Vấn đề giải quyết**:
   - **Danh mục được định hình sẵn**:
     - 🌸 **Mẹ hay nghe**: Nhạc thiền êm dịu, nhạc ngủ ngon, nhạc quê hương, niệm Phật, nhạc không lời thư giãn spa.
@@ -133,6 +131,6 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 | **RM-06** | Container Alpine Build & GHCR | `docs/adr/ADR-0007` | `.github/workflows/release.yml` |
 | **RM-07** | Playlist & Batch selection queue | `docs/adr/ADR-0008` | `tests/playlist.test.js` (Phase 3) |
 | **RM-08** | SHA-256 Checksum integrity | `docs/spec/phase3` | `tests/checksum.test.js` (Phase 3) |
-| **RM-09** | Persona presets (Ba/Mẹ/Thiền) | `docs/adr/ADR-0009` | `tests/curation.test.js` (Phase 4) |
+| **RM-09** | Persona presets (Bố/Mẹ/Thiền) | `docs/adr/ADR-0009` | `tests/playlist.test.js` (Phase 4) |
 | **RM-10** | Hybrid Client-Side WASM Compute | `docs/adr/ADR-0010` | `tests/wasm-stream.test.js` (Phase 5)|
 | **RM-11** | Browser Extension MV3 Integration | `docs/adr/ADR-0011` | `tests/extension.test.js` (Phase 6) |

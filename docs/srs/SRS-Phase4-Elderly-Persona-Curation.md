@@ -12,7 +12,7 @@
         "queries": ["nhạc thiền ngủ ngon", "niệm phật êm dịu", "nhạc không lời thư giãn spa", "dân ca quê hương"]
       },
       "dad": {
-        "title": "Ba Hay Nghe",
+        "title": "Bố Hay Nghe",
         "icon": "☕",
         "queries": ["nhạc vàng bolero chọn lọc", "nhạc tiền chiến bất hủ", "cải lương hồ quảng", "vọng cổ"]
       }

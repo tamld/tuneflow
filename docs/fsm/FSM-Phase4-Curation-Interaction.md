@@ -4,7 +4,7 @@
 stateDiagram-v2
     [*] --> DefaultFeed: User visits homepage
     DefaultFeed --> ViewingMom: Click "🌸 Mẹ Hay Nghe"
-    DefaultFeed --> ViewingDad: Click "☕ Ba Hay Nghe"
+    DefaultFeed --> ViewingDad: Click "☕ Bố Hay Nghe"
     DefaultFeed --> ViewingFavorites: Click "❤️ Bài Đã Thích"
     
     state ViewingMom {
