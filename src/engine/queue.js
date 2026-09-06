@@ -138,6 +138,7 @@ class DownloadQueue {
       // Step 1: Download stream using yt-dlp (keeping partial .part files for resume)
       await new Promise((resolve, reject) => {
         const args = [
+          '--js-runtimes', 'node:node',
           '-x',
           '--no-playlist',
           '--newline',

@@ -5,7 +5,8 @@ const { spawn } = require('child_process');
  */
 function runYtDlp(args) {
   return new Promise((resolve, reject) => {
-    const process = spawn('yt-dlp', args, {
+    const fullArgs = ['--js-runtimes', 'node:node', ...args];
+    const process = spawn('yt-dlp', fullArgs, {
       windowsHide: true
     });
 
