@@ -33,7 +33,10 @@
   },
   "devDependencies": {
     "eslint": "^10.10.0",
-    "puppeteer": "^24.4.0"
+    "puppeteer": "^25.10.0"
+  },
+  "overrides": {
+    "qs": "^6.16.0"
   },
   "engines": {
     "node": ">=20.0.0"
