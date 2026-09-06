@@ -21,6 +21,8 @@ module.exports = {
   MAX_DOWNLOADS: parseInt(process.env.MAX_DOWNLOADS || '2', 10),
   MAX_CONVERSIONS: parseInt(process.env.MAX_CONVERSIONS || '1', 10),
   MAX_RETRIES: parseInt(process.env.MAX_RETRIES || '3', 10),
+  DOWNLOAD_TTL_HOURS: parseInt(process.env.DOWNLOAD_TTL_HOURS || '24', 10),
+  MAX_STORAGE_MB: parseInt(process.env.MAX_STORAGE_MB || '2048', 10),
   DEFAULT_FORMAT: 'mp3',
   SUPPORTED_FORMATS: ['mp3', 'mp4', 'm4a']
 };

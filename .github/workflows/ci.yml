@@ -24,8 +24,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Unit Tests
-        run: npm run test:unit
-
-      - name: Run API Integration Tests
-        run: npm run test:api
+      - name: Run Full Test Suite (Unit, API, Happy, Edge, Worst)
+        run: npm test

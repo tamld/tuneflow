@@ -1,8 +1,35 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { TEMP_DIR, DOWNLOADS_DIR, MAX_DOWNLOADS, MAX_CONVERSIONS, MAX_RETRIES } = require('../config');
+const { TEMP_DIR, DOWNLOADS_DIR, MAX_DOWNLOADS, MAX_CONVERSIONS, MAX_RETRIES, DOWNLOAD_TTL_HOURS } = require('../config');
 const { convertToMp3 } = require('./ffmpeg');
+
+/**
+ * Sanitize titles for all operating systems (Windows, Linux, macOS)
+ * Strips reserved characters, control codes, Windows device names, and limits length
+ */
+function sanitizeTitle(rawTitle) {
+  if (!rawTitle || typeof rawTitle !== 'string') return 'Bai_hat';
+  
+  // Replace illegal OS chars \ / : * ? " < > | and control characters
+  let clean = rawTitle.replace(/[\\/:*?"<>|\x00-\x1f\x7f]/g, '_').trim();
+  
+  // Truncate to maximum 120 chars to avoid ENAMETOOLONG
+  if (clean.length > 120) {
+    clean = clean.substring(0, 120).trim();
+  }
+
+  // Strip trailing periods and spaces (invalid on Windows)
+  clean = clean.replace(/[. ]+$/, '');
+
+  // Guard against Windows reserved device names: CON, PRN, AUX, NUL, COM1-9, LPT1-9
+  const reservedRegex = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+  if (reservedRegex.test(clean)) {
+    clean = `Song_${clean}`;
+  }
+
+  return clean || 'Bai_hat';
+}
 
 class DownloadQueue {
   constructor() {
@@ -11,11 +38,18 @@ class DownloadQueue {
     this.sseClients = new Set();
     this.isPaused = false;
     this.isProcessing = false;
+
+    // Periodic storage cleanup (runs every hour)
+    setInterval(() => this.cleanupOldFiles(), 60 * 60 * 1000).unref();
   }
 
   add(itemData) {
     const id = itemData.id || `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const sanitizedTitle = (itemData.title || 'Bài hát').replace(/[\\/:*?"<>|]/g, '_').trim();
+    const sanitizedTitle = sanitizeTitle(itemData.title);
+    const finalMp3Path = path.join(DOWNLOADS_DIR, `${sanitizedTitle}.mp3`);
+
+    // Deduplication check: If file already exists and is healthy (>50KB), instantly complete
+    const isPreExisting = fs.existsSync(finalMp3Path) && fs.statSync(finalMp3Path).size > 50000;
     
     const item = {
       id,
@@ -26,20 +60,58 @@ class DownloadQueue {
       thumbnail: itemData.thumbnail || '',
       duration: itemData.duration || 0,
       format: itemData.format || 'mp3',
-      status: 'queued', // queued | downloading | converting | completed | failed | cancelled
-      progress: 0,
+      status: isPreExisting ? 'completed' : 'queued', // queued | downloading | converting | completed | failed | cancelled
+      progress: isPreExisting ? 100 : 0,
       speed: '',
       eta: '',
       error: null,
       retries: 0,
       createdAt: new Date().toISOString(),
-      completedFilePath: null
+      completedFilePath: isPreExisting ? finalMp3Path : null
     };
 
     this.items.set(id, item);
     this.broadcast();
-    this.processNext();
+    if (!isPreExisting) {
+      this.processNext();
+    }
     return item;
+  }
+
+  cleanupOldFiles(maxAgeHours = DOWNLOAD_TTL_HOURS) {
+    const now = Date.now();
+    const maxAgeMs = maxAgeHours * 60 * 60 * 1000;
+    let deletedCount = 0;
+
+    try {
+      if (fs.existsSync(DOWNLOADS_DIR)) {
+        const files = fs.readdirSync(DOWNLOADS_DIR);
+        for (const file of files) {
+          if (file === 'temp') continue;
+          const fullPath = path.join(DOWNLOADS_DIR, file);
+          const stat = fs.statSync(fullPath);
+          if (stat.isFile() && (now - stat.mtimeMs > maxAgeMs)) {
+            fs.unlinkSync(fullPath);
+            deletedCount++;
+          }
+        }
+      }
+
+      if (fs.existsSync(TEMP_DIR)) {
+        const tempFiles = fs.readdirSync(TEMP_DIR);
+        for (const file of tempFiles) {
+          const fullPath = path.join(TEMP_DIR, file);
+          const stat = fs.statSync(fullPath);
+          if (stat.isFile() && (now - stat.mtimeMs > 6 * 60 * 60 * 1000)) {
+            fs.unlinkSync(fullPath);
+            deletedCount++;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Lỗi khi dọn dẹp bộ nhớ tạm:', e.message);
+    }
+    return deletedCount;
   }
 
   get(id) {
@@ -114,14 +186,17 @@ class DownloadQueue {
       const nextItem = Array.from(this.items.values()).find(i => i.status === 'queued');
       if (!nextItem) return;
 
-      await this.executeItem(nextItem);
+      // Start execution in background, reactively picking next upon completion
+      this.executeItem(nextItem).finally(() => {
+        this.processNext();
+      });
+
+      // If we still have an available slot, dispatch immediately
+      if (activeCount + 1 < MAX_DOWNLOADS) {
+        setImmediate(() => this.processNext());
+      }
     } finally {
       this.isProcessing = false;
-      // Check if more items can be processed concurrently
-      const hasQueued = Array.from(this.items.values()).some(i => i.status === 'queued');
-      if (hasQueued) {
-        setTimeout(() => this.processNext(), 100);
-      }
     }
   }
 
@@ -226,4 +301,8 @@ class DownloadQueue {
   }
 }
 
-module.exports = new DownloadQueue();
+const queueInstance = new DownloadQueue();
+queueInstance.sanitizeTitle = sanitizeTitle;
+queueInstance.DownloadQueue = DownloadQueue;
+
+module.exports = queueInstance;

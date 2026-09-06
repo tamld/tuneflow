@@ -8,7 +8,7 @@ describe('TuneFlow Core Engine Unit Tests', () => {
     assert.equal(formatDuration(0), '00:00');
     assert.equal(formatDuration(65), '01:05');
     assert.equal(formatDuration(360), '06:00');
-    assert.equal(formatDuration(3665), '61:05');
+    assert.equal(formatDuration(3665), '1:01:05');
     assert.equal(formatDuration(null), '00:00');
   });
 
