@@ -1,6 +1,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { TEMP_DIR, DOWNLOADS_DIR, MAX_DOWNLOADS, MAX_CONVERSIONS, MAX_RETRIES, DOWNLOAD_TTL_HOURS } = require('../config');
 const { convertToMp3 } = require('./ffmpeg');
 
@@ -29,6 +30,26 @@ function sanitizeTitle(rawTitle) {
   }
 
   return clean || 'Bai_hat';
+}
+
+/**
+ * Calculate SHA-256 checksum of a file
+ * @param {string} filePath 
+ * @returns {Promise<string|null>} Hex string of SHA-256 hash or null if not found
+ */
+async function calculateChecksum(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) return null;
+  return new Promise((resolve, reject) => {
+    try {
+      const hash = crypto.createHash('sha256');
+      const stream = fs.createReadStream(filePath);
+      stream.on('error', (err) => reject(err));
+      stream.on('data', (chunk) => hash.update(chunk));
+      stream.on('end', () => resolve(hash.digest('hex')));
+    } catch (err) {
+      reject(err);
+    }
+  });
 }
 
 class DownloadQueue {
@@ -67,7 +88,8 @@ class DownloadQueue {
       error: null,
       retries: 0,
       createdAt: new Date().toISOString(),
-      completedFilePath: isPreExisting ? finalMp3Path : null
+      completedFilePath: isPreExisting ? finalMp3Path : null,
+      checksum: null
     };
 
     this.items.set(id, item);
@@ -76,6 +98,24 @@ class DownloadQueue {
       this.processNext();
     }
     return item;
+  }
+
+  addBatch(items, format = 'mp3') {
+    if (!Array.isArray(items) || items.length === 0) return [];
+    const queuedItems = [];
+    for (const entry of items) {
+      const item = this.add({
+        id: entry.id,
+        url: entry.url,
+        title: entry.title,
+        uploader: entry.uploader || entry.channel,
+        thumbnail: entry.thumbnail,
+        duration: entry.duration,
+        format: format
+      });
+      queuedItems.push(item);
+    }
+    return queuedItems;
   }
 
   cleanupOldFiles(maxAgeHours = DOWNLOAD_TTL_HOURS) {
@@ -275,14 +315,17 @@ class DownloadQueue {
         artist: item.uploader
       });
 
-      // Step 3: Success! Mark completed & clean up individual temp audio file (leave .part of other files intact)
+      // Step 3: Success! Mark completed & calculate SHA-256 checksum
       try {
         fs.unlinkSync(downloadedTempFile);
       } catch (e) {}
 
+      const checksum = await calculateChecksum(finalMp3Path);
+
       item.status = 'completed';
       item.progress = 100;
       item.completedFilePath = finalMp3Path;
+      item.checksum = checksum;
       this.broadcast();
 
     } catch (err) {
@@ -303,6 +346,7 @@ class DownloadQueue {
 
 const queueInstance = new DownloadQueue();
 queueInstance.sanitizeTitle = sanitizeTitle;
+queueInstance.calculateChecksum = calculateChecksum;
 queueInstance.DownloadQueue = DownloadQueue;
 
 module.exports = queueInstance;

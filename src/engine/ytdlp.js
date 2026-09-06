@@ -135,6 +135,56 @@ async function searchYouTube(query, options = {}) {
 }
 
 /**
+ * Extract tracks from a YouTube Playlist URL (up to limit)
+ */
+async function parsePlaylist(url, limit = 50) {
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    throw new Error('Vui lòng cung cấp đường dẫn danh sách phát (Playlist URL) hợp lệ');
+  }
+
+  const args = [
+    '--flat-playlist',
+    '--dump-single-json',
+    '--playlist-end', String(limit),
+    '--',
+    url.trim()
+  ];
+
+  try {
+    const raw = await runYtDlp(args);
+    if (!raw) return { title: 'Danh sách phát', entries: [] };
+
+    const data = JSON.parse(raw);
+    const rawEntries = Array.isArray(data.entries) ? data.entries : (data._type === 'playlist' ? [] : [data]);
+    
+    const entries = rawEntries.map(item => {
+      let thumb = item.thumbnail;
+      if (Array.isArray(item.thumbnails) && item.thumbnails.length > 0) {
+        thumb = item.thumbnails[item.thumbnails.length - 1].url;
+      }
+      return {
+        id: item.id,
+        title: item.title,
+        uploader: item.uploader || item.channel || item.artist || 'Nghệ sĩ',
+        duration: item.duration,
+        duration_string: item.duration_string || formatDuration(item.duration),
+        thumbnail: thumb || 'assets/default-thumbnail.jpg',
+        url: item.url && item.url.startsWith('http') ? item.url : `https://www.youtube.com/watch?v=${item.id}`
+      };
+    });
+
+    return {
+      title: data.title || 'Danh sách phát',
+      uploader: data.uploader || data.channel || 'Tuyển tập',
+      count: entries.length,
+      entries
+    };
+  } catch (err) {
+    throw new Error(`Không thể đọc danh sách phát: ${err.message}`);
+  }
+}
+
+/**
  * Helper to format seconds into MM:SS
  */
 function formatDuration(seconds) {
@@ -154,5 +204,6 @@ module.exports = {
   getPreviewStreamUrl,
   getVideoMetadata,
   searchYouTube,
+  parsePlaylist,
   formatDuration
 };

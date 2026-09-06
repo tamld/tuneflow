@@ -24,33 +24,71 @@
       </button>
     </header>
 
+    <!-- Hero Persona Bar (Mom / Dad / Favorites) -->
+    <div class="persona-hero">
+      <button id="btn-persona-mom" class="persona-btn active" data-persona="mom">
+        <span class="persona-icon">🌸</span>
+        <span class="persona-text">Mẹ Hay Nghe</span>
+      </button>
+      <button id="btn-persona-dad" class="persona-btn" data-persona="dad">
+        <span class="persona-icon">☕</span>
+        <span class="persona-text">Ba Hay Nghe</span>
+      </button>
+      <button id="btn-persona-favorites" class="persona-btn" data-persona="favorites">
+        <span class="persona-icon">❤️</span>
+        <span class="persona-text">Bài Đã Thích (<span id="fav-count">0</span>)</span>
+      </button>
+    </div>
+
     <!-- Category Recommendations for Parents -->
     <section class="category-section">
-      <h2 class="category-label">📻 Thể loại nhạc quen thuộc của Ba Mẹ:</h2>
-      <div class="category-pills">
-        <button class="pill-btn" data-query="Nhạc vàng 1975 hải ngoại chọn lọc">📻 Nhạc Vàng 1975</button>
-        <button class="pill-btn" data-query="Tân cổ giao duyên tuyển chọn hay nhất">🎭 Tân Cổ Giao Duyên</button>
-        <button class="pill-btn" data-query="Nhạc Trịnh Công Sơn Khánh Ly">🌸 Nhạc Trịnh Công Sơn</button>
+      <div class="category-header-row">
+        <h2 class="category-label">📻 Thể loại quen thuộc:</h2>
+        <!-- Vocal / Instrumental Filter -->
+        <div class="filter-group">
+          <button class="filter-chip active" data-filter="all">Tất Cả</button>
+          <button class="filter-chip" data-filter="vocal">Có Lời</button>
+          <button class="filter-chip" data-filter="instrumental">Không Lời Hòa Tấu</button>
+        </div>
+      </div>
+      <div id="category-pills" class="category-pills">
         <button class="pill-btn" data-query="Nhạc thiền tịnh tâm ngủ ngon">🧘 Nhạc Thiền Thư Giãn</button>
-        <button class="pill-btn" data-query="Vọng cổ miền tây ngọt ngào">🌾 Ca Cổ Miền Tây</button>
+        <button class="pill-btn" data-query="Niệm phật êm dịu thanh tịnh">📿 Niệm Phật Tịnh Tâm</button>
+        <button class="pill-btn" data-query="Nhạc spa thư giãn ngủ sâu">🌿 Nhạc Spa Thư Giãn</button>
+        <button class="pill-btn" data-query="Dân ca quê hương chọn lọc ngọt ngào">🌾 Dân Ca Quê Hương</button>
       </div>
     </section>
 
     <!-- Search Section -->
     <section class="search-card">
-      <label for="search-input" class="search-label">🔍 Ba Mẹ muốn tìm bài hát gì hôm nay ạ?</label>
+      <label for="search-input" class="search-label">🔍 Ba Mẹ muốn tìm bài hát hoặc dán link danh sách phát (Playlist) tại đây:</label>
       <div class="search-input-group">
         <input 
           type="text" 
           id="search-input" 
           class="search-input" 
-          placeholder="Gõ tên bài hát, ca sĩ (hoặc dán đường link YouTube tại đây)..."
+          placeholder="Gõ tên bài hát, ca sĩ, hoặc dán link Playlist YouTube..."
           autocomplete="off"
         >
         <button id="search-btn" class="search-btn">
-          🔎 Tìm Bài Hát
+          🔎 Tìm Kiếm
         </button>
       </div>
+    </section>
+
+    <!-- Playlist Batch Ingestion Panel -->
+    <section id="playlist-panel" class="playlist-panel" style="display: none;">
+      <div class="playlist-panel-header">
+        <div>
+          <h3 id="playlist-panel-title" class="playlist-panel-title">📻 Danh Sách Phát Tuyển Tập</h3>
+          <p id="playlist-panel-meta" class="playlist-panel-meta">Tích chọn các bài ưng ý để tải về máy nhé!</p>
+        </div>
+        <div class="playlist-panel-actions">
+          <button id="btn-select-all" class="btn-panel-secondary">Đánh Dấu Tất Cả</button>
+          <button id="btn-download-batch" class="btn-panel-primary">⬇️ Tải Các Bài Đã Chọn (<span id="batch-selected-count">0</span>)</button>
+        </div>
+      </div>
+      <div id="playlist-items-list" class="playlist-items-list"></div>
     </section>
 
     <!-- Results Section -->

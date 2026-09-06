@@ -1,5 +1,33 @@
-﻿# Nhật Ký Thay Đổi (Changelog)
+# Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
+
+---
+
+## [1.2.0] - 2026-09-06
+
+### Đã Thêm (Added)
+- **Trích xuất & Tải hàng loạt danh sách phát YouTube (Playlist Batch Download)**:
+  - API `POST /api/playlist/parse`: Trích xuất danh sách video nhanh (tối đa 50 mục) qua `yt-dlp --flat-playlist` mà không cần tải video thô.
+  - API `POST /api/queue/batch-add`: Đưa nhiều bài hát vào hàng đợi xử lý nền có kiểm soát giới hạn tài nguyên máy chủ (`MAX_CONCURRENT_DOWNLOADS = 2`).
+  - Giao diện người dùng: Tự động phát hiện liên kết danh sách phát (`list=...`), hiển thị bảng xem trước (modal/panel), cho phép chọn lọc tất cả hoặc từng bài hát, và tải hàng loạt chỉ với 1 chạm.
+- **Tính toán & Xác thực Tính toàn vẹn tệp (SHA-256 Checksum)**:
+  - Tự động tính toán mã băm SHA-256 (`crypto.createHash('sha256')`) ngay sau khi FFmpeg chuyển mã MP3 hoàn tất.
+  - Đính kèm mã băm vào siêu dữ liệu hàng đợi và trả về qua HTTP headers: `x-tuneflow-checksum` và `ETag` khi client tải tệp về.
+  - Đảm bảo tính toàn vẹn 100%, không bị hỏng tệp hay đứt gãy trong quá trình truyền tải.
+- **Bộ Lọc Persona & Thể Loại Cho Gia Đình (Family Persona & Mood Filtering)**:
+  - 3 Persona lớn: "🌸 Mẹ Hay Nghe" (Nhạc Vàng, Dân Ca, Tân Cổ), "☕ Ba Hay Nghe" (Nhạc Trịnh, Tiền Chiến, Bolero Trữ Tình), "❤️ Bài Đã Thích" (Danh sách bài hát yêu thích cá nhân).
+  - Chip lọc nhanh "🎤 Nhạc có lời" / "🎻 Nhạc không lời (Hòa tấu/Guitar/Saxophone)" thích hợp cho người cao tuổi thư giãn, uống trà hoặc tập dưỡng sinh.
+  - API `GET /api/curation/presets`: Cung cấp cấu hình các danh mục nhạc mặc định chuẩn hóa.
+- **Quản lý Bài hát Yêu thích Cục bộ (Zero-Login LocalStorage Favorites)**:
+  - Lưu trữ và đồng bộ danh sách bài hát yêu thích trực tiếp trên trình duyệt của người dùng qua `localStorage` (`tuneflow_favorites`).
+  - Đảm bảo quyền riêng tư tuyệt đối, hoạt động tức thì mà không cần tài khoản hay cơ sở dữ liệu cồng kềnh.
+- **Bộ kiểm thử tự động mới (Automated Test Suites)**:
+  - `tests/checksum.test.js`: Kiểm thử trích xuất hash SHA-256, kiểm tra tính toàn vẹn và HTTP response header.
+  - `tests/playlist.test.js`: Kiểm thử phân tích metadata danh sách phát, giới hạn trích xuất, và batch queue ingestion.
+
+### Đã Sửa (Fixed)
+- Đóng toàn bộ kết nối keep-alive và hủy tiến trình yt-dlp nền kịp thời trong các test hook (`queue.cancel()` + `server.closeAllConnections()`) giúp tối ưu thời gian chạy toàn bộ bộ test.
+- Tối ưu hóa phản hồi giao diện khi tải hàng loạt mà không làm giật lag trình duyệt.
 
 ---
 

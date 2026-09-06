@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const router = express.Router();
-const { searchYouTube, getVideoMetadata, getPreviewStreamUrl } = require('../engine/ytdlp');
+const { searchYouTube, getVideoMetadata, getPreviewStreamUrl, parsePlaylist } = require('../engine/ytdlp');
 const queue = require('../engine/queue');
 
 // Health check endpoint for container monitoring
@@ -82,6 +82,83 @@ router.post('/queue/add', (req, res) => {
   res.json({ success: true, item });
 });
 
+// Batch add tracks to queue
+router.post('/queue/batch-add', (req, res) => {
+  const { items, format } = req.body;
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, error: 'Danh sách bài hát không hợp lệ hoặc đang trống' });
+  }
+
+  const queuedItems = queue.addBatch(items, format || 'mp3');
+  res.json({
+    success: true,
+    queuedCount: queuedItems.length,
+    items: queuedItems
+  });
+});
+
+// Parse YouTube Playlist
+router.post('/playlist/parse', async (req, res) => {
+  const { url, limit } = req.body;
+  if (!url || typeof url !== 'string' || !url.trim()) {
+    return res.status(400).json({ success: false, error: 'Vui lòng cung cấp đường dẫn danh sách phát (Playlist URL)' });
+  }
+
+  try {
+    const result = await parsePlaylist(url.trim(), limit ? parseInt(limit, 10) : 50);
+    res.json({
+      success: true,
+      title: result.title,
+      uploader: result.uploader,
+      count: result.count,
+      items: result.entries
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Curated Presets for Elderly Personas (Ba & Me)
+router.get('/curation/presets', (req, res) => {
+  res.json({
+    success: true,
+    presets: {
+      mom: {
+        title: 'Mẹ Hay Nghe',
+        icon: '🌸',
+        description: 'Nhạc thiền êm dịu, niệm Phật, thư giãn ngủ ngon, dân ca quê hương',
+        queries: [
+          'nhạc thiền ngủ ngon',
+          'niệm phật êm dịu thanh tịnh',
+          'nhạc không lời thư giãn spa',
+          'dân ca quê hương chọn lọc'
+        ]
+      },
+      dad: {
+        title: 'Ba Hay Nghe',
+        icon: '☕',
+        description: 'Nhạc vàng bolero chọn lọc, nhạc tiền chiến bất hủ, cải lương cổ nhạc',
+        queries: [
+          'nhạc vàng bolero chọn lọc',
+          'nhạc tiền chiến bất hủ',
+          'cải lương hồ quảng',
+          'vọng cổ sầu'
+        ]
+      },
+      relax: {
+        title: 'Nhạc Không Lời',
+        icon: '🌿',
+        description: 'Hòa tấu đàn tranh, sáo trúc, guitar êm ái thư giãn',
+        queries: [
+          'hòa tấu đàn tranh sáo trúc',
+          'guitar không lời êm dịu',
+          'nhạc piano thư giãn dễ ngủ'
+        ]
+      }
+    }
+  });
+});
+
 // Get queue list
 router.get('/queue/list', (req, res) => {
   res.json({ success: true, items: queue.getAll() });
@@ -113,6 +190,11 @@ router.get('/download/:id/file', (req, res) => {
 
   if (!fs.existsSync(item.completedFilePath)) {
     return res.status(404).send('Tệp đã bị xóa khỏi đĩa đệm.');
+  }
+
+  if (item.checksum) {
+    res.setHeader('x-tuneflow-checksum', item.checksum);
+    res.setHeader('ETag', `"${item.checksum}"`);
   }
 
   const filename = `${item.sanitizedTitle}.mp3`;
