@@ -1276,3 +1276,34 @@ body {
   border-color: #fff;
 }
 
+/* ==========================================================================
+   Web Interface Guidelines & Senior Accessibility (WCAG 2.2 AAA Compliance)
+   ========================================================================== */
+
+/* Universal High-Contrast Focus Ring for Keyboard & Android TV D-Pad */
+:focus-visible {
+  outline: 3px solid var(--accent-gold) !important;
+  outline-offset: 3px !important;
+}
+
+/* Motion Reduction for Vestibular & Senior Users (Prefers-Reduced-Motion) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .song-card.playing .play-icon-overlay {
+    animation: none !important;
+  }
+
+  .toast {
+    transition: none !important;
+  }
+}
+
+

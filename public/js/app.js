@@ -569,7 +569,12 @@ document.addEventListener('DOMContentLoaded', () => {
       btnEl.textContent = '❤️';
       showToast(`❤️ Đã lưu bài "${song.title}" vào mục yêu thích của Bố Mẹ!`, 'success');
     }
-    localStorage.setItem('tuneflow_favorites', JSON.stringify(favorites));
+    try {
+      localStorage.setItem('tuneflow_favorites', JSON.stringify(favorites));
+    } catch (err) {
+      console.warn('[LocalStorage Quota Error] Could not save favorites:', err);
+      showToast('⚠️ Bộ nhớ lưu trữ bài hát của trình duyệt đã đầy!', 'warn');
+    }
     updateFavCount();
   }
 
@@ -641,8 +646,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 9. Single Download Queue
+  // 9. Single Download Queue with In-Flight Spam Guard (ck:scenario Dimension 3)
+  const pendingDownloadRequests = new Set();
+
   async function queueDownload(song) {
+    if (pendingDownloadRequests.has(song.id)) {
+      showToast(`⏳ Bài hát "${song.title}" đang được đưa vào hàng đợi, Bố Mẹ đợi một chút nhé!`, 'info');
+      return;
+    }
+
+    pendingDownloadRequests.add(song.id);
+    const downloadBtn = document.getElementById(`btn-download-${song.id}`);
+    if (downloadBtn) {
+      downloadBtn.disabled = true;
+      downloadBtn.style.opacity = '0.7';
+    }
+
     showToast(`⏳ Đang bắt đầu chuẩn bị bài: "${song.title}"...`, 'info');
     const statusBadge = document.getElementById(`status-${song.id}`);
     if (statusBadge) {
@@ -669,6 +688,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       showToast('❌ Có lỗi xảy ra khi bắt đầu tải bài hát này', 'error');
+    } finally {
+      setTimeout(() => {
+        pendingDownloadRequests.delete(song.id);
+        if (downloadBtn) {
+          downloadBtn.disabled = false;
+          downloadBtn.style.opacity = '1';
+        }
+      }, 1200);
     }
   }
 

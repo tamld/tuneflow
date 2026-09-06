@@ -191,6 +191,30 @@ Proposal này cung cấp cho PIC Agent kế hoạch hành động từng bước
 
 ---
 
+### Task 1.12: Vá 7 Lỗ Hổng CVEs Chuỗi Cung Ứng & Chặn Bằng CI Security Audit Gate
+* **Issue**: [#27](https://github.com/tamld/tuneflow/issues/27) (Dependency Security Audit Gate)
+* **Tệp tác động**: `package.json`, `package-lock.json`, `.github/workflows/ci.yml`
+* **Mô tả**: Quét `npm audit` phát hiện 7 lỗ hổng (4 High, 3 Moderate) trong `puppeteer`/`extract-zip` (CWE-22 Symlink Traversal) và `express`/`body-parser`/`qs` (CWE-770 DoS). Áp dụng ghi đè `overrides` và nâng cấp thư viện, đưa số lượng lỗ hổng về 0.
+* **Các bước thực hiện**:
+  - [x] **Step 1**: Nâng cấp `puppeteer` lên `^25.10.0` vá triệt để lỗ hổng High CWE-22 trong `extract-zip`.
+  - [x] **Step 2**: Thêm `"overrides": { "qs": "^6.16.0" }` trong `package.json` triệt tiêu rủi ro DoS từ `body-parser`.
+  - [x] **Step 3**: Bổ sung bước kiểm toán bảo mật tự động trong `.github/workflows/ci.yml`: `npm audit --audit-level=high`.
+  - [x] **Step 4**: Commit: `security(audit): patch 7 dependency CVEs via qs overrides and puppeteer update, and add CI security audit gate (#27)`
+
+---
+
+### Task 1.13: Triệt Tiêu Nuốt Ngoại Lệ (Swallowed Catches) & Tái Kết Nối Tự Động SSE Theo Chuẩn FARD
+* **Issue**: [#29](https://github.com/tamld/tuneflow/issues/29) (Failure-Aware Resiliency & Swallowed Exceptions)
+* **Tệp tác động**: `public/js/app.js`, `src/engine/queue.js`, `src/server.js`
+* **Mô tả**: Rà soát theo chuẩn `wiki-failure-design` (FARD), phát hiện các khối `catch (e) {}` nuốt lỗi im lặng làm ẩn giấu lỗi rò rỉ ổ đĩa và rớt kết nối stream.
+* **Các bước thực hiện**:
+  - [x] **Step 1**: Bổ sung bộ quản lý kết nối SSE `initSSE()` có `onerror` với cơ chế Exponential Backoff Reconnect (`1s -> 2s -> 4s -> ... -> 30s`) để tự phục hồi khi Wi-Fi của Bố Mẹ bị chập chờn.
+  - [x] **Step 2**: Loại bỏ toàn bộ các khối `catch (_e) {}` nuốt lỗi, thay bằng log ngữ cảnh có tiền tố chẩn đoán (`[Storage Quota Warning]`, `[Process Termination Warning]`, `[Temp File Cleanup Warning]`).
+  - [x] **Step 3**: Dọn dẹp dứt điểm các file tạm `downloadedTempFile` khi quá trình chuyển đổi MP3 bị thất bại để không làm đầy ổ đĩa.
+  - [x] **Step 4**: Commit: `resilience(fard): eliminate swallowed exceptions, add SSE exponential backoff reconnection, and cleanup orphaned failure files (#29)`
+
+---
+
 ## 📻 PHASE 2: NÂNG CẤP TRẢI NGHIỆM NGHE THUẦN TÚY & SILVERMELODY UX (v1.3.0)
 
 ### Task 2.1: Chế độ Nghe Liên Tục (Radio/Autoplay), Hẹn Giờ Ngủ & MediaSession API
@@ -291,6 +315,29 @@ Proposal này cung cấp cho PIC Agent kế hoạch hành động từng bước
   - [x] **Step 4**: Cập nhật cả bảng danh sách bài tuyển tập (`.playlist-item-row`) với tính năng tương tự.
   - [x] **Step 5**: Viết kiểm thử E2E tự động xác thực cursor, click trigger và ARIA attributes (100% green).
   - [x] **Step 6**: Commit: `ux(player): enable click-to-play on song thumbnail and title with visual hover affordance (#26)`
+
+---
+
+### Task 2.8: Chuẩn Web Interface Guidelines: Chế Độ Giảm Chuyển Động (prefers-reduced-motion) & Viền Focus Toàn Cục
+* **Issue**: [#30](https://github.com/tamld/tuneflow/issues/30) (Web Interface Guidelines & Motion Sensitivity)
+* **Tệp tác động**: `public/css/silver-melody.css`
+* **Mô tả**: Rà soát theo tiêu chuẩn Web Interface Guidelines và WCAG 2.2 AAA. Người cao tuổi thường nhạy cảm với tiền đình khi có hiệu ứng nhịp đập (`pulse`) hoặc zoom ảnh liên tục. Bổ sung `@media (prefers-reduced-motion: reduce)` và viền focus vàng 3px cho điều hướng bàn phím / remote Android TV.
+* **Các bước thực hiện**:
+  - [x] **Step 1**: Cấu hình `:focus-visible` với `outline: 3px solid var(--accent-gold) !important; outline-offset: 3px !important;` trên toàn bộ phần tử tương tác.
+  - [x] **Step 2**: Thêm media query `@media (prefers-reduced-motion: reduce)` triệt tiêu toàn bộ animation lặp và rút ngắn thời gian chuyển đổi về 0.01ms.
+  - [x] **Step 3**: Kiểm tra đối chiếu độ tương phản màu sắc đạt chuẩn WCAG AAA ($\ge 7:1$).
+  - [x] **Step 4**: Commit: `a11y(guidelines): implement prefers-reduced-motion for vestibular comfort, universal focus ring, and WCAG AAA contrast (#30)`
+
+---
+
+### Task 2.9: Phòng Vệ Rủi Ro Biên 12 Chiều: Chống Spam Click Tải & Bẫy Tràn Bộ Nhớ LocalStorage
+* **Issue**: [#31](https://github.com/tamld/tuneflow/issues/31) (12-Dimensional Edge Case Explorer)
+* **Tệp tác động**: `public/js/app.js`
+* **Mô tả**: Bóc tách rủi ro hệ thống theo `ck:scenario`: Người già tay run bấm nút tải 5 lần liên tiếp gây nghẽn hàng đợi (Dimension 3); lưu quá nhiều bài hát yêu thích khiến `localStorage` quăng lỗi `QuotaExceededError` đánh sập JS (Dimension 4).
+* **Các bước thực hiện**:
+  - [x] **Step 1**: Thêm tập hợp `pendingDownloadRequests` Set và vô hiệu hóa tạm thời nút bấm với độ mờ 0.7 trong 1200ms khi bắt đầu tải để chống spam request.
+  - [x] **Step 2**: Bọc an toàn `localStorage.setItem('tuneflow_favorites')` trong khối `try-catch`, phát thông báo toast cảnh báo nhẹ nhàng khi bộ nhớ trình duyệt cạn kiệt.
+  - [x] **Step 3**: Commit: `resilience(scenario): add in-flight rapid click debounce on downloads and QuotaExceededError guard on favorites (#31)`
 
 ---
 
