@@ -1,0 +1,30 @@
+services:
+  tuneflow:
+    image: ghcr.io/tamld/tuneflow:latest
+    container_name: tuneflow
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - MAX_DOWNLOADS=2
+      - MAX_CONVERSIONS=1
+      - MAX_RETRIES=3
+    volumes:
+      - ./downloads:/app/downloads
+    # Resource limits for Proxmox Homelab
+    deploy:
+      resources:
+        limits:
+          cpus: '1.50'
+          memory: 256M
+        reservations:
+          cpus: '0.10'
+          memory: 40M
+    # Traefik Reverse Proxy integration (Homelab standard)
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tuneflow.rule=Host(`music.homelab.local`) || Host(`nhac.lan`)"
+      - "traefik.http.routers.tuneflow.entrypoints=web"
+      - "traefik.http.services.tuneflow.loadbalancer.server.port=3000"

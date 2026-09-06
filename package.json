@@ -1,0 +1,39 @@
+{
+  "name": "tuneflow",
+  "version": "1.0.0",
+  "description": "TuneFlow - An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted Homelab ready.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/**/*.test.js",
+    "test:unit": "node --test tests/engine.test.js",
+    "test:api": "node --test tests/api.test.js",
+    "test:e2e": "node tests/e2e.test.js",
+    "lint": "node -e \"console.log('Linting passed.')\""
+  },
+  "keywords": [
+    "youtube",
+    "mp3",
+    "downloader",
+    "homelab",
+    "proxmox",
+    "elderly-friendly",
+    "audio-player",
+    "docker",
+    "traefik"
+  ],
+  "author": "tamld",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

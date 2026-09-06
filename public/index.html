@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TuneFlow - Nghe Thử & Tải Nhạc Cho Ba Mẹ</title>
+  <link rel="stylesheet" href="/css/silver-melody.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%3E%3Ctext y=%2226%22 font-size=%2226%22>🎶</text></svg>">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">🎶</span>
+        <div>
+          <h1 class="brand-title">TuneFlow</h1>
+          <p class="brand-tagline">Nghe thử & Tải nhạc chất lượng cao dành cho Ba Mẹ</p>
+        </div>
+      </div>
+      <button class="help-btn" onclick="alert('Dạ Ba Mẹ chỉ cần:\n1. Chọn hoặc gõ tên bài hát\n2. Bấm nút [Nghe Thử] để nghe trước\n3. Thấy ưng ý thì bấm [Tải Về Máy] là xong ạ!')">
+        ❓ Hướng Dẫn Dễ Hiểu
+      </button>
+    </header>
+
+    <!-- Category Recommendations for Parents -->
+    <section class="category-section">
+      <h2 class="category-label">📻 Thể loại nhạc quen thuộc của Ba Mẹ:</h2>
+      <div class="category-pills">
+        <button class="pill-btn" data-query="Nhạc vàng 1975 hải ngoại chọn lọc">📻 Nhạc Vàng 1975</button>
+        <button class="pill-btn" data-query="Tân cổ giao duyên tuyển chọn hay nhất">🎭 Tân Cổ Giao Duyên</button>
+        <button class="pill-btn" data-query="Nhạc Trịnh Công Sơn Khánh Ly">🌸 Nhạc Trịnh Công Sơn</button>
+        <button class="pill-btn" data-query="Nhạc thiền tịnh tâm ngủ ngon">🧘 Nhạc Thiền Thư Giãn</button>
+        <button class="pill-btn" data-query="Vọng cổ miền tây ngọt ngào">🌾 Ca Cổ Miền Tây</button>
+      </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="search-card">
+      <label for="search-input" class="search-label">🔍 Ba Mẹ muốn tìm bài hát gì hôm nay ạ?</label>
+      <div class="search-input-group">
+        <input 
+          type="text" 
+          id="search-input" 
+          class="search-input" 
+          placeholder="Gõ tên bài hát, ca sĩ (hoặc dán đường link YouTube tại đây)..."
+          autocomplete="off"
+        >
+        <button id="search-btn" class="search-btn">
+          🔎 Tìm Bài Hát
+        </button>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section">
+      <h2 id="results-header" class="results-header">✨ Bấm chọn một thể loại ở trên hoặc gõ tên bài hát để bắt đầu nhé!</h2>
+      <div id="results-grid" class="results-grid"></div>
+    </section>
+  </div>
+
+  <!-- Sticky Bottom Audio Preview Player -->
+  <div id="bottom-player" class="bottom-player">
+    <div class="player-inner">
+      <button id="btn-player-play-pause" class="btn-play-pause" title="Bật / Dừng nghe thử">
+        ▶️
+      </button>
+      <div class="player-info">
+        <div id="player-track-title" class="player-title">Chưa chọn bài hát</div>
+        <div id="player-track-status" class="player-status">Bấm nghe thử để bắt đầu</div>
+      </div>
+      <div class="player-progress-container">
+        <span id="player-time-current" class="player-time">00:00</span>
+        <input type="range" id="player-progress" class="player-slider" min="0" max="100" value="0">
+        <span id="player-time-total" class="player-time">00:00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/player.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
