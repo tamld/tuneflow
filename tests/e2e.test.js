@@ -6,9 +6,9 @@ const fs = require('fs');
 const { app } = require('../src/server');
 
 /**
- * Resolve Chrome/Chromium executable across Windows and Linux environments.
+ * Resolve Chrome/Chromium executable across Windows, Linux, and Puppeteer cache environments.
  */
-function resolveChromeExecutable() {
+async function resolveChromeExecutable() {
   const candidates = [
     process.env.CHROME_BIN,
     process.env.PUPPETEER_EXECUTABLE_PATH,
@@ -29,6 +29,19 @@ function resolveChromeExecutable() {
       // Ignore permission or file-system probe errors
     }
   }
+
+  // Probe Puppeteer's internal browser cache if available
+  if (typeof puppeteer.executablePath === 'function') {
+    try {
+      const pPath = await puppeteer.executablePath();
+      if (pPath && fs.existsSync(pPath)) {
+        return pPath;
+      }
+    } catch {
+      // Cache probe ignored
+    }
+  }
+
   return null;
 }
 
@@ -40,7 +53,7 @@ describe('TuneFlow End-to-End & Elderly Accessibility Suite', () => {
       server.listen(0, '127.0.0.1', () => resolve(server.address().port));
     });
 
-    const chromePath = resolveChromeExecutable();
+    const chromePath = await resolveChromeExecutable();
     const launchOptions = {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
