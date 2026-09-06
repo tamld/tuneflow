@@ -1,17 +1,17 @@
-# SRS — Phase 6: Software Requirements Specification (Browser Extension & Legal)
+﻿# SRS — Phase 6: Software Requirements Specification (Browser Extension & Legal)
 
 ## 1. Yêu Cầu Chức Năng (Functional Requirements)
 - **FR-601 (Extension Manifest V3 Specs)**:
   - Tệp `manifest.json`:
     - `manifest_version: 3`
     - `permissions`: `["activeTab", "storage", "notifications"]`
-    - `host_permissions`: `["*://*.youtube.com/*", "http://nhac.lan/*", "http://localhost:3000/*"]`
+    - `host_permissions`: `["*://*.youtube.com/*", "http://tuneflow.local/*", "http://localhost:3000/*"]`
 - **FR-602 (Content Script Button Injection)**:
   - Theo dõi sự kiện thay đổi trang YouTube (`yt-navigate-finish`).
   - Chèn nút bấm tương tác `#tuneflow-quick-download-btn` vào vùng tương tác dưới thanh thông tin người đăng ký (`#owner` / `#subscribe-button`).
   - Kích thước nút $\ge 44\text{px}$, màu xanh ngọc với chữ trắng tương phản cao.
 - **FR-603 (Background Service Worker Dispatch)**:
-  - Bắt sự kiện click nút, trích xuất `videoId`, gửi payload `POST http://nhac.lan:3000/api/queue/add`.
+  - Bắt sự kiện click nút, trích xuất `videoId`, gửi payload `POST http://tuneflow.local:3000/api/queue/add`.
   - Hiển thị Toast thông báo trạng thái: *"Đang tải nhạc về máy chủ gia đình... Ba mẹ chờ một lát nhé!"*.
 
 ## 2. Yêu Cầu Phi Chức Năng & Pháp Lý (Non-Functional & Compliance)

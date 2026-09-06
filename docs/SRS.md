@@ -1,4 +1,4 @@
-# Đặc Tả Yêu Cầu Phần Mềm (Software Requirements Specification - SRS)
+﻿# Đặc Tả Yêu Cầu Phần Mềm (Software Requirements Specification - SRS)
 ## Hệ Thống: TuneFlow (YouTube to MP3 / MP4 Converter & Audio Player)
 
 > **Mã tài liệu**: `TUNEFLOW-SRS-01`  
@@ -17,7 +17,7 @@ Tài liệu này xác định đầy đủ các đặc tả chức năng, giao d
 TuneFlow là ứng dụng Web Full-stack bao gồm:
 - **Tầng Client (Frontend)**: Giao diện web đơn trang (SPA) tối ưu công thái học người cao tuổi, viết bằng HTML5/CSS3/Vanilla ES6, không phụ thuộc các framework cồng kềnh.
 - **Tầng Server (Backend Engine)**: Dịch vụ Node.js Express điều phối hàng đợi tải, tích hợp các công cụ nhị phân `yt-dlp` và `FFmpeg` để xử lý âm thanh.
-- **Tầng Đóng Gói (Infrastructure)**: Docker container nền tảng Alpine Linux tích hợp sẵn nhãn Traefik cho cụm Proxmox Homelab.
+- **Tầng Đóng Gói (Infrastructure)**: Docker container nền tảng Alpine Linux tích hợp sẵn nhãn Traefik cho cụm máy chủ gia đình (Self-Hosted).
 
 ---
 
@@ -44,7 +44,7 @@ TuneFlow là ứng dụng Web Full-stack bao gồm:
 
 ### 2.2 Ràng buộc thiết kế & vận hành (Constraints)
 1. **Ràng buộc phần cứng**:
-   - Máy chủ Proxmox: Node x86_64 (HP EliteDesk / Intel Xeon).
+   - máy chủ: Node x86_64 (x86_64 / ARM64).
    - Bộ nhớ cấp phát tối đa cho container: 256MB RAM.
    - Dung lượng ổ đĩa khả dụng: Phải có cơ chế tự dọn dẹp các tệp cũ tránh làm đầy ổ lưu trữ server.
 2. **Ràng buộc tương thích**:

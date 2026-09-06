@@ -5,7 +5,7 @@ const router = express.Router();
 const { searchYouTube, getVideoMetadata, getPreviewStreamUrl } = require('../engine/ytdlp');
 const queue = require('../engine/queue');
 
-// Health check endpoint for Docker and Proxmox monitoring
+// Health check endpoint for container monitoring
 router.get('/health', (req, res) => {
   res.json({
     status: 'healthy',

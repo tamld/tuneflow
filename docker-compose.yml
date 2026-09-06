@@ -13,7 +13,7 @@ services:
       - MAX_RETRIES=3
     volumes:
       - ./downloads:/app/downloads
-    # Resource limits for Proxmox Homelab
+    # Resource limits for container host
     deploy:
       resources:
         limits:
@@ -22,9 +22,9 @@ services:
         reservations:
           cpus: '0.10'
           memory: 40M
-    # Traefik Reverse Proxy integration (Homelab standard)
+    # Reverse Proxy integration (optional)
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.tuneflow.rule=Host(`music.homelab.local`) || Host(`nhac.lan`)"
-      - "traefik.http.routers.tuneflow.entrypoints=web"
+      - "traefik.http.routers.tuneflow.rule=Host(`tuneflow.local`)"
+      - "traefik.http.entrypoints=web"
       - "traefik.http.services.tuneflow.loadbalancer.server.port=3000"

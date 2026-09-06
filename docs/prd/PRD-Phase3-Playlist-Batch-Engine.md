@@ -1,7 +1,7 @@
-# PRD — Phase 3: Playlist Batch Parsing, Multi-Select & Checksum Verification
+﻿# PRD — Phase 3: Playlist Batch Parsing, Multi-Select & Checksum Verification
 
 ## 1. Mục Tiêu Sản Phẩm (Goal)
-Cung cấp khả năng tải toàn bộ danh sách phát (Playlist) hoặc chọn lọc hàng loạt bài hát theo ý thích của ba mẹ, hiển thị danh sách bài trực quan, xếp hàng tải thông minh có giới hạn tải song song để không làm nghẽn Proxmox, và tự động kiểm tra tính toàn vẹn Checksum SHA-256 của từng bài hát.
+Cung cấp khả năng tải toàn bộ danh sách phát (Playlist) hoặc chọn lọc hàng loạt bài hát theo ý thích của ba mẹ, hiển thị danh sách bài trực quan, xếp hàng tải thông minh có giới hạn tải song song để không làm nghẽn Container Host, và tự động kiểm tra tính toàn vẹn Checksum SHA-256 của từng bài hát.
 
 ## 2. Trải Nghiệm Người Dùng (UX Flow)
 1. **Dán link**: Ba mẹ hoặc con cái dán đường dẫn YouTube Playlist vào ô tìm kiếm.

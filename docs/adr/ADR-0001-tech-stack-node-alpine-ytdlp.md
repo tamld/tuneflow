@@ -1,7 +1,7 @@
-# ADR-0001: Lựa Chọn Ngôn Ngữ & Nền Tảng Đóng Gói (Node.js 22 LTS & Alpine Linux)
+﻿# ADR-0001: Lựa Chọn Ngôn Ngữ & Nền Tảng Đóng Gói (Node.js 22 LTS & Alpine Linux)
 
 ## Bối Cảnh (Context)
-Dự án TuneFlow cần triển khai trên cụm máy chủ Proxmox Homelab cá nhân của tác giả. Máy chủ này đang chạy đồng thời nhiều dịch vụ khác (Home Assistant, Plex, AdGuard, v.v.). Yêu cầu đặt ra là ứng dụng phải tốn cực ít tài nguyên RAM ($\le 150\text{ MB}$), khởi động tức thì, xử lý I/O luồng stream không bị block và tệp hình ảnh Docker container phải siêu nhẹ ($\le 120\text{ MB}$).
+Dự án TuneFlow cần triển khai trên cụm máy chủ máy chủ gia đình (Self-Hosted) cá nhân của tác giả. Máy chủ này đang chạy đồng thời nhiều dịch vụ khác (Home Assistant, Plex, AdGuard, v.v.). Yêu cầu đặt ra là ứng dụng phải tốn cực ít tài nguyên RAM ($\le 150\text{ MB}$), khởi động tức thì, xử lý I/O luồng stream không bị block và tệp hình ảnh Docker container phải siêu nhẹ ($\le 120\text{ MB}$).
 
 ## Quyết Định (Decision)
 1. Sử dụng **Node.js 22 LTS** làm runtime chính cho backend.

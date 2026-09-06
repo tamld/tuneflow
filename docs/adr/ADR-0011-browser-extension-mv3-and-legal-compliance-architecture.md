@@ -1,4 +1,4 @@
-# ADR-0011: Browser Extension MV3 Integration, Commercialization Models, and Legal Compliance Strategy
+﻿# ADR-0011: Browser Extension MV3 Integration, Commercialization Models, and Legal Compliance Strategy
 
 ## Trạng thái
 Đã chấp thuận (Accepted)
@@ -14,7 +14,7 @@ Người dùng đặt ra 3 yêu cầu chiến lược:
 ### 1. Kiến Trúc Browser Extension (Manifest V3)
 - Sử dụng chuẩn Chrome/Edge WebExtension Manifest V3.
 - `content_scripts`: Chạy trên miền `*://*.youtube.com/*`, chèn 1 nút bấm màu xanh nổi bật: **"🎧 Tải MP3 TuneFlow"** ngay cạnh nút Like/Share của YouTube video player.
-- `background service worker`: Lấy ID video hiện tại, gửi lệnh POST tới máy chủ TuneFlow qua mạng LAN (`http://nhac.lan:3000/api/queue/add` hoặc URL public).
+- `background service worker`: Lấy ID video hiện tại, gửi lệnh POST tới máy chủ TuneFlow qua mạng LAN (`http://tuneflow.local:3000/api/queue/add` hoặc URL public).
 - Thông báo Toast hiển thị trực quan: "Đang tải bài hát cho ba mẹ... Tải xong sẽ lưu vào thư mục Downloads".
 
 ### 2. Đánh Giá Pháp Lý & Bản Quyền (Legal Risk Assessment)

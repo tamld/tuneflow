@@ -1,4 +1,4 @@
-# Nhật Ký Thay Đổi (Changelog)
+﻿# Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
 ---
@@ -19,7 +19,7 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - `tests/suite-edge.test.js`: Kiểm thử trường hợp biên (Tiếng Việt có dấu, tiêu đề dài > 200 ký tự, ký tự đặc biệt, khử trùng tên tệp Windows reserved, deduplication tức thì, dọn dẹp bộ nhớ đệm).
   - `tests/suite-worst.test.js`: Kiểm thử sự cố (Từ khóa rỗng, URL không hợp lệ, giới hạn đồng thời `MAX_DOWNLOADS = 2`, hủy tác vụ đang chạy, xử lý lỗi an toàn).
 - **Tính năng & Khắc phục nợ kỹ thuật (Technical Debt Resolved)**:
-  - Tự động dọn dẹp tệp cũ sau 24 giờ (`cleanupOldFiles` theo cấu hình `DOWNLOAD_TTL_HOURS`) để chống đầy đĩa máy chủ Proxmox ([Issue #1](https://github.com/tamld/tuneflow/issues/1)).
+  - Tự động dọn dẹp tệp cũ sau 24 giờ (`cleanupOldFiles` theo cấu hình `DOWNLOAD_TTL_HOURS`) để chống đầy đĩa máy chủ ([Issue #1](https://github.com/tamld/tuneflow/issues/1)).
   - Tự động phát hiện tệp MP3 đã tồn tại để trả kết quả `completed` ngay lập tức trong < 100ms mà không cần tải lại ([Issue #2](https://github.com/tamld/tuneflow/issues/2)).
   - Chuẩn hóa và bảo vệ tên tệp chống lỗi hệ điều hành Windows/Linux với các từ khóa `CON`, `PRN`, `AUX`, `NUL` và giới hạn tối đa 120 ký tự ([Issue #3](https://github.com/tamld/tuneflow/issues/3)).
   - Nâng cấp `formatDuration` hỗ trợ hiển thị đầy đủ định dạng `HH:MM:SS` cho các tuyển tập nhạc dài trên 1 tiếng.

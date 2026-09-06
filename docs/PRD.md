@@ -16,7 +16,7 @@ Người lớn tuổi trong gia đình có nhu cầu rất lớn về việc ngh
 2. Các trang web "tải nhạc YouTube miễn phí" tràn ngập pop-up lừa đảo, nút bấm giả mạo, virus, hoặc tải về tệp chất lượng kém, rè tiếng.
 3. Các giải pháp Self-Hosted hiện nay thường lưu tệp trên ổ cứng của server nội bộ (Homelab), khiến người già không biết cách lấy tệp về máy tính cá nhân nếu không có người hỗ trợ kỹ thuật.
 
-**TuneFlow** ra đời với sứ mệnh xóa bỏ toàn bộ các rào cản trên: Một cổng thông tin âm nhạc tự lưu trữ trên Proxmox Homelab, giao diện tối giản chuẩn công thái học **SilverMelody (WCAG 2.2 AAA)**, cho phép nghe thử tức thì trong 1 giây, chọn bài ưng ý và **tự động chuyển tệp MP3 chất lượng cao 320kbps vào máy tính cá nhân đang sử dụng**.
+**TuneFlow** ra đời với sứ mệnh xóa bỏ toàn bộ các rào cản trên: Một cổng thông tin âm nhạc tự lưu trữ (Self-Hosted), giao diện tối giản chuẩn công thái học **SilverMelody (WCAG 2.2 AAA)**, cho phép nghe thử tức thì trong 1 giây, chọn bài ưng ý và **tự động chuyển tệp MP3 chất lượng cao 320kbps vào máy tính cá nhân đang sử dụng**.
 
 ---
 
@@ -31,11 +31,11 @@ Người lớn tuổi trong gia đình có nhu cầu rất lớn về việc ngh
   - Bấm nút là nghe được ngay để biết đúng ca khúc mình thích chưa.
   - Bấm tải là nhạc tự chạy vào máy tính mà không hỏi các câu hỏi kỹ thuật khó hiểu.
 
-### Persona 2: Anh Tâm (Quản trị viên Homelab Proxmox)
-- **Đặc điểm**: Kỹ sư phần mềm / DevOps, sở hữu cụm máy chủ Proxmox cá nhân.
+### Persona 2: Người Quản Trị Hệ Thống (Sysadmin / Self-Hoster)
+- **Đặc điểm**: Kỹ sư phần mềm / DevOps, sở hữu máy chủ tự host hoặc VPS riêng.
 - **Kỳ vọng**:
-  - Ứng dụng đóng gói dạng Docker container siêu nhẹ ($\le 120\text{ MB}$), tiêu tốn ít RAM ($\le 150\text{ MB}$ khi chạy, $\le 50\text{ MB}$ khi nghỉ).
-  - Tương thích tốt với Traefik Reverse Proxy và tên miền nội bộ `.lan`.
+  - Ứng dụng đóng gói dạng container siêu nhẹ ($\le 120\text{ MB}$), tiêu tốn ít RAM ($\le 150\text{ MB}$ khi chạy, $\le 50\text{ MB}$ khi nghỉ).
+  - Tương thích tốt với Reverse Proxy và tên miền nội bộ.
   - Khả năng chống crash: Mạng rớt hay khởi động lại container không làm hỏng dữ liệu dở dang.
 
 ---
@@ -49,9 +49,9 @@ Người lớn tuổi trong gia đình có nhu cầu rất lớn về việc ngh
 | **US-03** | Là một người lớn tuổi, tôi muốn khi bấm "Tải Về", bài hát tự động xuất hiện trong máy tính của tôi mà tôi không cần phải tìm kiếm trên server. | P0 (Must Have) | Cơ chế HTTP `Content-Disposition: attachment` tự động stream file về thư mục Downloads của client. |
 | **US-04** | Là một người lớn tuổi, tôi muốn các nút bấm phải thật to, chữ to rõ và màn hình êm dịu không chói mắt để tôi dễ bấm và không mỏi mắt. | P0 (Must Have) | Chuẩn SilverMelody: Chiều cao nút $\ge 50\text{px}$, tương phản WCAG 2.2 AAA, tông màu hổ phách/tối ấm. |
 | **US-05** | Là một người lớn tuổi, tôi muốn tải một lúc nhiều bài hoặc cả danh sách phát (Playlist) để tiết kiệm thời gian. | P1 (Should Have) | Trích xuất playlist YouTube và tự động xếp hàng tải tuần tự. |
-| **US-06** | Là quản trị viên Homelab, tôi muốn hệ thống giới hạn số lượt tải đồng thời để không làm nghẽn CPU và băng thông của cụm Proxmox. | P0 (Must Have) | Hàng đợi tải bất đồng bộ khống chế `MAX_CONCURRENT_DOWNLOADS = 2`. |
-| **US-07** | Là quản trị viên Homelab, tôi muốn các tệp tải dở dang (`.part`) không bị xóa sạch khi mạng rớt để tiết kiệm băng thông và tự phục hồi. | P1 (Should Have) | Cơ chế Resilient Queue & Crash Recovery giữ nguyên tệp tạm. |
-| **US-08** | Là quản trị viên, tôi muốn hình ảnh container Docker phải nhỏ hơn 120MB để dễ dàng sao lưu và khởi động nhanh trên node Proxmox. | P1 (Should Have) | Multi-stage build Alpine Linux với standalone `yt-dlp` và `node:22-alpine`. |
+| **US-06** | Là quản trị viên hệ thống, tôi muốn hệ thống giới hạn số lượt tải đồng thời để không làm nghẽn CPU và băng thông của máy chủ. | P0 (Must Have) | Hàng đợi tải bất đồng bộ khống chế `MAX_CONCURRENT_DOWNLOADS = 2`. |
+| **US-07** | Là quản trị viên hệ thống, tôi muốn các tệp tải dở dang (`.part`) không bị xóa sạch khi mạng rớt để tiết kiệm băng thông và tự phục hồi. | P1 (Should Have) | Cơ chế Resilient Queue & Crash Recovery giữ nguyên tệp tạm. |
+| **US-08** | Là quản trị viên, tôi muốn hình ảnh container phải nhỏ hơn 120MB để dễ dàng sao lưu và khởi động nhanh trên máy chủ. | P1 (Should Have) | Multi-stage build Alpine Linux với standalone `yt-dlp` và `node:22-alpine`. |
 
 ---
 
@@ -67,7 +67,7 @@ Người lớn tuổi trong gia đình có nhu cầu rất lớn về việc ngh
    - Không chứa bất kỳ hiệu ứng chớp tắt gây động kinh hoặc khó chịu thị giác.
 3. **Bảo mật & An toàn (Security & Safety)**:
    - Chống tiêm lệnh shell (Argument Injection): Toàn bộ lời gọi hệ thống tới `yt-dlp` và `ffmpeg` bắt buộc sử dụng mảng tham số an toàn kèm cờ `--` phân cách URL.
-   - Container chạy dưới tài khoản không đặc quyền (`USER node`), không có quyền root trên máy chủ Proxmox.
+   - Container chạy dưới tài khoản không đặc quyền (`USER node`), không có quyền root trên máy chủ vật lý.
 4. **Độ tin cậy (Reliability)**:
    - Cơ chế tự phục hồi sau sự cố mạng với tối đa 3 lần thử lại (Retry Backoff).
    - Tiến độ tải và trạng thái hệ thống được đồng bộ thời gian thực qua Server-Sent Events (SSE).

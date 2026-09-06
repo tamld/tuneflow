@@ -1,6 +1,6 @@
 # ==============================================================================
-# TuneFlow - Lightweight Proxmox Homelab Dockerfile (<120MB)
-# Multi-stage build based on Alpine Linux 3.21 with Node.js 22 LTS
+# TuneFlow - Lightweight Container Dockerfile (<120MB)
+# Lightweight runtime image with Node.js 22 LTS
 # ==============================================================================
 
 FROM node:22-alpine AS runtime
@@ -41,7 +41,7 @@ USER node
 
 EXPOSE 3000
 
-# Docker healthcheck for Proxmox / Uptime Kuma monitoring
+# Container healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted Homelab ready.**
+**An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted and container ready.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node: ≥20](https://img.shields.io/badge/Node-%E2%89%A520-green.svg)](#)
@@ -22,7 +22,7 @@
 - 💾 **Direct Client Browser Delivery**: Automatically downloads and saves the final high-quality MP3 (320kbps) straight to the user's computer `Downloads` directory.
 - 📦 **Batch & Playlist Support**: 1-Click download for full albums, playlists, or multi-selected search results with safe sequential rate-limiting.
 - 🛡️ **Resilient Crash-Survival**: Preserves `.part` download streams for automatic resume upon network failure or server restart.
-- 🐳 **Lightweight Homelab Ready**: Docker Alpine multi-stage container (<120MB image, <40MB idle RAM) pre-configured with Traefik reverse proxy labels.
+- 🐳 **Lightweight & Container Ready**: Docker / Podman Alpine multi-stage container (<120MB image, <40MB idle RAM) pre-configured with reverse proxy support.
 
 ---
 
@@ -42,7 +42,7 @@ npm start
 # App running at: http://localhost:3000
 ```
 
-### 2. Docker & Homelab (Proxmox / Docker Compose)
+### 2. Container Deployment (Docker / Podman Compose)
 ```yaml
 services:
   tuneflow:
@@ -58,7 +58,7 @@ services:
       - ./downloads:/app/downloads
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.tuneflow.rule=Host(`music.homelab.local`)"
+      - "traefik.http.routers.tuneflow.rule=Host(`tuneflow.local`)"
       - "traefik.http.services.tuneflow.loadbalancer.server.port=3000"
 ```
 

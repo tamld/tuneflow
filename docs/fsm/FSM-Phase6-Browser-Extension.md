@@ -1,4 +1,4 @@
-# FSM — Phase 6: Browser Extension Interaction State Machine
+﻿# FSM — Phase 6: Browser Extension Interaction State Machine
 
 ```mermaid
 stateDiagram-v2
@@ -7,7 +7,7 @@ stateDiagram-v2
     ContentScriptMounted --> ButtonInjected: `#tuneflow-quick-btn` rendered
     
     ButtonInjected --> UserClicked: Elderly clicks "🎧 Tải Về Cho Ba Mẹ"
-    UserClicked --> CheckingServerStatus: ping http://nhac.lan:3000/api/health
+    UserClicked --> CheckingServerStatus: ping http://tuneflow.local:3000/api/health
     
     state ServerDispatch {
         CheckingServerStatus --> PostingQueue: server online (200 OK)
@@ -15,7 +15,7 @@ stateDiagram-v2
         PostingQueue --> ErrorToast: network / format error
     }
     
-    CheckingServerStatus --> OfflineToast: cannot reach nhac.lan
+    CheckingServerStatus --> OfflineToast: cannot reach tuneflow.local
     
     QueuedSuccess --> ShowingProgressNotification: Notification shown
     ShowingProgressNotification --> [*]

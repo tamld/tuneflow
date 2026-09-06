@@ -1,10 +1,10 @@
-# ADR-0008: Playlist Batch Parsing, Bounded Concurrency Queue, and SHA-256 Checksum Verification
+﻿# ADR-0008: Playlist Batch Parsing, Bounded Concurrency Queue, and SHA-256 Checksum Verification
 
 ## Trạng thái
 Đã chấp thuận (Accepted)
 
 ## Bối cảnh
-Người lớn tuổi thường có thói quen nghe cả một danh sách tuyển tập (ví dụ: "Tuyển tập 20 bài nhạc thiền ngủ ngon", "Tuyển tập ca khúc tiền chiến"). Nếu hệ thống tải cùng lúc 20–50 bài hát, CPU và RAM máy chủ Proxmox sẽ bị quá tải, gây nghẽn mạng gia đình. Ngoài ra, việc tải nhiều bài dễ gặp lỗi rớt mạng giữa chừng hoặc file bị lỗi ghép âm thanh.
+Người lớn tuổi thường có thói quen nghe cả một danh sách tuyển tập (ví dụ: "Tuyển tập 20 bài nhạc thiền ngủ ngon", "Tuyển tập ca khúc tiền chiến"). Nếu hệ thống tải cùng lúc 20–50 bài hát, CPU và RAM máy chủ sẽ bị quá tải, gây nghẽn mạng gia đình. Ngoài ra, việc tải nhiều bài dễ gặp lỗi rớt mạng giữa chừng hoặc file bị lỗi ghép âm thanh.
 
 ## Quyết định Kiến Trúc
 1. **Bóc tách Playlist hai giai đoạn**:
@@ -20,5 +20,5 @@ Người lớn tuổi thường có thói quen nghe cả một danh sách tuyể
    - Client nhận stream tải về kèm header `ETag: <sha256>` hoặc `x-checksum-sha256: <hash>` để xác nhận tệp hoàn chỉnh 100%.
 
 ## Hệ quả
-- Đảm bảo an toàn tuyệt đối cho CPU của Proxmox.
+- Đảm bảo an toàn tuyệt đối cho CPU của Container Host.
 - Không bao giờ giao tệp nhạc bị hỏng hoặc mất nửa bài cho ba mẹ.

@@ -1,7 +1,7 @@
-# ADR-0004: Cơ Chế Tự Động Chuyển Giao Tệp Về Trình Duyệt Khách (Content-Disposition Attachment)
+﻿# ADR-0004: Cơ Chế Tự Động Chuyển Giao Tệp Về Trình Duyệt Khách (Content-Disposition Attachment)
 
 ## Bối Cảnh (Context)
-Các giải pháp self-hosted Homelab thông thường lưu tệp sau khi tải về ổ đĩa của server (ví dụ: thư mục `/srv/music/` trên Proxmox node).
+Các giải pháp self-hosted Homelab thông thường lưu tệp sau khi tải về ổ đĩa của server (ví dụ: thư mục `/srv/music/` trên server node).
 Rào cản lớn nhất: Ba Mẹ đang ngồi máy tính cá nhân trong phòng khách và không có kỹ năng truy cập SMB/NFS share hay dùng WinSCP/SSH để lấy tệp về máy tính của mình.
 
 ## Quyết Định (Decision)

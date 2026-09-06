@@ -1,4 +1,4 @@
-# Phase 5 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
+﻿# Phase 5 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
 ## 1. Definition of Ready (DoR)
 - [x] Đã có ADR-0010 phân định rõ ranh giới Server Proxy vs Client Compute.
@@ -8,7 +8,7 @@
 ## 2. Definition of Done (DoD)
 - [ ] Endpoint `/api/stream/pipe/:id` truyền tải luồng âm thanh liên tục mà không tạo tệp tạm trên đĩa của máy chủ.
 - [ ] Trình phát Web Audio phát bài hát ngay trong giây đầu tiên nhận dữ liệu.
-- [ ] Thử nghiệm cắt đoạn nhạc bằng WASM hoàn tất trên trình duyệt mà CPU máy chủ Proxmox không tăng.
+- [ ] Thử nghiệm cắt đoạn nhạc bằng WASM hoàn tất trên trình duyệt mà CPU máy chủ không tăng.
 - [ ] Bộ test `tests/streaming.test.js` kiểm tra backpressure và kết thúc kết nối an toàn.
 
 ## 3. Acceptance Criteria (AC)

@@ -1,9 +1,9 @@
-# Phase 2 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
+﻿# Phase 2 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
 ## 1. Definition of Ready (DoR)
 - [x] Dockerfile đa tầng (multi-stage) đã được soạn thảo dựa trên `node:22-alpine`.
 - [x] Tệp cấu hình GitHub Actions `.github/workflows/release.yml` đã được định nghĩa với buildx và QEMU.
-- [x] Đã xác lập ranh giới tài nguyên Proxmox: RAM cap 256MB, CPU 1.0 core.
+- [x] Đã xác lập ranh giới tài nguyên máy chủ: RAM cap 256MB, CPU 1.0 core.
 
 ## 2. Definition of Done (DoD)
 - [ ] Pipeline GitHub Actions chạy xanh 100% khi gắn tag phiên bản mới.

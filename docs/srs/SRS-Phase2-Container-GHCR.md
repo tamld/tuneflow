@@ -1,4 +1,4 @@
-# SRS — Phase 2: Software Requirements Specification (Container & GHCR)
+﻿# SRS — Phase 2: Software Requirements Specification (Container & GHCR)
 
 ## 1. Yêu Cầu Chức Năng (Functional Requirements)
 - **FR-201 (Dockerfile Specs)**:
@@ -13,9 +13,9 @@
   - Platforms: `linux/amd64`, `linux/arm64`.
   - Registry: `ghcr.io/tamld/tuneflow`.
   - Tags output: `latest`, `vX.Y.Z`, `vX.Y`.
-- **FR-203 (Proxmox Integration Specs)**:
+- **FR-203 (Container Host Integration Specs)**:
   - Docker Compose file: `docker-compose.prod.yml`.
-  - Traefik routing rules: Host header `nhac.lan`.
+  - Traefik routing rules: Host header `tuneflow.local`.
   - Volume mount: Phân vùng SSD NVMe cho `/app/downloads`.
 
 ## 2. Yêu Cầu Phi Chức Năng (Non-Functional Requirements)

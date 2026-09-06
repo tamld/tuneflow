@@ -1,4 +1,4 @@
-# OpenSpec DELTA-01: TuneFlow Core Specification
+﻿# OpenSpec DELTA-01: TuneFlow Core Specification
 
 > **Specification Standard**: OpenSpec Spec Kit Framework  
 > **Status**: APPROVED  
@@ -17,7 +17,7 @@ Elderly family members face significant barriers when attempting to save music a
 
 ### 1.2 Solution
 TuneFlow provides:
-- A clean, self-hosted, lightweight Node.js daemon running on Proxmox.
+- A clean, self-hosted, lightweight Node.js daemon running on Container Host.
 - An in-app audio preview engine that allows elderly users to verify the exact artist/song before queuing.
 - An automated client streaming delivery endpoint (`Content-Disposition: attachment`) that transmits completed MP3 files directly into the client computer's native `Downloads` folder.
 - High-contrast, large-touch-target, 100% warm Vietnamese UI.

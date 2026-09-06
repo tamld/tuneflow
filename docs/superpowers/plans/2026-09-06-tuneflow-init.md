@@ -1,8 +1,8 @@
-# TuneFlow Implementation Plan
+﻿# TuneFlow Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build TuneFlow — an elegant, elderly-friendly YouTube to MP3/MP4 music downloader with an in-app audio preview player, client-side direct delivery, and an ultra-lightweight Docker container optimized for Proxmox Homelab.
+**Goal:** Build TuneFlow — an elegant, elderly-friendly YouTube to MP3/MP4 music downloader with an in-app audio preview player, client-side direct delivery, and an ultra-lightweight Docker container optimized for máy chủ gia đình (Self-Hosted).
 
 **Architecture:** Node.js 22 LTS with Fastify/Express backend managing child process execution (`yt-dlp` and `ffmpeg`) via a bounded concurrency state machine. Frontend is an accessible, high-contrast, large-touch-target Vanilla SPA featuring an embedded no-ad YouTube preview player and automated SSE stream piping. Packaged via multi-stage Alpine Docker container (<120MB) integrated with Traefik reverse proxy labels.
 

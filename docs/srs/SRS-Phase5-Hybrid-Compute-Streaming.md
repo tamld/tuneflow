@@ -1,4 +1,4 @@
-# SRS — Phase 5: Software Requirements Specification (Hybrid Compute)
+﻿# SRS — Phase 5: Software Requirements Specification (Hybrid Compute)
 
 ## 1. Yêu Cầu Chức Năng (Functional Requirements)
 - **FR-501 (Direct Stream Proxy Endpoint)**:
@@ -12,5 +12,5 @@
   - Cho phép người dùng chọn đoạn bắt đầu và kết thúc (start/end timestamp) để trích xuất file `.mp3` trực tiếp trên máy client.
 
 ## 2. Yêu Cầu Phi Chức Năng (Non-Functional Requirements)
-- **NFR-501 (Tài nguyên máy chủ)**: Chế độ Zero-Disk Stream tiêu thụ dưới 15MB RAM bổ sung trên máy chủ Proxmox cho mỗi luồng truyền.
+- **NFR-501 (Tài nguyên máy chủ)**: Chế độ Zero-Disk Stream tiêu thụ dưới 15MB RAM bổ sung trên máy chủ cho mỗi luồng truyền.
 - **NFR-502 (Độ trễ bắt đầu phát)**: Thời gian từ lúc bấm nút nghe thử đến khi âm thanh phát ra loa trên máy khách $\le 1.5\text{ giây}$.
