@@ -30,10 +30,10 @@
 - Create: `README.md`
 - Create: `LICENSE`
 
-- [ ] **Step 1: Write package.json and manifest.json configuration**
-- [ ] **Step 2: Initialize gitignore and MIT license**
-- [ ] **Step 3: Create README.md with project architecture and quickstart**
-- [ ] **Step 4: Verify npm installation and commit foundation**
+- [x] **Step 1: Write package.json and manifest.json configuration**
+- [x] **Step 2: Initialize gitignore and MIT license**
+- [x] **Step 3: Create README.md with project architecture and quickstart**
+- [x] **Step 4: Verify npm installation and commit foundation**
 
 ---
 
@@ -46,11 +46,11 @@
 - Create: `src/engine/queue.js`
 - Test: `tests/engine.test.js`
 
-- [ ] **Step 1: Write failing engine unit test**
-- [ ] **Step 2: Implement yt-dlp info extraction and argument-injection prevention (`--`)**
-- [ ] **Step 3: Implement ffmpeg audio extraction to high-quality MP3 (320kbps)**
-- [ ] **Step 4: Implement bounded queue with retry and resumable `.part` file preservation**
-- [ ] **Step 5: Run engine test and verify pass**
+- [x] **Step 1: Write failing engine unit test**
+- [x] **Step 2: Implement yt-dlp info extraction and argument-injection prevention (`--`)**
+- [x] **Step 3: Implement ffmpeg audio extraction to high-quality MP3 (320kbps)**
+- [x] **Step 4: Implement bounded queue with retry and resumable `.part` file preservation**
+- [x] **Step 5: Run engine test and verify pass**
 
 ---
 
@@ -61,12 +61,12 @@
 - Create: `src/routes/api.js`
 - Test: `tests/api.test.js`
 
-- [ ] **Step 1: Write failing API route test for search, preview-metadata, queue, and download-stream**
-- [ ] **Step 2: Implement `/api/search` with sorting (`sp`) and playlist support**
-- [ ] **Step 3: Implement `/api/preview/:id` for fast audio/video stream preview**
-- [ ] **Step 4: Implement `/api/download/:id/file` for direct browser file attachment stream**
-- [ ] **Step 5: Implement SSE stream `/api/queue/stream` for live progress**
-- [ ] **Step 6: Run API test suite and verify pass**
+- [x] **Step 1: Write failing API route test for search, preview-metadata, queue, and download-stream**
+- [x] **Step 2: Implement `/api/search` with sorting (`sp`) and playlist support**
+- [x] **Step 3: Implement `/api/preview/:id` for fast audio/video stream preview**
+- [x] **Step 4: Implement `/api/download/:id/file` for direct browser file attachment stream**
+- [x] **Step 5: Implement SSE stream `/api/queue/stream` for live progress**
+- [x] **Step 6: Run API test suite and verify pass**
 
 ---
 
@@ -80,11 +80,11 @@
 - Create: `public/assets/`
 - Test: `tests/ui-accessibility.test.js`
 
-- [ ] **Step 1: Design HTML5 semantic layout with high-contrast, large-button layout**
-- [ ] **Step 2: Implement no-ad embedded Audio Preview Player**
-- [ ] **Step 3: Implement Search & 1-Click "Tải về máy" button with automatic browser download**
-- [ ] **Step 4: Implement Batch selection & Playlist preview list**
-- [ ] **Step 5: Test UI responsiveness and accessibility with Puppeteer**
+- [x] **Step 1: Design HTML5 semantic layout with high-contrast, large-button layout**
+- [x] **Step 2: Implement no-ad embedded Audio Preview Player**
+- [x] **Step 3: Implement Search & 1-Click "Tải về máy" button with automatic browser download**
+- [x] **Step 4: Implement Batch selection & Playlist preview list**
+- [x] **Step 5: Test UI responsiveness and accessibility with Puppeteer**
 
 ---
 
@@ -97,8 +97,8 @@
 - Create: `.github/workflows/ci.yml`
 - Create: `.github/workflows/release.yml`
 
-- [ ] **Step 1: Write multi-stage lightweight Alpine Dockerfile**
-- [ ] **Step 2: Write docker-compose.yml with Traefik labels and memory cap**
-- [ ] **Step 3: Configure GitHub Actions CI workflow (lint + test)**
-- [ ] **Step 4: Configure GitHub Actions Release workflow (multi-arch build for ghcr.io)**
-- [ ] **Step 5: Validate workflows and commit**
+- [x] **Step 1: Write multi-stage lightweight Alpine Dockerfile**
+- [x] **Step 2: Write docker-compose.yml with Traefik labels and memory cap**
+- [x] **Step 3: Configure GitHub Actions CI workflow (lint + test)**
+- [x] **Step 4: Configure GitHub Actions Release workflow (multi-arch build for ghcr.io)**
+- [x] **Step 5: Validate workflows and commit**
