@@ -331,6 +331,7 @@ class DownloadQueue {
     // Isolated temp download target
     const tempRawPath = path.join(TEMP_DIR, `${item.id}.%(ext)s`);
     const finalMp3Path = path.join(DOWNLOADS_DIR, `${item.sanitizedTitle}.mp3`);
+    let downloadedTempFile = null;
 
     try {
       // Step 1: Download stream using yt-dlp (keeping partial .part files for resume)
@@ -395,7 +396,7 @@ class DownloadQueue {
         throw new Error('Không tìm thấy tệp âm thanh sau khi tải');
       }
 
-      const downloadedTempFile = path.join(TEMP_DIR, tempFiles[0]);
+      downloadedTempFile = path.join(TEMP_DIR, tempFiles[0]);
 
       // Step 2: Convert to pristine 320kbps MP3
       item.status = 'converting';
@@ -410,7 +411,9 @@ class DownloadQueue {
       // Step 3: Success! Mark completed & calculate SHA-256 checksum
       try {
         fs.unlinkSync(downloadedTempFile);
-      } catch (e) {}
+      } catch (err) {
+        console.warn(`[Temp File Cleanup Warning] Could not remove temp file ${downloadedTempFile}:`, err.message);
+      }
 
       const checksum = await calculateChecksum(finalMp3Path);
 
@@ -425,6 +428,15 @@ class DownloadQueue {
 
     } catch (err) {
       if (item.status === 'cancelled') return;
+
+      // Clean up orphaned downloaded temporary file on failure
+      if (downloadedTempFile && fs.existsSync(downloadedTempFile)) {
+        try {
+          fs.unlinkSync(downloadedTempFile);
+        } catch (cleanupErr) {
+          console.warn(`[Failure Cleanup Warning] Failed to delete temp file ${downloadedTempFile}:`, cleanupErr.message);
+        }
+      }
 
       if (item.retries < MAX_RETRIES) {
         item.retries++;

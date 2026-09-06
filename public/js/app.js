@@ -699,95 +699,122 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 10. Connect Server-Sent Events (SSE) for Real-Time Progress & Drawer Updates (Issue #9)
-  const eventSource = new EventSource('/api/queue/stream');
+  // 10. Connect Server-Sent Events (SSE) with Reconnection & Error Guard (FARD Resiliency)
+  let eventSource = null;
+  let sseReconnectAttempts = 0;
 
-  eventSource.onmessage = (event) => {
-    try {
-      const items = JSON.parse(event.data);
-      if (!Array.isArray(items)) return;
+  function initSSE() {
+    if (eventSource) {
+      try { eventSource.close(); } catch (_e) {}
+    }
 
-      // Update Floating Queue Badge & Drawer Header Count
-      const activeCount = items.filter(i => i.status === 'downloading' || i.status === 'converting' || i.status === 'queued').length;
-      if (queueBadgeCountEl) queueBadgeCountEl.textContent = activeCount;
-      if (drawerCountEl) drawerCountEl.textContent = items.length;
+    eventSource = new EventSource('/api/queue/stream');
 
-      // Update Persistent Queue Slide-Over Drawer
-      if (drawerQueueList) {
-        if (items.length === 0) {
-          drawerQueueList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px 10px; font-size: 16px;">Chưa có bài hát nào trong hàng đợi tải.<br>Bố Mẹ bấm [Tải Về Máy] ở bài hát để theo dõi tiến độ tại đây nhé!</div>`;
-        } else {
-          drawerQueueList.innerHTML = '';
-          items.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'drawer-queue-item';
-            let statusText = '⏳ Đang chờ...';
-            let statusColor = 'var(--accent-gold)';
-            if (item.status === 'downloading') {
-              statusText = `📥 Đang tải ${item.progress}% ${item.speed ? '(' + item.speed + ')' : ''}`;
-            } else if (item.status === 'converting') {
-              statusText = '⚙️ Ghép MP3 320kbps';
-            } else if (item.status === 'completed') {
-              statusText = '✅ Đã tải xong';
-              statusColor = 'var(--accent-green)';
-            } else if (item.status === 'failed') {
-              statusText = '❌ Lỗi tải';
-              statusColor = 'var(--accent-red)';
-            }
+    eventSource.onopen = () => {
+      sseReconnectAttempts = 0;
+    };
 
-            div.innerHTML = `
-              <div class="drawer-item-header">
-                <span class="drawer-item-title">${escapeHtml(item.title)}</span>
-                <span class="drawer-item-status" style="color: ${statusColor};">${statusText}</span>
-              </div>
-              ${item.status === 'downloading' || item.status === 'converting' ? `
-                <div style="background: #090a0d; border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px;">
-                  <div style="background: var(--accent-gold); height: 100%; width: ${item.progress || 10}%; transition: width 0.3s ease;"></div>
-                </div>
-              ` : ''}
-            `;
-            drawerQueueList.appendChild(div);
-          });
-        }
-      }
+    eventSource.onmessage = (event) => {
+      try {
+        const items = JSON.parse(event.data);
+        if (!Array.isArray(items)) return;
 
-      // Update Visible Song Cards on Main View
-      items.forEach(item => {
-        document.querySelectorAll('.song-card').forEach(card => {
-          const titleEl = card.querySelector('.song-title');
-          if (titleEl && titleEl.textContent === item.title) {
-            const statusBadge = card.querySelector('.song-status-badge');
-            const downloadBtn = card.querySelector('.btn-download');
+        // Update Floating Queue Badge & Drawer Header Count
+        const activeCount = items.filter(i => i.status === 'downloading' || i.status === 'converting' || i.status === 'queued').length;
+        if (queueBadgeCountEl) queueBadgeCountEl.textContent = activeCount;
+        if (drawerCountEl) drawerCountEl.textContent = items.length;
 
-            if (statusBadge) {
-              statusBadge.style.display = 'block';
+        // Update Persistent Queue Slide-Over Drawer
+        if (drawerQueueList) {
+          if (items.length === 0) {
+            drawerQueueList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px 10px; font-size: 16px;">Chưa có bài hát nào trong hàng đợi tải.<br>Bố Mẹ bấm [Tải Về Máy] ở bài hát để theo dõi tiến độ tại đây nhé!</div>`;
+          } else {
+            drawerQueueList.innerHTML = '';
+            items.forEach(item => {
+              const div = document.createElement('div');
+              div.className = 'drawer-queue-item';
+              let statusText = '⏳ Đang chờ...';
+              let statusColor = 'var(--accent-gold)';
               if (item.status === 'downloading') {
-                statusBadge.textContent = `📥 Đang tải về... (${item.progress}%) ${item.speed ? '• ' + item.speed : ''}`;
-                statusBadge.style.color = 'var(--accent-gold)';
+                statusText = `📥 Đang tải ${item.progress}% ${item.speed ? '(' + item.speed + ')' : ''}`;
               } else if (item.status === 'converting') {
-                statusBadge.textContent = `⚙️ Đang ghép âm thanh MP3 320kbps... (90%)`;
-                statusBadge.style.color = 'var(--accent-gold)';
+                statusText = '⚙️ Ghép MP3 320kbps';
               } else if (item.status === 'completed') {
-                statusBadge.textContent = `✅ Đã xong! File đang lưu vào máy tính Bố Mẹ.`;
-                statusBadge.style.color = 'var(--accent-green)';
-                if (downloadBtn) {
-                  downloadBtn.textContent = '✅ Đã Tải Xong';
-                }
-
-                if (!activeDownloadedIds.has(item.id)) {
-                  activeDownloadedIds.add(item.id);
-                  triggerClientBrowserDownload(item);
-                }
+                statusText = '✅ Đã tải xong';
+                statusColor = 'var(--accent-green)';
               } else if (item.status === 'failed') {
-                statusBadge.textContent = `⚠️ Bài này bị lỗi tải, Bố Mẹ chọn bài khác nhé!`;
-                statusBadge.style.color = 'var(--accent-red)';
+                statusText = '❌ Lỗi tải';
+                statusColor = 'var(--accent-red)';
+              }
+
+              div.innerHTML = `
+                <div class="drawer-item-header">
+                  <span class="drawer-item-title">${escapeHtml(item.title)}</span>
+                  <span class="drawer-item-status" style="color: ${statusColor};">${statusText}</span>
+                </div>
+                ${item.status === 'downloading' || item.status === 'converting' ? `
+                  <div style="background: #090a0d; border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px;">
+                    <div style="background: var(--accent-gold); height: 100%; width: ${item.progress || 10}%; transition: width 0.3s ease;"></div>
+                  </div>
+                ` : ''}
+              `;
+              drawerQueueList.appendChild(div);
+            });
+          }
+        }
+
+        // Update Visible Song Cards on Main View
+        items.forEach(item => {
+          document.querySelectorAll('.song-card').forEach(card => {
+            const titleEl = card.querySelector('.song-title');
+            if (titleEl && titleEl.textContent === item.title) {
+              const statusBadge = card.querySelector('.song-status-badge');
+              const downloadBtn = card.querySelector('.btn-download');
+
+              if (statusBadge) {
+                statusBadge.style.display = 'block';
+                if (item.status === 'downloading') {
+                  statusBadge.textContent = `📥 Đang tải về... (${item.progress}%) ${item.speed ? '• ' + item.speed : ''}`;
+                  statusBadge.style.color = 'var(--accent-gold)';
+                } else if (item.status === 'converting') {
+                  statusBadge.textContent = `⚙️ Đang ghép âm thanh MP3 320kbps... (90%)`;
+                  statusBadge.style.color = 'var(--accent-gold)';
+                } else if (item.status === 'completed') {
+                  statusBadge.textContent = `✅ Đã xong! File đang lưu vào máy tính Bố Mẹ.`;
+                  statusBadge.style.color = 'var(--accent-green)';
+                  if (downloadBtn) {
+                    downloadBtn.textContent = '✅ Đã Tải Xong';
+                  }
+
+                  if (!activeDownloadedIds.has(item.id)) {
+                    activeDownloadedIds.add(item.id);
+                    triggerClientBrowserDownload(item);
+                  }
+                } else if (item.status === 'failed') {
+                  statusBadge.textContent = `⚠️ Bài này bị lỗi tải, Bố Mẹ chọn bài khác nhé!`;
+                  statusBadge.style.color = 'var(--accent-red)';
+                }
               }
             }
-          }
+          });
         });
-      });
-    } catch (e) {}
-  };
+      } catch (err) {
+        console.error('[SSE Event Processing Error]', err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      sseReconnectAttempts++;
+      const delay = Math.min(30000, 1000 * Math.pow(2, sseReconnectAttempts));
+      console.warn(`[SSE Connection Lost] Attempting reconnect #${sseReconnectAttempts} in ${delay}ms...`, err);
+      if (eventSource) {
+        try { eventSource.close(); } catch (_e) {}
+      }
+      setTimeout(initSSE, delay);
+    };
+  }
+
+  initSSE();
 
   // Wire Drawer Clear Handled Items Button
   if (btnDrawerClearDone) {
