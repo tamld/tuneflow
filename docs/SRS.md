@@ -26,7 +26,7 @@ TuneFlow là ứng dụng Web Full-stack bao gồm:
 ### 2.1 Kiến trúc tổng thể (Architecture Overview)
 
 ```text
-[Trình duyệt Ba Mẹ]
+[Trình duyệt Bố Mẹ]
        │
        ▼ (HTTP / SSE)
 [Traefik Reverse Proxy :80/:443]
@@ -99,7 +99,7 @@ TuneFlow là ứng dụng Web Full-stack bao gồm:
 
 ### Chức năng F-06: Tự Động Chuyển Giao Tệp Về Trình Duyệt Khách (Client Delivery)
 - **Mã yêu cầu**: `REQ-FUNC-06`
-- **Mô tả**: Đảm bảo tệp MP3 lưu trên máy chủ Homelab được chuyển tự động vào thư mục `Downloads` của máy tính Ba Mẹ.
+- **Mô tả**: Đảm bảo tệp MP3 lưu trên máy chủ Homelab được chuyển tự động vào thư mục `Downloads` của máy tính Bố Mẹ.
 - **Cơ chế**:
   - Khi nhận sự kiện SSE với trạng thái `completed`, client tự động tạo một thẻ neo ẩn `<a download href="/api/download/:id/file">` và kích hoạt sự kiện click.
   - Server phản hồi với các tiêu đề HTTP chuẩn:

@@ -3,6 +3,40 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 
 ---
 
+## [1.3.0] - 2026-09-06
+
+### Đã Thêm (Added)
+- **Bảo mật & Phòng vệ OWASP (Security Hardening)**:
+  - Khắc phục triệt để DOM-based XSS trong giao diện với cơ chế `textContent` và `escapeHtml` an toàn ([Issue #4](https://github.com/tamld/tuneflow/issues/4)).
+  - Bổ sung xác thực Whitelist Domain và regex ID video chống tấn công SSRF & command injection ([Issue #5](https://github.com/tamld/tuneflow/issues/5)).
+  - Tích hợp Helmet bảo mật HTTP headers, sliding-window rate limiting chống lạm dụng API và path traversal protection cho tệp tải về ([Issue #6](https://github.com/tamld/tuneflow/issues/6)).
+  - Pinned phiên bản nhị phân `yt-dlp` kiểm tra mã băm SHA-256 trong Dockerfile và lá chắn bắt lỗi toàn cục `uncaughtException`/`unhandledRejection` ([Issue #25](https://github.com/tamld/tuneflow/issues/25)).
+  - Hỗ trợ cơ chế nạp cookies (`YTDLP_COOKIES_PATH`), proxy và extractor arguments để vượt qua kiểm tra chống bot YouTube ([Issue #23](https://github.com/tamld/tuneflow/issues/23)).
+- **Tối ưu Hiệu năng Lõi (Core Performance & Resiliency)**:
+  - Giảm tải Event Loop CPU với throttle SSE broadcast 300ms/2% tiến độ ([Issue #7](https://github.com/tamld/tuneflow/issues/7)).
+  - Quản lý hạn mức dung lượng đĩa `MAX_STORAGE_MB` (FIFO pruning) và bộ nhớ đệm tìm kiếm LRU Cache ([Issue #8](https://github.com/tamld/tuneflow/issues/8)).
+  - Loại bỏ nhân đôi Disk I/O bằng cách pipe stream trực tiếp `yt-dlp stdout -> ffmpeg stdin` ([Issue #21](https://github.com/tamld/tuneflow/issues/21)).
+  - Graceful shutdown toàn diện với tín hiệu SIGTERM/SIGINT dọn dẹp tiến trình con mồ côi và tệp `.part` dở dang ([Issue #22](https://github.com/tamld/tuneflow/issues/22)).
+- **Nâng cấp Trải nghiệm SilverMelody UX & Trợ Năng Cho Bố Mẹ (Elderly UX/A11y)**:
+  - Modal hướng dẫn 3 bước trực quan thay thế hộp thoại alert mặc định ([Issue #10](https://github.com/tamld/tuneflow/issues/10)).
+  - Khay trượt hàng đợi tải cố định (Persistent Queue Drawer) theo dõi tiến độ tải mọi lúc ([Issue #9](https://github.com/tamld/tuneflow/issues/9)).
+  - Tải 1-click toàn bộ bài hát yêu thích về máy tính Bố Mẹ ([Issue #11](https://github.com/tamld/tuneflow/issues/11)).
+  - Nút xóa từ khóa tìm kiếm nhanh, nút điều chỉnh âm lượng/lặp lại trên thanh phát nhạc và bộ phóng to cỡ chữ 4 cấp độ (90% - 130%) cho người viễn thị ([Issue #12](https://github.com/tamld/tuneflow/issues/12)).
+  - Chế độ tự động phát liên tục (Autoplay/Radio), tích hợp MediaSession API hiển thị trên màn hình khóa và hẹn giờ ngủ tắt dần âm lượng ([Issue #16](https://github.com/tamld/tuneflow/issues/16)).
+  - Stream proxy trung gian hỗ trợ HTTP 206 Partial Content và Range headers loại bỏ triệt để lỗi 403 Forbidden từ CDN YouTube ([Issue #20](https://github.com/tamld/tuneflow/issues/20)).
+  - Khử trùng race condition tìm kiếm bằng `AbortController` và xử lý an toàn lỗi `AbortError` của Audio playback ([Issue #24](https://github.com/tamld/tuneflow/issues/24)).
+  - Hỗ trợ bấm trực tiếp vào ảnh bìa (thumbnail) hoặc tiêu đề bài hát để phát nhạc ngay lập tức với hiệu ứng viền vàng nổi bật ([Issue #26](https://github.com/tamld/tuneflow/issues/26)).
+  - Hệ thống đa ngôn ngữ Tiếng Việt & Tiếng Anh (i18n) với các bộ sưu tập nhạc bản địa hóa dành riêng cho Bố và Mẹ ([Issue #19](https://github.com/tamld/tuneflow/issues/19)).
+- **Mở rộng Kiến trúc Di động & Android TV (Mobile & TV Ecosystem)**:
+  - Bản ghi Quyết định Kiến trúc [ADR-0012](file:///docs/adr/ADR-0012-android-mobile-and-tv-leanback-architecture.md) và Đặc tả [SPEC-0007](file:///docs/spec/SPEC-0007-android-tv-and-mobile-client.md) cho Android Phone & Android TV D-Pad remote navigation ([Issue #17](https://github.com/tamld/tuneflow/issues/17)).
+- **Tự động hóa CI/CD & Cổng Kiểm Thử Chất Lượng (Quality Gates & CI/CD)**:
+  - Tích hợp chuẩn linter ESLint 10, đo lường độ bao phủ kiểm thử (`npm run test:coverage`) và dynamic port trong Puppeteer E2E test ([Issue #15](https://github.com/tamld/tuneflow/issues/15)).
+  - Bổ sung kiểm thử smoke test tự động build container và kiểm tra healthcheck trong GitHub Actions CI ([Issue #14](https://github.com/tamld/tuneflow/issues/14)).
+  - Thiết lập cổng kiểm thử Pre-Flight Gate bắt buộc trước khi tạo GitHub Release tự động ([Issue #13](https://github.com/tamld/tuneflow/issues/13)).
+  - Workflow GitHub Actions tự động build APK, ký số Keystore, sinh bảng băm SHA-256 và đính kèm vào bản phát hành ([Issue #18](https://github.com/tamld/tuneflow/issues/18)).
+
+---
+
 ## [1.2.0] - 2026-09-06
 
 ### Đã Thêm (Added)
@@ -15,7 +49,7 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Đính kèm mã băm vào siêu dữ liệu hàng đợi và trả về qua HTTP headers: `x-tuneflow-checksum` và `ETag` khi client tải tệp về.
   - Đảm bảo tính toàn vẹn 100%, không bị hỏng tệp hay đứt gãy trong quá trình truyền tải.
 - **Bộ Lọc Persona & Thể Loại Cho Gia Đình (Family Persona & Mood Filtering)**:
-  - 3 Persona lớn: "🌸 Mẹ Hay Nghe" (Nhạc Vàng, Dân Ca, Tân Cổ), "☕ Ba Hay Nghe" (Nhạc Trịnh, Tiền Chiến, Bolero Trữ Tình), "❤️ Bài Đã Thích" (Danh sách bài hát yêu thích cá nhân).
+  - 3 Persona lớn: "🌸 Mẹ Hay Nghe" (Nhạc Vàng, Dân Ca, Tân Cổ), "☕ Bố Hay Nghe" (Nhạc Trịnh, Tiền Chiến, Bolero Trữ Tình), "❤️ Bài Đã Thích" (Danh sách bài hát yêu thích cá nhân).
   - Chip lọc nhanh "🎤 Nhạc có lời" / "🎻 Nhạc không lời (Hòa tấu/Guitar/Saxophone)" thích hợp cho người cao tuổi thư giãn, uống trà hoặc tập dưỡng sinh.
   - API `GET /api/curation/presets`: Cung cấp cấu hình các danh mục nhạc mặc định chuẩn hóa.
 - **Quản lý Bài hát Yêu thích Cục bộ (Zero-Login LocalStorage Favorites)**:
@@ -35,7 +69,7 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 
 ### Đã Thêm (Added)
 - **Bộ tài liệu kỹ thuật & quản trị toàn diện**:
-  - `docs/PRD.md`: Tài liệu Yêu cầu Sản phẩm cho Ba Mẹ & Quản trị viên Homelab.
+  - `docs/PRD.md`: Tài liệu Yêu cầu Sản phẩm cho Bố Mẹ & Quản trị viên Homelab.
   - `docs/SRS.md`: Đặc tả Yêu cầu Phần mềm chuẩn IEEE 830 / ISO 29148.
   - `docs/FSM.md`: Đặc tả Máy Trạng Thái Hữu Hạn cho Hàng đợi, Trình phát nhạc và Luồng chuyển giao tệp (kèm sơ đồ Mermaid).
   - `docs/DoD.md`: Tiêu chuẩn Hoàn thành (Definition of Done) nghiêm ngặt.

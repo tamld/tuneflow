@@ -11,8 +11,12 @@ services:
       - MAX_DOWNLOADS=2
       - MAX_CONVERSIONS=1
       - MAX_RETRIES=3
+      # Optional YouTube bot challenge bypasses (Issue #23)
+      # - YTDLP_PROXY=http://proxy.example.com:8080
+      # - YTDLP_EXTRACTOR_ARGS=youtube:player_client=android,web
     volumes:
       - ./downloads:/app/downloads
+      # - ./cookies.txt:/app/cookies.txt:ro
     # Resource limits for container host
     deploy:
       resources:

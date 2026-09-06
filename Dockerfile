@@ -12,8 +12,9 @@ RUN apk add --no-cache \
     curl \
     ca-certificates
 
-# Download standalone yt-dlp binary
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+# Pin standalone yt-dlp binary release
+ARG YTDLP_VERSION=2025.02.19
+RUN curl -fsSL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" -o /usr/local/bin/yt-dlp && \
     chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app

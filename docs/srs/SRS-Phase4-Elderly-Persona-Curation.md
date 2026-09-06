@@ -25,7 +25,7 @@
     - `filter=vocal` ➔ `query + " ca sĩ hát có lời"`
 - **FR-403 (Client Local Favorites Sync)**:
   - Client lưu danh sách bài hát yêu thích trong `localStorage.getItem('tuneflow_favorites')`.
-  - Hỗ trợ xuất / nhập nhanh danh sách yêu thích qua mã QR để chuyển sang điện thoại khác của ba mẹ.
+  - Hỗ trợ xuất / nhập nhanh danh sách yêu thích qua mã QR để chuyển sang điện thoại khác của bố mẹ.
 
 ## 2. Yêu Cầu Phi Chức Năng (Non-Functional Requirements)
 - **NFR-401 (Tương tác)**: Chuyển đổi danh mục Persona hiển thị kết quả ngay lập tức trong vòng $\le 500\text{ms}$ thông qua caching kết quả tìm kiếm.

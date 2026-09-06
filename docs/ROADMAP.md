@@ -1,6 +1,6 @@
 # TuneFlow Master Engineering Roadmap (v1.0.0 → v2.0.0)
 
-> **Mục tiêu tối thượng**: Xây dựng giải pháp nghe thử và tải nhạc YouTube chất lượng cao (320kbps MP3 / MP4), tối ưu riêng cho **người lớn tuổi (ba mẹ)** với giao diện một chạm siêu dễ, đóng gói container nhẹ nhàng, chạy êm ái 24/7 trên **máy chủ gia đình (Self-Hosted / Podman / Docker)**; đồng thời vạch rõ lộ trình mở rộng **Browser Extension**, kiến trúc **Client-Side Compute**, và chiến lược **Thương mại hóa / Pháp lý bản quyền**.
+> **Mục tiêu tối thượng**: Xây dựng giải pháp nghe thử và tải nhạc YouTube chất lượng cao (320kbps MP3 / MP4), tối ưu riêng cho **người lớn tuổi (bố mẹ)** với giao diện một chạm siêu dễ, đóng gói container nhẹ nhàng, chạy êm ái 24/7 trên **máy chủ gia đình (Self-Hosted / Podman / Docker)**; đồng thời vạch rõ lộ trình mở rộng **Browser Extension**, kiến trúc **Client-Side Compute**, và chiến lược **Thương mại hóa / Pháp lý bản quyền**.
 
 ---
 
@@ -75,9 +75,9 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 - **Vấn đề giải quyết**:
   - **Danh mục được định hình sẵn**:
     - 🌸 **Mẹ hay nghe**: Nhạc thiền êm dịu, nhạc ngủ ngon, nhạc quê hương, niệm Phật, nhạc không lời thư giãn spa.
-    - ☕ **Ba hay nghe**: Nhạc vàng trữ tình, bolero, tiền chiến, quan họ, thời sự âm nhạc.
+    - ☕ **Bố hay nghe**: Nhạc vàng trữ tình, bolero, tiền chiến, quan họ, thời sự âm nhạc.
     - 🎵 **Bộ lọc nhanh**: Nút gạt to rõ chuyển đổi giữa "Nhạc có lời" và "Nhạc không lời".
-  - **Neo dữ liệu cá nhân hóa (Zero-Login Anchor)**: Ba mẹ bấm "Thích bài này" hoặc tạo mục "Yêu thích", dữ liệu được lưu trực tiếp vào LocalStorage / Persistent Session của trình duyệt, không bắt người lớn tuổi phải nhớ mật khẩu hay đăng nhập tài khoản phức tạp.
+  - **Neo dữ liệu cá nhân hóa (Zero-Login Anchor)**: Bố mẹ bấm "Thích bài này" hoặc tạo mục "Yêu thích", dữ liệu được lưu trực tiếp vào LocalStorage / Persistent Session của trình duyệt, không bắt người lớn tuổi phải nhớ mật khẩu hay đăng nhập tài khoản phức tạp.
 - **Bộ hồ sơ tài liệu**:
   - **PRD**: `docs/prd/PRD-Phase4-Elderly-Persona-Curation.md`
   - **SRS**: `docs/srs/SRS-Phase4-Elderly-Persona-Curation.md`
@@ -105,7 +105,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 ### CHẶNG 6: Browser Extension MV3, Lộ Trình Thương Mại Hóa & Pháp Lý Bản Quyền (v2.0.0)
 - **Vấn đề giải quyết**:
   - **Chrome / Edge Extension (Manifest V3)**:
-    - Khi ba mẹ hoặc người dùng đang xem bất kỳ video nào trên YouTube, extension sẽ tự động hiển thị nút màu xanh to rõ **"Tải MP3 TuneFlow"** ngay dưới tiêu đề video.
+    - Khi bố mẹ hoặc người dùng đang xem bất kỳ video nào trên YouTube, extension sẽ tự động hiển thị nút màu xanh to rõ **"Tải MP3 TuneFlow"** ngay dưới tiêu đề video.
     - Nhấp 1 chạm: Extension gửi tín hiệu về TuneFlow server cục bộ (`http://localhost:3000` hoặc domain nội bộ) để xử lý tải và tự động lưu file về máy tính.
   - **Chiến lược Thương mại hóa & Rủi ro Bản quyền**:
     - *Rủi ro pháp lý*: Theo điều khoản dịch vụ YouTube (ToS) và luật sở hữu trí tuệ, việc bán quyền tải bài hát thuộc bản quyền của ca sĩ/nhạc sĩ là vi phạm nghiêm trọng và dễ bị khiếu nại DMCA.

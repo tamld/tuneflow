@@ -8,7 +8,7 @@
 ## 2. Definition of Done (DoD)
 - [ ] Thư mục `extension/` chứa đầy đủ `manifest.json`, `content.js`, `background.js`, `popup.html`.
 - [ ] Cài đặt thử nghiệm chế độ Developer Mode trên Chrome/Edge hoạt động không lỗi cú pháp.
-- [ ] Mở video YouTube bất kỳ thấy nút "🎧 Tải Về Cho Ba Mẹ" xuất hiện đúng vị trí và nhấp được.
+- [ ] Mở video YouTube bất kỳ thấy nút "🎧 Tải Về Cho Bố Mẹ" xuất hiện đúng vị trí và nhấp được.
 - [ ] Click nút gửi đúng request `POST /api/queue/add` tới `http://tuneflow.local:3000` và hiển thị thông báo thành công.
 - [ ] Bộ tài liệu tuân thủ pháp lý (`docs/LEGAL_COMPLIANCE.md`) được hoàn thiện.
 

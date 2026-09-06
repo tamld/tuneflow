@@ -7,7 +7,7 @@ Một yêu cầu (User Story / Issue / Feature Ticket) chỉ được coi là **
 
 ## 1. Tính Rõ Ràng Về Nghiệp Vụ (Business Clarity)
 - [ ] User Story được diễn đạt theo cấu trúc chuẩn: *"Là một [đối tượng], tôi muốn [hành động], để [giá trị nhận được]"*.
-- [ ] Xác định rõ đối tượng hưởng lợi (Ba Mẹ hay Quản trị viên Homelab).
+- [ ] Xác định rõ đối tượng hưởng lợi (Bố Mẹ hay Quản trị viên Homelab).
 - [ ] Có phạm vi rõ ràng (In-Scope) và liệt kê rõ những gì không làm (Out-of-Scope).
 
 ## 2. Tiêu Chí Nghiệm Thu Minh Bạch (Acceptance Criteria - AC)

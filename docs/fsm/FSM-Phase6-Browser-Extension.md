@@ -6,7 +6,7 @@ stateDiagram-v2
     YouTubePageLoaded --> ContentScriptMounted: DOM listener ready
     ContentScriptMounted --> ButtonInjected: `#tuneflow-quick-btn` rendered
     
-    ButtonInjected --> UserClicked: Elderly clicks "🎧 Tải Về Cho Ba Mẹ"
+    ButtonInjected --> UserClicked: Elderly clicks "🎧 Tải Về Cho Bố Mẹ"
     UserClicked --> CheckingServerStatus: ping http://tuneflow.local:3000/api/health
     
     state ServerDispatch {

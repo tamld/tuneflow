@@ -1,9 +1,26 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { Readable } = require('stream');
 const router = express.Router();
 const { searchYouTube, getVideoMetadata, getPreviewStreamUrl, parsePlaylist } = require('../engine/ytdlp');
 const queue = require('../engine/queue');
+const { DOWNLOADS_DIR } = require('../config');
+const { isValidYouTubeUrl, isValidVideoId } = require('../utils/validator');
+const { createRateLimiter } = require('../utils/rateLimiter');
+
+// Rate Limiters to protect homelab resources against DoS / Container OOMKill
+const searchRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 40,
+  message: 'Dạ Bố Mẹ tìm kiếm quá nhanh, vui lòng đợi vài giây nhé!'
+});
+
+const queueRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: 'Dạ đang có nhiều bài hát được xếp hàng tải, Bố Mẹ đợi một chút nhé!'
+});
 
 // Health check endpoint for container monitoring
 router.get('/health', (req, res) => {
@@ -15,8 +32,8 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Search YouTube with sorting and playlist support
-router.get('/search', async (req, res) => {
+// Search YouTube with sorting, playlist support, and rate limiting
+router.get('/search', searchRateLimiter, async (req, res) => {
   const { q, sp, type, limit } = req.query;
   if (!q || !q.trim()) {
     return res.status(400).json({ error: 'Vui lòng nhập từ khóa tìm kiếm' });
@@ -34,16 +51,54 @@ router.get('/search', async (req, res) => {
   }
 });
 
-// Fast In-App Preview stream URL for HTML5 audio element
+// Fast In-App Preview stream proxy for HTML5 audio element (Issue #20: Prevents YouTube CDN 403)
 router.get('/preview/:id', async (req, res) => {
   const { id } = req.params;
+  if (!isValidVideoId(id)) {
+    return res.status(400).json({ error: 'Mã video YouTube không hợp lệ' });
+  }
+
   const videoUrl = `https://www.youtube.com/watch?v=${id}`;
 
   try {
     const streamUrl = await getPreviewStreamUrl(videoUrl);
-    // Redirect directly to the YouTube raw audio stream URL so the browser plays it natively
-    res.redirect(streamUrl);
+
+    // Forward Range header if requested by HTML5 audio element for seeking
+    const headers = {};
+    if (req.headers.range) {
+      headers['Range'] = req.headers.range;
+    }
+
+    const abortController = new AbortController();
+    req.on('close', () => {
+      try {
+        abortController.abort();
+      } catch (_e) {}
+    });
+
+    const upstreamRes = await fetch(streamUrl, {
+      headers,
+      signal: abortController.signal
+    });
+
+    if (!upstreamRes.ok && upstreamRes.status !== 206) {
+      return res.status(upstreamRes.status).json({ error: 'Không thể phát luồng âm thanh từ YouTube' });
+    }
+
+    res.status(upstreamRes.status);
+    res.setHeader('Content-Type', upstreamRes.headers.get('content-type') || 'audio/webm');
+    res.setHeader('Accept-Ranges', 'bytes');
+    if (upstreamRes.headers.get('content-range')) {
+      res.setHeader('Content-Range', upstreamRes.headers.get('content-range'));
+    }
+    if (upstreamRes.headers.get('content-length')) {
+      res.setHeader('Content-Length', upstreamRes.headers.get('content-length'));
+    }
+
+    // Pipe upstream Web Stream to Express response
+    Readable.fromWeb(upstreamRes.body).pipe(res);
   } catch (err) {
+    if (err.name === 'AbortError') return;
     res.status(500).json({ error: 'Không thể phát nghe thử bài hát này.' });
   }
 });
@@ -51,8 +106,8 @@ router.get('/preview/:id', async (req, res) => {
 // Inspect video / playlist metadata
 router.get('/info', async (req, res) => {
   const { url } = req.query;
-  if (!url) {
-    return res.status(400).json({ error: 'Vui lòng cung cấp đường dẫn video' });
+  if (!url || !isValidYouTubeUrl(url)) {
+    return res.status(400).json({ error: 'Vui lòng cung cấp đường dẫn video YouTube hợp lệ' });
   }
 
   try {
@@ -63,11 +118,14 @@ router.get('/info', async (req, res) => {
   }
 });
 
-// Add item to queue
-router.post('/queue/add', (req, res) => {
+// Add item to queue with rate limiting & YouTube URL validation
+router.post('/queue/add', queueRateLimiter, (req, res) => {
   const { url, title, uploader, thumbnail, duration, format } = req.body;
   if (!url) {
     return res.status(400).json({ error: 'Đường dẫn bài hát không hợp lệ' });
+  }
+  if (!isValidYouTubeUrl(url)) {
+    return res.status(400).json({ error: 'Đường dẫn bài hát không hợp lệ hoặc không thuộc YouTube' });
   }
 
   const item = queue.add({
@@ -82,14 +140,19 @@ router.post('/queue/add', (req, res) => {
   res.json({ success: true, item });
 });
 
-// Batch add tracks to queue
-router.post('/queue/batch-add', (req, res) => {
+// Batch add tracks to queue with rate limiting & YouTube URL validation
+router.post('/queue/batch-add', queueRateLimiter, (req, res) => {
   const { items, format } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ success: false, error: 'Danh sách bài hát không hợp lệ hoặc đang trống' });
   }
 
-  const queuedItems = queue.addBatch(items, format || 'mp3');
+  const validItems = items.filter(item => item && isValidYouTubeUrl(item.url));
+  if (validItems.length === 0) {
+    return res.status(400).json({ success: false, error: 'Không tìm thấy bài hát YouTube hợp lệ nào trong danh sách' });
+  }
+
+  const queuedItems = queue.addBatch(validItems, format || 'mp3');
   res.json({
     success: true,
     queuedCount: queuedItems.length,
@@ -97,11 +160,14 @@ router.post('/queue/batch-add', (req, res) => {
   });
 });
 
-// Parse YouTube Playlist
-router.post('/playlist/parse', async (req, res) => {
+// Parse YouTube Playlist with rate limiting and URL validation
+router.post('/playlist/parse', searchRateLimiter, async (req, res) => {
   const { url, limit } = req.body;
   if (!url || typeof url !== 'string' || !url.trim()) {
     return res.status(400).json({ success: false, error: 'Vui lòng cung cấp đường dẫn danh sách phát (Playlist URL)' });
+  }
+  if (!isValidYouTubeUrl(url.trim())) {
+    return res.status(400).json({ success: false, error: 'Đường dẫn danh sách phát không hợp lệ hoặc không thuộc YouTube' });
   }
 
   try {
@@ -118,10 +184,54 @@ router.post('/playlist/parse', async (req, res) => {
   }
 });
 
-// Curated Presets for Elderly Personas (Ba & Me)
+// Curated Presets for Elderly Personas (Mom & Dad / Bố & Mẹ - Issue #19)
 router.get('/curation/presets', (req, res) => {
+  const lang = (req.query.lang || '').toLowerCase() === 'en' ? 'en' : 'vi';
+
+  if (lang === 'en') {
+    return res.json({
+      success: true,
+      lang: 'en',
+      presets: {
+        mom: {
+          title: "Mom's Favorites",
+          icon: '🌸',
+          description: 'Peaceful meditation, gentle hymns, Celtic melodies, and classical lullabies',
+          queries: [
+            'peaceful meditation sleep music',
+            'celtic melodies gentle hymns',
+            'gentle acoustic country melodies',
+            'calming nature sounds deep sleep'
+          ]
+        },
+        dad: {
+          title: "Dad's Favorites",
+          icon: '☕',
+          description: 'Golden oldies 50s-70s, classic rock ballads, vintage country, smooth jazz',
+          queries: [
+            'golden oldies 50s 60s 70s classics',
+            'frank sinatra crooners classics',
+            'classic rock ballads vintage',
+            'vintage acoustic blues country'
+          ]
+        },
+        relax: {
+          title: 'Instrumental & Relax',
+          icon: '🌿',
+          description: 'Gentle piano relaxation, soft acoustic guitar, relaxing nature rain',
+          queries: [
+            'peaceful piano relaxation music',
+            'gentle acoustic guitar instrumental',
+            'relaxing nature rain and forest melodies'
+          ]
+        }
+      }
+    });
+  }
+
   res.json({
     success: true,
+    lang: 'vi',
     presets: {
       mom: {
         title: 'Mẹ Hay Nghe',
@@ -135,7 +245,7 @@ router.get('/curation/presets', (req, res) => {
         ]
       },
       dad: {
-        title: 'Ba Hay Nghe',
+        title: 'Bố Hay Nghe',
         icon: '☕',
         description: 'Nhạc vàng bolero chọn lọc, nhạc tiền chiến bất hủ, cải lương cổ nhạc',
         queries: [
@@ -181,11 +291,17 @@ router.post('/queue/clear', (req, res) => {
   res.json({ success: true });
 });
 
-// Direct Client Browser Download (Streams file straight to Ba Me's machine)
+// Direct Client Browser Download (Streams file straight to Bố Mẹ's machine)
 router.get('/download/:id/file', (req, res) => {
   const item = queue.get(req.params.id);
   if (!item || item.status !== 'completed' || !item.completedFilePath) {
     return res.status(404).send('Tệp âm thanh chưa hoàn thành hoặc không tìm thấy.');
+  }
+
+  // Security: Prevent path traversal attacks
+  const safePath = path.resolve(item.completedFilePath);
+  if (!safePath.startsWith(path.resolve(DOWNLOADS_DIR))) {
+    return res.status(403).send('Truy cập tệp không hợp lệ');
   }
 
   if (!fs.existsSync(item.completedFilePath)) {
@@ -203,6 +319,42 @@ router.get('/download/:id/file', (req, res) => {
       console.error(`Lỗi khi stream tệp về client:`, err);
     }
   });
+});
+
+// Phase 5: Zero-Disk Direct Streaming Pipeline (Streams audio chunks directly from YouTube CDN to client)
+router.get('/stream/pipe/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!isValidVideoId(id)) {
+    return res.status(400).json({ error: 'Mã video YouTube không hợp lệ' });
+  }
+
+  const videoUrl = `https://www.youtube.com/watch?v=${id}`;
+  try {
+    const streamUrl = await getPreviewStreamUrl(videoUrl);
+    const audioRes = await fetch(streamUrl);
+    if (!audioRes.ok) {
+      return res.status(audioRes.status).send('Không thể kết nối đến luồng âm thanh YouTube');
+    }
+
+    res.setHeader('Content-Type', audioRes.headers.get('content-type') || 'audio/webm');
+    if (audioRes.headers.get('content-length')) {
+      res.setHeader('Content-Length', audioRes.headers.get('content-length'));
+    }
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'no-cache');
+
+    const { Readable } = require('stream');
+    const nodeStream = Readable.fromWeb(audioRes.body);
+    nodeStream.pipe(res);
+
+    req.on('close', () => {
+      try {
+        nodeStream.destroy();
+      } catch (e) {}
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi khi truyền phát luồng âm thanh: ' + err.message });
+  }
 });
 
 module.exports = router;

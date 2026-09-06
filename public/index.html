@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TuneFlow - Nghe Thử & Tải Nhạc Cho Ba Mẹ</title>
+  <title>TuneFlow - Nghe Thử & Tải Nhạc Cho Bố Mẹ</title>
   <link rel="stylesheet" href="/css/silver-melody.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%3E%3Ctext y=%2226%22 font-size=%2226%22>🎶</text></svg>">
 </head>
@@ -16,12 +16,29 @@
         <span class="brand-icon">🎶</span>
         <div>
           <h1 class="brand-title">TuneFlow</h1>
-          <p class="brand-tagline">Nghe thử & Tải nhạc chất lượng cao dành cho Ba Mẹ</p>
+          <p class="brand-tagline">Nghe thử & Tải nhạc chất lượng cao dành cho Bố Mẹ</p>
         </div>
       </div>
-      <button class="help-btn" onclick="alert('Dạ Ba Mẹ chỉ cần:\n1. Chọn hoặc gõ tên bài hát\n2. Bấm nút [Nghe Thử] để nghe trước\n3. Thấy ưng ý thì bấm [Tải Về Máy] là xong ạ!')">
-        ❓ Hướng Dẫn Dễ Hiểu
-      </button>
+      <div class="header-actions">
+        <!-- Language Switcher (Issue #19) -->
+        <button id="btn-lang-toggle" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Chuyển đổi ngôn ngữ / Switch Language">
+          🇻🇳 Tiếng Việt
+        </button>
+        <!-- Font Size Scaler (Issue #12) -->
+        <div class="font-scale-group" title="Chỉnh cỡ chữ hiển thị cho Bố Mẹ dễ đọc">
+          <button id="btn-font-dec" class="font-scale-btn" title="Chữ nhỏ hơn">A-</button>
+          <button id="btn-font-reset" class="font-scale-btn" title="Cỡ chữ chuẩn">A</button>
+          <button id="btn-font-inc" class="font-scale-btn" title="Chữ to rõ hơn">A+</button>
+        </div>
+        <!-- Persistent Queue Trigger (Issue #9) -->
+        <button id="btn-floating-queue" class="floating-queue-btn" title="Mở danh sách các bài hát đang tải">
+          📥 Hàng Đợi (<span id="queue-badge-count">0</span>)
+        </button>
+        <!-- Accessible Guidance Modal Trigger (Issue #10) -->
+        <button id="btn-help" class="help-btn" title="Bấm để xem hướng dẫn sử dụng">
+          ❓ Hướng Dẫn Dễ Hiểu
+        </button>
+      </div>
     </header>
 
     <!-- Hero Persona Bar (Mom / Dad / Favorites) -->
@@ -32,36 +49,38 @@
       </button>
       <button id="btn-persona-dad" class="persona-btn" data-persona="dad">
         <span class="persona-icon">☕</span>
-        <span class="persona-text">Ba Hay Nghe</span>
+        <span class="persona-text">Bố Hay Nghe</span>
       </button>
       <button id="btn-persona-favorites" class="persona-btn" data-persona="favorites">
         <span class="persona-icon">❤️</span>
-        <span class="persona-text">Bài Đã Thích (<span id="fav-count">0</span>)</span>
+        <span class="persona-text">Bài Bố Mẹ Thích (<span id="fav-count">0</span>)</span>
       </button>
     </div>
 
     <!-- Category Recommendations for Parents -->
     <section class="category-section">
       <div class="category-header-row">
-        <h2 class="category-label">📻 Thể loại quen thuộc:</h2>
+        <h2 class="category-label" id="category-section-label">🌸 Thể loại Mẹ hay nghe:</h2>
         <!-- Vocal / Instrumental Filter -->
         <div class="filter-group">
           <button class="filter-chip active" data-filter="all">Tất Cả</button>
-          <button class="filter-chip" data-filter="vocal">Có Lời</button>
-          <button class="filter-chip" data-filter="instrumental">Không Lời Hòa Tấu</button>
+          <button class="filter-chip" data-filter="vocal">🎤 Có Lời</button>
+          <button class="filter-chip" data-filter="instrumental">🎻 Không Lời Hòa Tấu</button>
         </div>
       </div>
       <div id="category-pills" class="category-pills">
-        <button class="pill-btn" data-query="Nhạc thiền tịnh tâm ngủ ngon">🧘 Nhạc Thiền Thư Giãn</button>
+        <button class="pill-btn active" data-query="Dân ca quê hương chọn lọc ngọt ngào">🌸 Dân Ca Quê Hương</button>
         <button class="pill-btn" data-query="Niệm phật êm dịu thanh tịnh">📿 Niệm Phật Tịnh Tâm</button>
-        <button class="pill-btn" data-query="Nhạc spa thư giãn ngủ sâu">🌿 Nhạc Spa Thư Giãn</button>
-        <button class="pill-btn" data-query="Dân ca quê hương chọn lọc ngọt ngào">🌾 Dân Ca Quê Hương</button>
+        <button class="pill-btn" data-query="Nhạc thiền tịnh tâm ngủ ngon dễ ngủ">🧘 Nhạc Thiền Dễ Ngủ</button>
+        <button class="pill-btn" data-query="Ca nhạc trữ tình quê hương ngọt ngào">🪷 Trữ Tình Quê Mẹ</button>
+        <button class="pill-btn" data-query="Tân cổ giao duyên tuyển chọn hay nhất">🪕 Tân Cổ Giao Duyên</button>
+        <button class="pill-btn" data-query="Nhạc spa thư giãn ngủ sâu giảm căng thẳng">🌿 Nhạc Spa Thư Giãn</button>
       </div>
     </section>
 
     <!-- Search Section -->
     <section class="search-card">
-      <label for="search-input" class="search-label">🔍 Ba Mẹ muốn tìm bài hát hoặc dán link danh sách phát (Playlist) tại đây:</label>
+      <label for="search-input" class="search-label">🔍 Bố Mẹ muốn tìm bài hát hoặc dán link danh sách phát (Playlist) tại đây:</label>
       <div class="search-input-group">
         <input 
           type="text" 
@@ -70,6 +89,7 @@
           placeholder="Gõ tên bài hát, ca sĩ, hoặc dán link Playlist YouTube..."
           autocomplete="off"
         >
+        <button id="btn-clear-search" class="btn-clear-search" title="Xóa tìm kiếm" aria-label="Xóa nội dung tìm kiếm" style="display: none;">✕</button>
         <button id="search-btn" class="search-btn">
           🔎 Tìm Kiếm
         </button>
@@ -81,7 +101,7 @@
       <div class="playlist-panel-header">
         <div>
           <h3 id="playlist-panel-title" class="playlist-panel-title">📻 Danh Sách Phát Tuyển Tập</h3>
-          <p id="playlist-panel-meta" class="playlist-panel-meta">Tích chọn các bài ưng ý để tải về máy nhé!</p>
+          <p id="playlist-panel-meta" class="playlist-panel-meta">Tích chọn các bài Bố Mẹ ưng ý để tải về máy nhé!</p>
         </div>
         <div class="playlist-panel-actions">
           <button id="btn-select-all" class="btn-panel-secondary">Đánh Dấu Tất Cả</button>
@@ -110,8 +130,75 @@
       </div>
       <div class="player-progress-container">
         <span id="player-time-current" class="player-time">00:00</span>
-        <input type="range" id="player-progress" class="player-slider" min="0" max="100" value="0">
+        <input type="range" id="player-progress" class="player-slider" min="0" max="100" value="0" aria-label="Tiến độ bài hát">
         <span id="player-time-total" class="player-time">00:00</span>
+      </div>
+      <div class="player-controls">
+        <button id="btn-player-repeat" class="player-ctrl-btn" title="Lặp lại bài hát: Đang tắt" aria-label="Lặp lại bài hát">
+          🔁
+        </button>
+        <button id="btn-player-volume" class="player-ctrl-btn" title="Âm lượng: 100%" aria-label="Chỉnh âm lượng">
+          🔊
+        </button>
+        <button id="btn-player-sleep" class="player-ctrl-btn" title="Hẹn giờ tắt: Đang tắt" aria-label="Hẹn giờ tắt nhạc">
+          ⏱️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accessible Guidance Modal (Issue #10) -->
+  <div id="help-modal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="help-modal-title">❓ Hướng Dẫn Sử Dụng Cho Bố Mẹ</h2>
+        <button id="btn-help-close" class="modal-close-btn" aria-label="Đóng bảng hướng dẫn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="step-card">
+          <span class="step-icon">🌸</span>
+          <div class="step-text">
+            <h3>Bước 1: Chọn Thể Loại Nhạc Quen Thuộc</h3>
+            <p>Bố Mẹ chỉ cần bấm vào các nút thể loại có sẵn ở trên (Dân ca quê hương, Nhạc vàng Bolero, Nhạc thiền...), hoặc gõ tên bài hát vào ô tìm kiếm.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <span class="step-icon">▶️</span>
+          <div class="step-text">
+            <h3>Bước 2: Bấm Nghe Thử Trước</h3>
+            <p>Bấm nút <strong>[▶️ Nghe Thử Trước]</strong> để nghe bài hát phát ngay ở thanh phát nhạc bên dưới. Thấy ưng ý giai điệu thì mới tải về máy nhé!</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <span class="step-icon">⬇️</span>
+          <div class="step-text">
+            <h3>Bước 3: Tải Về Máy Tính</h3>
+            <p>Bấm nút <strong>[⬇️ Tải Về Máy]</strong>. Bản nhạc chất lượng cao MP3 320kbps sẽ tự động được tải và lưu an toàn vào máy tính của Bố Mẹ.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-help-ack" class="btn-primary-large">Dạ Bố Mẹ Đã Hiểu Rồi!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent Download Queue Drawer (Issue #9) -->
+  <div id="queue-drawer-overlay" class="drawer-overlay" style="display: none;" role="dialog" aria-modal="true">
+    <div class="queue-drawer">
+      <div class="drawer-header">
+        <h3>📥 Hàng Đợi Tải Nhạc (<span id="drawer-count">0</span>)</h3>
+        <button id="btn-close-drawer" class="modal-close-btn" aria-label="Đóng ngăn tải nhạc">✕</button>
+      </div>
+      <div id="drawer-queue-list" class="drawer-queue-list">
+        <div style="text-align: center; color: var(--text-muted); padding: 40px 10px; font-size: 16px;">
+          Chưa có bài hát nào trong hàng đợi tải.<br>Bố Mẹ bấm [Tải Về Máy] ở bài hát để theo dõi tiến độ tại đây nhé!
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <button id="btn-drawer-clear-done" class="btn-panel-secondary" style="font-size: 14px; padding: 8px 16px;">
+          🧹 Dọn Dẹp Các Bài Đã Tải Xong
+        </button>
       </div>
     </div>
   </div>
@@ -120,6 +207,7 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- Scripts -->
+  <script src="/js/i18n.js"></script>
   <script src="/js/player.js"></script>
   <script src="/js/app.js"></script>
 </body>

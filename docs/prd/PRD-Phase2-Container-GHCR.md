@@ -5,7 +5,7 @@
 
 ## 2. Đối Tượng Người Dùng (Target Audience)
 - **Quản trị viên hạ tầng (Sysadmin/DevOps)**: Cần hình ảnh container chuẩn hóa, bảo mật không đặc quyền (`USER node`), giới hạn bộ nhớ dưới 256MB, tự phục hồi khi gặp lỗi.
-- **Người dùng gia đình (Ba Mẹ)**: Truy cập dịch vụ ổn định 24/7 qua tên miền nội bộ `tuneflow.local`.
+- **Người dùng gia đình (Bố Mẹ)**: Truy cập dịch vụ ổn định 24/7 qua tên miền nội bộ `tuneflow.local`.
 
 ## 3. Các Tính Năng Trọng Tâm (Key Features)
 - **Multi-Stage Alpine Image**: Tối ưu hóa kích thước image $< 120\text{MB}$, cài đặt sẵn `ffmpeg` và `python3`.

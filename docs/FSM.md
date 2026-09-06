@@ -95,7 +95,7 @@ stateDiagram-v2
 
 ## 3. Máy Trạng Thái Luồng Chuyển Giao Tệp Về Máy Cá Nhân (Client Delivery Pipeline FSM)
 
-Đảm bảo tệp MP3 sau khi xử lý tại máy chủ sẽ tự động lưu vào máy của Ba Mẹ:
+Đảm bảo tệp MP3 sau khi xử lý tại máy chủ sẽ tự động lưu vào máy của Bố Mẹ:
 
 ```mermaid
 stateDiagram-v2

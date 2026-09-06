@@ -73,7 +73,7 @@ describe('TuneFlow Playlist & Batch Ingestion Tests', () => {
     assert.equal(data.items.length, 3);
   });
 
-  it('GET /api/curation/presets should return predefined categories for Ba and Me', async () => {
+  it('GET /api/curation/presets should return predefined categories for Bo and Me', async () => {
     const res = await fetch(`${baseUrl}/api/curation/presets`);
     assert.equal(res.status, 200);
     const data = await res.json();
@@ -81,6 +81,6 @@ describe('TuneFlow Playlist & Batch Ingestion Tests', () => {
     assert.ok(data.presets.mom);
     assert.ok(data.presets.dad);
     assert.equal(data.presets.mom.title, 'Mẹ Hay Nghe');
-    assert.equal(data.presets.dad.title, 'Ba Hay Nghe');
+    assert.equal(data.presets.dad.title, 'Bố Hay Nghe');
   });
 });

@@ -1,15 +1,49 @@
 /**
- * Main Application Logic for TuneFlow (v1.2.0)
- * Includes Persona Hero Navigation, Playlist Batch Ingestion, Vocal Filters, and Zero-Login Favorites
+ * Main Application Logic for TuneFlow (v1.3.0)
+ * Includes Persona Hero Navigation, Playlist Batch Ingestion, Vocal Filters,
+ * Zero-Login Favorites, Persistent Queue Drawer, Accessible Guidance Modal,
+ * Clear Search, and Font Size Scaling.
  */
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('search-input');
   const searchBtn = document.getElementById('search-btn');
+  const btnClearSearch = document.getElementById('btn-clear-search');
   const resultsContainer = document.getElementById('results-grid');
   const resultsHeader = document.getElementById('results-header');
   const categoryPillsContainer = document.getElementById('category-pills');
   const toastContainer = document.getElementById('toast-container');
   const favCountEl = document.getElementById('fav-count');
+  const categorySectionLabel = document.getElementById('category-section-label');
+
+  // Modal & Drawer Elements
+  const btnHelp = document.getElementById('btn-help');
+  const helpModal = document.getElementById('help-modal');
+  const btnHelpClose = document.getElementById('btn-help-close');
+  const btnHelpAck = document.getElementById('btn-help-ack');
+
+  const btnFloatingQueue = document.getElementById('btn-floating-queue');
+  const queueBadgeCountEl = document.getElementById('queue-badge-count');
+  const queueDrawerOverlay = document.getElementById('queue-drawer-overlay');
+  const btnCloseDrawer = document.getElementById('btn-close-drawer');
+  const drawerCountEl = document.getElementById('drawer-count');
+  const drawerQueueList = document.getElementById('drawer-queue-list');
+  const btnDrawerClearDone = document.getElementById('btn-drawer-clear-done');
+
+  // Font Scaler Buttons
+  const btnFontDec = document.getElementById('btn-font-dec');
+  const btnFontReset = document.getElementById('btn-font-reset');
+  const btnFontInc = document.getElementById('btn-font-inc');
+
+  // Security: HTML Escaping Helper (Prevents DOM-based XSS)
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
   // Persona buttons
   const btnPersonaMom = document.getElementById('btn-persona-mom');
@@ -32,6 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeDownloadedIds = new Set();
   let currentPlaylistTracks = [];
   let favorites = [];
+  let activeTrackList = [];
+  let currentSearchAbortController = null;
 
   try {
     favorites = JSON.parse(localStorage.getItem('tuneflow_favorites') || '[]');
@@ -40,58 +76,97 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   updateFavCount();
 
-  // 1. Persona Navigation & Curation
+  // 1. Persona Navigation & Curation Presets (Bố vs Mẹ)
   const personaPresets = {
     mom: {
       title: 'Mẹ Hay Nghe',
+      sectionLabel: '🌸 Thể loại Mẹ hay nghe:',
       pills: [
-        { label: '🧘 Nhạc Thiền Thư Giãn', query: 'Nhạc thiền tịnh tâm ngủ ngon' },
+        { label: '🌸 Dân Ca Quê Hương', query: 'Dân ca quê hương chọn lọc ngọt ngào' },
         { label: '📿 Niệm Phật Tịnh Tâm', query: 'Niệm phật êm dịu thanh tịnh' },
-        { label: '🌿 Nhạc Spa Thư Giãn', query: 'Nhạc spa thư giãn ngủ sâu' },
-        { label: '🌾 Dân Ca Quê Hương', query: 'Dân ca quê hương chọn lọc ngọt ngào' }
+        { label: '🧘 Nhạc Thiền Dễ Ngủ', query: 'Nhạc thiền tịnh tâm ngủ ngon dễ ngủ' },
+        { label: '🪷 Trữ Tình Quê Mẹ', query: 'Ca nhạc trữ tình quê hương ngọt ngào' },
+        { label: '🪕 Tân Cổ Giao Duyên', query: 'Tân cổ giao duyên tuyển chọn hay nhất' },
+        { label: '🌿 Nhạc Spa Thư Giãn', query: 'Nhạc spa thư giãn ngủ sâu giảm căng thẳng' }
       ],
-      defaultQuery: 'Nhạc thiền tịnh tâm ngủ ngon'
+      defaultQuery: 'Dân ca quê hương chọn lọc ngọt ngào'
     },
     dad: {
-      title: 'Ba Hay Nghe',
+      title: 'Bố Hay Nghe',
+      sectionLabel: '☕ Thể loại Bố hay nghe:',
       pills: [
         { label: '📻 Nhạc Vàng Bolero', query: 'Nhạc vàng 1975 bolero chọn lọc' },
-        { label: '🎭 Tân Cổ Giao Duyên', query: 'Tân cổ giao duyên tuyển chọn hay nhất' },
-        { label: '🌸 Nhạc Tiền Chiến', query: 'Nhạc tiền chiến bất hủ trữ tình' },
-        { label: '🌾 Ca Cổ Miền Tây', query: 'Vọng cổ miền tây ngọt ngào' }
+        { label: '🎸 Tình Ca Trịnh Công Sơn', query: 'Nhạc Trịnh Công Sơn Khánh Ly bất hủ' },
+        { label: '📜 Nhạc Tiền Chiến & Đỏ', query: 'Nhạc tiền chiến bất hủ hào hùng' },
+        { label: '🪕 Cải Lương & Vọng Cổ', query: 'Cải lương vọng cổ hồ quảng tuyển chọn' },
+        { label: '🎷 Hòa Tấu Guitar & Saxophone', query: 'Hòa tấu guitar saxophone êm dịu' },
+        { label: '🌾 Tình Ca Quê Hương', query: 'Ca khúc quê hương đi cùng năm tháng hay nhất' }
       ],
       defaultQuery: 'Nhạc vàng 1975 bolero chọn lọc'
     }
   };
 
+  let currentPersona = 'mom';
+
   btnPersonaMom.addEventListener('click', () => switchPersona('mom'));
   btnPersonaDad.addEventListener('click', () => switchPersona('dad'));
   btnPersonaFavs.addEventListener('click', showFavoritesView);
 
+  const btnLangToggle = document.getElementById('btn-lang-toggle');
+  if (btnLangToggle && window.TuneFlowI18n) {
+    // Initial language setup from saved preference
+    window.TuneFlowI18n.setLanguage(window.TuneFlowI18n.getLanguage());
+
+    btnLangToggle.addEventListener('click', () => {
+      const nextLang = window.TuneFlowI18n.getLanguage() === 'vi' ? 'en' : 'vi';
+      window.TuneFlowI18n.setLanguage(nextLang);
+      showToast(nextLang === 'en' ? '🇬🇧 Switched language to English!' : '🇻🇳 Đã chuyển sang Tiếng Việt!', 'info');
+      refreshCurrentPersonaPresets();
+    });
+  }
+
+  function refreshCurrentPersonaPresets() {
+    switchPersona(currentPersona);
+  }
+
+  function removeFavBatchBar() {
+    const existingBar = document.getElementById('fav-batch-bar');
+    if (existingBar) existingBar.remove();
+  }
+
   function switchPersona(type) {
+    currentPersona = type;
+    removeFavBatchBar();
     btnPersonaMom.classList.toggle('active', type === 'mom');
     btnPersonaDad.classList.toggle('active', type === 'dad');
     btnPersonaFavs.classList.remove('active');
     playlistPanel.style.display = 'none';
 
-    const preset = personaPresets[type];
+    const presets = window.TuneFlowI18n ? window.TuneFlowI18n.getPresets() : personaPresets;
+    const preset = presets[type];
     if (!preset) return;
 
+    if (categorySectionLabel) {
+      categorySectionLabel.textContent = preset.sectionLabel;
+    }
+
     categoryPillsContainer.innerHTML = '';
-    preset.pills.forEach(pillData => {
+    preset.pills.forEach((pillData, idx) => {
       const btn = document.createElement('button');
-      btn.className = 'pill-btn';
+      btn.className = 'pill-btn' + (idx === 0 ? ' active' : '');
       btn.setAttribute('data-query', pillData.query);
       btn.textContent = pillData.label;
       btn.addEventListener('click', () => {
+        categoryPillsContainer.querySelectorAll('.pill-btn').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
         searchInput.value = pillData.query;
-        executeSearch(pillData.query);
+        executeSearch(pillData.query, pillData.label);
       });
       categoryPillsContainer.appendChild(btn);
     });
 
     searchInput.value = preset.defaultQuery;
-    executeSearch(preset.defaultQuery);
+    executeSearch(preset.defaultQuery, preset.pills[0].label);
   }
 
   // 2. Vocal / Instrumental Filter Chips
@@ -106,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 3. Search Button & Enter Key
+  // 3. Search Button, Enter Key, & Clear Search (Issue #12)
   searchBtn.addEventListener('click', () => {
     executeSearch(searchInput.value);
   });
@@ -117,10 +192,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  if (searchInput && btnClearSearch) {
+    searchInput.addEventListener('input', () => {
+      btnClearSearch.style.display = searchInput.value.length > 0 ? 'flex' : 'none';
+    });
+    btnClearSearch.addEventListener('click', () => {
+      searchInput.value = '';
+      btnClearSearch.style.display = 'none';
+      searchInput.focus();
+    });
+  }
+
+  // 4. Accessible Guidance Modal (Issue #10)
+  function openHelpModal() {
+    if (helpModal) helpModal.style.display = 'flex';
+  }
+  function closeHelpModal() {
+    if (helpModal) helpModal.style.display = 'none';
+  }
+  if (btnHelp) btnHelp.addEventListener('click', openHelpModal);
+  if (btnHelpClose) btnHelpClose.addEventListener('click', closeHelpModal);
+  if (btnHelpAck) btnHelpAck.addEventListener('click', closeHelpModal);
+  if (helpModal) {
+    helpModal.addEventListener('click', (e) => {
+      if (e.target === helpModal) closeHelpModal();
+    });
+  }
+
+  // 5. Persistent Queue Slide-Over Drawer (Issue #9)
+  function openQueueDrawer() {
+    if (queueDrawerOverlay) queueDrawerOverlay.style.display = 'flex';
+  }
+  function closeQueueDrawer() {
+    if (queueDrawerOverlay) queueDrawerOverlay.style.display = 'none';
+  }
+  if (btnFloatingQueue) btnFloatingQueue.addEventListener('click', openQueueDrawer);
+  if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeQueueDrawer);
+  if (queueDrawerOverlay) {
+    queueDrawerOverlay.addEventListener('click', (e) => {
+      if (e.target === queueDrawerOverlay) closeQueueDrawer();
+    });
+  }
+
+  // Global Keyboard Shortcuts (Escape to close modals)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeHelpModal();
+      closeQueueDrawer();
+    }
+  });
+
+  // 6. Font Size Scaling (Issue #12)
+  const fontScales = ['90%', '100%', '115%', '130%'];
+  let currentScaleIdx = 1; // Default 100%
+  try {
+    const savedScale = localStorage.getItem('tuneflow_font_scale');
+    if (savedScale && fontScales.includes(savedScale)) {
+      currentScaleIdx = fontScales.indexOf(savedScale);
+      document.documentElement.style.fontSize = savedScale;
+    }
+  } catch (e) {}
+
+  function applyFontScale(idx) {
+    currentScaleIdx = Math.max(0, Math.min(fontScales.length - 1, idx));
+    const scale = fontScales[currentScaleIdx];
+    document.documentElement.style.fontSize = scale;
+    try {
+      localStorage.setItem('tuneflow_font_scale', scale);
+    } catch (e) {}
+    showToast(`🔤 Cỡ chữ hiển thị: ${scale}`, 'info');
+  }
+
+  if (btnFontDec) btnFontDec.addEventListener('click', () => applyFontScale(currentScaleIdx - 1));
+  if (btnFontReset) btnFontReset.addEventListener('click', () => applyFontScale(1));
+  if (btnFontInc) btnFontInc.addEventListener('click', () => applyFontScale(currentScaleIdx + 1));
+
   // 4. Search Execution (Supports both single track and playlist URL)
-  async function executeSearch(query) {
+  async function executeSearch(query, genreLabel = null) {
+    removeFavBatchBar();
     if (!query || !query.trim()) {
-      showToast('⚠️ Ba Mẹ vui lòng nhập tên bài hát hoặc ca sĩ nhé!', 'warn');
+      showToast('⚠️ Bố Mẹ vui lòng nhập tên bài hát hoặc ca sĩ nhé!', 'warn');
       return;
     }
 
@@ -133,28 +284,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     playlistPanel.style.display = 'none';
-    resultsHeader.textContent = '⏳ Đang tìm kiếm các bài hát hay cho Ba Mẹ...';
+    resultsHeader.textContent = genreLabel 
+      ? `📻 Đang mở thể loại: ${genreLabel} (Bố Mẹ chờ xíu nha...)`
+      : '⏳ Đang tìm kiếm các bài hát hay cho Bố Mẹ...';
     resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 22px; color: var(--text-muted);">Đang tải danh sách bài hát, vui lòng chờ chút xíu ạ...</div>';
 
     let finalQuery = trimmed;
     if (currentFilter === 'vocal') finalQuery += ' có lời ca sĩ hát';
-    if (currentFilter === 'instrumental') finalQuery += ' không lời hòa tấu';
+    if (currentFilter === 'instrumental') finalQuery += ' hòa tấu không lời guitar saxophone';
+
+    if (currentSearchAbortController) {
+      try {
+        currentSearchAbortController.abort();
+      } catch (_e) {}
+    }
+    currentSearchAbortController = new AbortController();
+    const searchSignal = currentSearchAbortController.signal;
 
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(finalQuery)}&limit=12`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(finalQuery)}&limit=12`, {
+        signal: searchSignal
+      });
       const data = await res.json();
 
       if (!data.success || !data.results || data.results.length === 0) {
         resultsHeader.textContent = 'Không tìm thấy bài hát';
-        resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 20px;">Dạ không tìm thấy bài hát này. Ba Mẹ thử gõ tên khác xem sao nhé!</div>';
+        resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 20px;">Dạ không tìm thấy bài hát này. Bố Mẹ thử chọn thể loại khác hoặc gõ tên khác xem sao nhé!</div>';
         return;
       }
 
-      resultsHeader.textContent = `🎵 Tìm thấy ${data.results.length} bài hát hay (Bấm nghe thử rồi chọn tải nhé!):`;
+      resultsHeader.textContent = genreLabel
+        ? `📻 Thể loại: ${genreLabel} — Tìm thấy ${data.results.length} bài hát hay (Bố Mẹ bấm nghe thử hoặc tải về máy nhé!):`
+        : `🎵 Tìm thấy ${data.results.length} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):`;
       renderResults(data.results);
     } catch (err) {
+      if (err && err.name === 'AbortError') return;
       resultsHeader.textContent = 'Lỗi kết nối';
-      resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--accent-red);">Dạ mạng đang bị gián đoạn, Ba Mẹ bấm thử lại nha!</div>`;
+      resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--accent-red);">Dạ mạng đang bị gián đoạn, Bố Mẹ bấm thử lại nha!</div>`;
     }
   }
 
@@ -196,27 +362,62 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderPlaylistBatch(items) {
     playlistItemsList.innerHTML = '';
     items.forEach((item, index) => {
+      const isCurrentlyPlaying = window.previewPlayer && window.previewPlayer.currentTrack && window.previewPlayer.currentTrack.id === item.id && window.previewPlayer.isPlaying;
       const row = document.createElement('div');
-      row.className = 'playlist-item-row';
+      row.className = `playlist-item-row${isCurrentlyPlaying ? ' playing' : ''}`;
+      row.id = `playlist-row-${escapeHtml(item.id)}`;
       row.innerHTML = `
-        <input type="checkbox" class="playlist-checkbox" id="chk-${item.id}" data-id="${item.id}" checked>
+        <input type="checkbox" class="playlist-checkbox" id="chk-${escapeHtml(item.id)}" data-id="${escapeHtml(item.id)}" checked>
         <span style="font-weight: 700; color: var(--accent-gold); min-width: 28px;">${index + 1}.</span>
-        <img class="playlist-item-thumb" src="${item.thumbnail}" alt="${item.title}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'70\\' height=\\'45\\' fill=\\'%232e323e\\'><rect width=\\'100%\\' height=\\'100%\\'/></svg>'">
-        <span class="playlist-item-title">${item.title}</span>
-        <span class="playlist-item-duration">${item.duration_string || '00:00'}</span>
-        <button class="btn-preview" style="min-height: 40px; padding: 6px 14px; font-size: 15px;" id="btn-preview-pl-${item.id}">▶️ Nghe</button>
+        <div class="playlist-item-thumb-wrapper" role="button" tabindex="0" title="Bấm để nghe bài hát này" aria-label="Nghe thử: ${escapeHtml(item.title)}">
+          <img class="playlist-item-thumb" src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'70\\' height=\\'45\\' fill=\\'%232e323e\\'><rect width=\\'100%\\' height=\\'100%\\'/></svg>'">
+          <span class="playlist-play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
+        </div>
+        <span class="playlist-item-title" role="button" tabindex="0" title="Bấm để nghe bài hát này" aria-label="Nghe thử: ${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
+        <span class="playlist-item-duration">${escapeHtml(item.duration_string || '00:00')}</span>
+        <button class="btn-preview" style="min-height: 40px; padding: 6px 14px; font-size: 15px;" id="btn-preview-pl-${escapeHtml(item.id)}">${isCurrentlyPlaying ? '⏸️ Dừng' : '▶️ Nghe'}</button>
       `;
 
-      row.querySelector(`#btn-preview-pl-${item.id}`).addEventListener('click', (e) => {
-        e.stopPropagation();
-        window.previewPlayer.playTrack(item);
-      });
+      const playItemHandler = (e) => {
+        if (e) e.stopPropagation();
+        if (window.previewPlayer) {
+          window.previewPlayer.playTrack(item);
+        }
+      };
+
+      const plThumb = row.querySelector('.playlist-item-thumb-wrapper');
+      if (plThumb) {
+        plThumb.addEventListener('click', playItemHandler);
+        plThumb.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            playItemHandler(e);
+          }
+        });
+      }
+
+      const plTitle = row.querySelector('.playlist-item-title');
+      if (plTitle) {
+        plTitle.addEventListener('click', playItemHandler);
+        plTitle.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            playItemHandler(e);
+          }
+        });
+      }
+
+      const previewBtn = row.querySelector(`#btn-preview-pl-${item.id}`);
+      if (previewBtn) {
+        previewBtn.addEventListener('click', playItemHandler);
+      }
 
       row.querySelector('.playlist-checkbox').addEventListener('change', updateSelectedBatchCount);
       playlistItemsList.appendChild(row);
     });
 
     updateSelectedBatchCount();
+    activeTrackList = items;
   }
 
   function updateSelectedBatchCount() {
@@ -235,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnDownloadBatch.addEventListener('click', async () => {
     const checked = Array.from(playlistItemsList.querySelectorAll('.playlist-checkbox:checked'));
     if (checked.length === 0) {
-      showToast('⚠️ Ba Mẹ hãy tích chọn ít nhất 1 bài hát để tải nhé!', 'warn');
+      showToast('⚠️ Bố Mẹ hãy tích chọn ít nhất 1 bài hát để tải nhé!', 'warn');
       return;
     }
 
@@ -262,41 +463,75 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7. Render Song Cards
   function renderResults(songs) {
     resultsContainer.innerHTML = '';
+    activeTrackList = songs;
 
     songs.forEach(song => {
       const isFav = favorites.some(f => f.id === song.id);
+      const isCurrentlyPlaying = window.previewPlayer && window.previewPlayer.currentTrack && window.previewPlayer.currentTrack.id === song.id && window.previewPlayer.isPlaying;
       const card = document.createElement('div');
-      card.className = 'song-card';
-      card.id = `card-${song.id}`;
+      card.className = `song-card${isCurrentlyPlaying ? ' playing' : ''}`;
+      card.id = `card-${escapeHtml(song.id)}`;
 
       card.innerHTML = `
-        <div class="song-thumbnail-wrapper">
-          <img class="song-thumbnail" src="${song.thumbnail}" alt="${song.title}" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' fill=\\'%232e323e\\'><rect width=\\'100%\\' height=\\'100%\\'/></svg>'">
-          <span class="song-duration">${song.duration_string || '00:00'}</span>
+        <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">
+          <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' fill=\\'%232e323e\\'><rect width=\\'100%\\' height=\\'100%\\'/></svg>'">
+          <div class="song-thumb-overlay" aria-hidden="true">
+            <span class="play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
+          </div>
+          <span class="song-duration">${escapeHtml(song.duration_string || '00:00')}</span>
         </div>
         <div class="song-info">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-            <h3 class="song-title">${song.title}</h3>
-            <button class="btn-fav" id="btn-fav-${song.id}" title="Lưu bài hát yêu thích">${isFav ? '❤️' : '🤍'}</button>
+            <h3 class="song-title" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">${escapeHtml(song.title)}</h3>
+            <button class="btn-fav" id="btn-fav-${escapeHtml(song.id)}" title="Lưu bài hát yêu thích">${isFav ? '❤️' : '🤍'}</button>
           </div>
-          <p class="song-uploader">🎙️ ${song.uploader || 'Nghệ sĩ'}</p>
-          <div class="song-status-badge" id="status-${song.id}" style="margin-top: 8px; font-size: 16px; font-weight: 600; color: var(--accent-gold); display: none;"></div>
+          <p class="song-uploader">🎙️ ${escapeHtml(song.uploader || 'Nghệ sĩ')}</p>
+          <div class="song-status-badge" id="status-${escapeHtml(song.id)}" style="margin-top: 8px; font-size: 16px; font-weight: 600; color: var(--accent-gold); display: none;"></div>
         </div>
         <div class="song-actions">
-          <button class="btn-preview" id="btn-preview-${song.id}">
-            ▶️ Nghe Thử Trước
+          <button class="btn-preview" id="btn-preview-${escapeHtml(song.id)}">
+            ${isCurrentlyPlaying ? '⏸️ Tạm Dừng' : '▶️ Nghe Thử Trước'}
           </button>
-          <button class="btn-download" id="btn-download-${song.id}">
+          <button class="btn-download" id="btn-download-${escapeHtml(song.id)}">
             ⬇️ Tải Về Máy (MP3)
           </button>
         </div>
       `;
 
+      // Play action handler for thumbnail, title, and preview button
+      const playHandler = () => {
+        if (window.previewPlayer) {
+          window.previewPlayer.playTrack(song);
+        }
+      };
+
+      const thumbWrapper = card.querySelector('.song-thumbnail-wrapper');
+      if (thumbWrapper) {
+        thumbWrapper.addEventListener('click', playHandler);
+        thumbWrapper.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            playHandler();
+          }
+        });
+      }
+
+      const titleEl = card.querySelector('.song-title');
+      if (titleEl) {
+        titleEl.addEventListener('click', playHandler);
+        titleEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            playHandler();
+          }
+        });
+      }
+
       // Event: Preview
       const previewBtn = card.querySelector(`#btn-preview-${song.id}`);
-      previewBtn.addEventListener('click', () => {
-        window.previewPlayer.playTrack(song);
-      });
+      if (previewBtn) {
+        previewBtn.addEventListener('click', playHandler);
+      }
 
       // Event: Download
       const downloadBtn = card.querySelector(`#btn-download-${song.id}`);
@@ -332,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
         url: song.url
       });
       btnEl.textContent = '❤️';
-      showToast(`❤️ Đã lưu bài "${song.title}" vào mục yêu thích của Ba Mẹ!`, 'success');
+      showToast(`❤️ Đã lưu bài "${song.title}" vào mục yêu thích của Bố Mẹ!`, 'success');
     }
     localStorage.setItem('tuneflow_favorites', JSON.stringify(favorites));
     updateFavCount();
@@ -343,6 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showFavoritesView() {
+    removeFavBatchBar();
     btnPersonaMom.classList.remove('active');
     btnPersonaDad.classList.remove('active');
     btnPersonaFavs.classList.add('active');
@@ -350,12 +586,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (favorites.length === 0) {
       resultsHeader.textContent = '❤️ Danh Sách Bài Hát Yêu Thích';
-      resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--text-muted);">Ba Mẹ chưa bấm lưu bài hát nào. Khi nghe bài nào ưng ý, Ba Mẹ bấm vào hình trái tim ❤️ để lưu vào đây nhé!</div>';
+      resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--text-muted);">Bố Mẹ chưa bấm lưu bài hát nào. Khi nghe bài nào ưng ý, Bố Mẹ bấm vào hình trái tim ❤️ để lưu vào đây nhé!</div>';
       return;
     }
 
-    resultsHeader.textContent = `❤️ Các bài hát Ba Mẹ đã bấm thích (${favorites.length} bài):`;
+    resultsHeader.textContent = `❤️ Các bài hát Bố Mẹ đã bấm thích (${favorites.length} bài):`;
     renderResults(favorites);
+
+    // 1-Click Batch Download Favorites Bar (Issue #11)
+    const batchBar = document.createElement('div');
+    batchBar.id = 'fav-batch-bar';
+    batchBar.className = 'fav-batch-bar';
+    batchBar.innerHTML = `
+      <div>
+        <h3 style="font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px 0;">❤️ Tuyển Tập Yêu Thích Của Bố Mẹ</h3>
+        <p style="font-size: 15px; color: var(--accent-gold); margin: 0;">Đang có ${favorites.length} bài hát đã lưu trữ</p>
+      </div>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button id="btn-batch-fav-dl" class="btn-batch-fav-dl">⬇️ Tải Toàn Bộ Về Máy (${favorites.length} bài)</button>
+        <button id="btn-batch-fav-clear" class="btn-batch-fav-clear">🗑️ Xóa Toàn Bộ</button>
+      </div>
+    `;
+
+    resultsContainer.parentNode.insertBefore(batchBar, resultsContainer);
+
+    batchBar.querySelector('#btn-batch-fav-dl').addEventListener('click', async () => {
+      showToast(`⏳ Đang xếp hàng tải toàn bộ ${favorites.length} bài hát yêu thích về máy...`, 'info');
+      try {
+        const res = await fetch('/api/queue/batch-add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: favorites, format: 'mp3' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`🎉 Đã đưa ${data.queuedCount} bài hát yêu thích vào danh sách tải tự động!`, 'success');
+        }
+      } catch (e) {
+        showToast('❌ Có lỗi khi tải danh sách bài hát yêu thích', 'error');
+      }
+    });
+
+    batchBar.querySelector('#btn-batch-fav-clear').addEventListener('click', () => {
+      if (confirm('Bố Mẹ có chắc chắn muốn xóa toàn bộ danh sách bài hát yêu thích không ạ?')) {
+        favorites = [];
+        try {
+          localStorage.removeItem('tuneflow_favorites');
+        } catch (e) {}
+        updateFavCount();
+        removeFavBatchBar();
+        showFavoritesView();
+        showToast('🗑️ Đã làm trống danh sách bài hát yêu thích', 'info');
+      }
+    });
   }
 
   // 9. Single Download Queue
@@ -389,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 10. Connect Server-Sent Events (SSE) for Real-Time Progress & Client Download
+  // 10. Connect Server-Sent Events (SSE) for Real-Time Progress & Drawer Updates (Issue #9)
   const eventSource = new EventSource('/api/queue/stream');
 
   eventSource.onmessage = (event) => {
@@ -397,6 +680,51 @@ document.addEventListener('DOMContentLoaded', () => {
       const items = JSON.parse(event.data);
       if (!Array.isArray(items)) return;
 
+      // Update Floating Queue Badge & Drawer Header Count
+      const activeCount = items.filter(i => i.status === 'downloading' || i.status === 'converting' || i.status === 'queued').length;
+      if (queueBadgeCountEl) queueBadgeCountEl.textContent = activeCount;
+      if (drawerCountEl) drawerCountEl.textContent = items.length;
+
+      // Update Persistent Queue Slide-Over Drawer
+      if (drawerQueueList) {
+        if (items.length === 0) {
+          drawerQueueList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px 10px; font-size: 16px;">Chưa có bài hát nào trong hàng đợi tải.<br>Bố Mẹ bấm [Tải Về Máy] ở bài hát để theo dõi tiến độ tại đây nhé!</div>`;
+        } else {
+          drawerQueueList.innerHTML = '';
+          items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'drawer-queue-item';
+            let statusText = '⏳ Đang chờ...';
+            let statusColor = 'var(--accent-gold)';
+            if (item.status === 'downloading') {
+              statusText = `📥 Đang tải ${item.progress}% ${item.speed ? '(' + item.speed + ')' : ''}`;
+            } else if (item.status === 'converting') {
+              statusText = '⚙️ Ghép MP3 320kbps';
+            } else if (item.status === 'completed') {
+              statusText = '✅ Đã tải xong';
+              statusColor = 'var(--accent-green)';
+            } else if (item.status === 'failed') {
+              statusText = '❌ Lỗi tải';
+              statusColor = 'var(--accent-red)';
+            }
+
+            div.innerHTML = `
+              <div class="drawer-item-header">
+                <span class="drawer-item-title">${escapeHtml(item.title)}</span>
+                <span class="drawer-item-status" style="color: ${statusColor};">${statusText}</span>
+              </div>
+              ${item.status === 'downloading' || item.status === 'converting' ? `
+                <div style="background: #090a0d; border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px;">
+                  <div style="background: var(--accent-gold); height: 100%; width: ${item.progress || 10}%; transition: width 0.3s ease;"></div>
+                </div>
+              ` : ''}
+            `;
+            drawerQueueList.appendChild(div);
+          });
+        }
+      }
+
+      // Update Visible Song Cards on Main View
       items.forEach(item => {
         document.querySelectorAll('.song-card').forEach(card => {
           const titleEl = card.querySelector('.song-title');
@@ -413,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusBadge.textContent = `⚙️ Đang ghép âm thanh MP3 320kbps... (90%)`;
                 statusBadge.style.color = 'var(--accent-gold)';
               } else if (item.status === 'completed') {
-                statusBadge.textContent = `✅ Đã xong! File đang lưu vào máy tính Ba Mẹ.`;
+                statusBadge.textContent = `✅ Đã xong! File đang lưu vào máy tính Bố Mẹ.`;
                 statusBadge.style.color = 'var(--accent-green)';
                 if (downloadBtn) {
                   downloadBtn.textContent = '✅ Đã Tải Xong';
@@ -424,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   triggerClientBrowserDownload(item);
                 }
               } else if (item.status === 'failed') {
-                statusBadge.textContent = `⚠️ Bài này bị lỗi tải, Ba Mẹ chọn bài khác nhé!`;
+                statusBadge.textContent = `⚠️ Bài này bị lỗi tải, Bố Mẹ chọn bài khác nhé!`;
                 statusBadge.style.color = 'var(--accent-red)';
               }
             }
@@ -434,9 +762,25 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   };
 
+  // Wire Drawer Clear Handled Items Button
+  if (btnDrawerClearDone) {
+    btnDrawerClearDone.addEventListener('click', () => {
+      if (!drawerQueueList) return;
+      const completedCards = drawerQueueList.querySelectorAll('.drawer-queue-item');
+      let count = 0;
+      completedCards.forEach(c => {
+        if (c.textContent.includes('Đã tải xong') || c.textContent.includes('Lỗi tải')) {
+          c.remove();
+          count++;
+        }
+      });
+      showToast(count > 0 ? `🧹 Đã dọn dẹp ${count} bài đã hoàn tất` : 'Hàng đợi đang gọn gàng!', 'info');
+    });
+  }
+
   // 11. Direct Client Browser Download Trigger
   function triggerClientBrowserDownload(item) {
-    showToast(`🎉 Đã tải xong bài "${item.title}"! File đang được lưu vào máy tính của Ba Mẹ.`, 'success');
+    showToast(`🎉 Đã tải xong bài "${item.title}"! File đang được lưu vào máy tính của Bố Mẹ.`, 'success');
     
     const a = document.createElement('a');
     a.style.display = 'none';
@@ -449,13 +793,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2000);
   }
 
-  // 12. Toast Helper
+  // 12. Continuous Playback Handlers (Issue #16)
+  window.playNextTrack = () => {
+    if (!activeTrackList || activeTrackList.length === 0) return;
+    const current = window.previewPlayer ? window.previewPlayer.currentTrack : null;
+    if (!current) return;
+    const currentIndex = activeTrackList.findIndex(t => t.id === current.id);
+    if (currentIndex >= 0 && currentIndex < activeTrackList.length - 1) {
+      const nextTrack = activeTrackList[currentIndex + 1];
+      showToast(`⏭️ Đang tự động phát bài tiếp: "${nextTrack.title}"`, 'info');
+      window.previewPlayer.playTrack(nextTrack);
+    } else {
+      showToast('🎵 Đã phát hết danh sách bài hát!', 'info');
+    }
+  };
+
+  window.playPreviousTrack = () => {
+    if (!activeTrackList || activeTrackList.length === 0) return;
+    const current = window.previewPlayer ? window.previewPlayer.currentTrack : null;
+    if (!current) return;
+    const currentIndex = activeTrackList.findIndex(t => t.id === current.id);
+    if (currentIndex > 0) {
+      const prevTrack = activeTrackList[currentIndex - 1];
+      showToast(`⏮️ Đang phát bài trước: "${prevTrack.title}"`, 'info');
+      window.previewPlayer.playTrack(prevTrack);
+    }
+  };
+
+  // 13. Toast Helper (Safe Text Rendering & Global Exposure)
   function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = 'toast';
     if (type === 'warn') toast.style.borderColor = 'var(--accent-gold)';
     if (type === 'error') toast.style.borderColor = 'var(--accent-red)';
-    toast.innerHTML = `<span>${message}</span>`;
+    const span = document.createElement('span');
+    span.textContent = message;
+    toast.appendChild(span);
     toastContainer.appendChild(toast);
 
     setTimeout(() => {
@@ -463,4 +836,8 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => toast.remove(), 300);
     }, 4500);
   }
+
+  window.showToast = showToast;
+  window.renderResults = renderResults;
+  window.renderPlaylistBatch = renderPlaylistBatch;
 });

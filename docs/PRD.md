@@ -4,7 +4,7 @@
 > **Mã dự án**: `TUNEFLOW-PRD-01`  
 > **Phiên bản**: `1.0.0`  
 > **Chủ quản sản phẩm (Product Owner)**: TamLD (`tamld/tuneflow`)  
-> **Đối tượng thụ hưởng chính**: Ba Mẹ (Người lớn tuổi) & Quản trị viên Homelab  
+> **Đối tượng thụ hưởng chính**: Bố Mẹ (Người lớn tuổi) & Quản trị viên Homelab  
 > **Trạng thái**: PHÊ DUYỆT (APPROVED)  
 
 ---
@@ -22,7 +22,7 @@ Người lớn tuổi trong gia đình có nhu cầu rất lớn về việc ngh
 
 ## 2. Chân Dung Người Dùng (User Personas)
 
-### Persona 1: Ba Mẹ (Người dùng cốt lõi)
+### Persona 1: Bố Mẹ (Người dùng cốt lõi)
 - **Độ tuổi**: 60 - 75 tuổi.
 - **Thói quen**: Nghe nhạc buổi sáng khi uống trà hoặc buổi tối trước khi đi ngủ. Thích chép nhạc vào USB để nghe trên loa kéo hoặc trên ô tô.
 - **Đặc điểm thể chất**: Thị lực suy giảm (khó đọc chữ nhỏ, dễ lóa mắt), thao tác tay kém chính xác (dễ click trượt nút bấm nhỏ), trí nhớ công nghệ hạn chế (ngại các bước cài đặt phức tạp).

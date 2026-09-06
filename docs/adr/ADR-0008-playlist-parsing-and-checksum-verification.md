@@ -21,4 +21,4 @@ Người lớn tuổi thường có thói quen nghe cả một danh sách tuyể
 
 ## Hệ quả
 - Đảm bảo an toàn tuyệt đối cho CPU của Container Host.
-- Không bao giờ giao tệp nhạc bị hỏng hoặc mất nửa bài cho ba mẹ.
+- Không bao giờ giao tệp nhạc bị hỏng hoặc mất nửa bài cho bố mẹ.

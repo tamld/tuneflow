@@ -10,4 +10,4 @@ Tối ưu hóa triệt để tài nguyên máy chủ bằng cách phân định 
 ## 3. Các Tính Năng Trọng Tâm
 - **Chế độ Zero-Disk Streaming**: Máy chủ nhận luồng âm thanh từ YouTube CDN và pipe thẳng tới kết nối HTTP của trình duyệt client qua `ReadableStream`, không cần ghi tạm tệp ra đĩa SSD Container Host.
 - **Client WebAudio Player & Visualizer**: Sóng âm thanh trực quan, điều khiển âm lượng lớn, tăng cường bass/treble trực tiếp trên trình duyệt bằng Web Audio API.
-- **Client-Side Audio Trimming (WASM)**: Cho phép cắt 30 giây làm nhạc chuông điện thoại cho ba mẹ, tính toán hoàn toàn trên trình duyệt máy khách bằng `ffmpeg.wasm`.
+- **Client-Side Audio Trimming (WASM)**: Cho phép cắt 30 giây làm nhạc chuông điện thoại cho bố mẹ, tính toán hoàn toàn trên trình duyệt máy khách bằng `ffmpeg.wasm`.

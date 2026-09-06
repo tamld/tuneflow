@@ -6,7 +6,7 @@
 - [x] Đã hoàn thành SRS và FSM quy định hành vi lọc từ khóa.
 
 ## 2. Definition of Done (DoD)
-- [ ] Endpoint `/api/curation/presets` trả về đầy đủ cấu trúc danh mục cho Ba và Mẹ.
+- [ ] Endpoint `/api/curation/presets` trả về đầy đủ cấu trúc danh mục cho Bố và Mẹ.
 - [ ] Giao diện người dùng có 3 nút Persona lớn trên đỉnh trang chủ.
 - [ ] Nút bật tắt "Không lời / Có lời" tự động lọc kết quả mà không cần tải lại toàn bộ trang.
 - [ ] Nút yêu thích ❤️ lưu bài hát vào `localStorage` và tồn tại sau khi tắt bật lại trình duyệt.

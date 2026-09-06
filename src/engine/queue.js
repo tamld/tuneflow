@@ -2,7 +2,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { TEMP_DIR, DOWNLOADS_DIR, MAX_DOWNLOADS, MAX_CONVERSIONS, MAX_RETRIES, DOWNLOAD_TTL_HOURS } = require('../config');
+const { TEMP_DIR, DOWNLOADS_DIR, MAX_DOWNLOADS, MAX_RETRIES, DOWNLOAD_TTL_HOURS, MAX_STORAGE_MB, YTDLP_COOKIES_PATH, YTDLP_PROXY, YTDLP_EXTRACTOR_ARGS } = require('../config');
 const { convertToMp3 } = require('./ffmpeg');
 
 /**
@@ -59,9 +59,21 @@ class DownloadQueue {
     this.sseClients = new Set();
     this.isPaused = false;
     this.isProcessing = false;
+    this.lastBroadcast = 0;
+    this.broadcastTimer = null;
 
-    // Periodic storage cleanup (runs every hour)
+    // Periodic storage cleanup and quota enforcement (runs every hour)
     setInterval(() => this.cleanupOldFiles(), 60 * 60 * 1000).unref();
+  }
+
+  shutdown() {
+    console.log(`🛑 DownloadQueue: Gracefully terminating ${this.activeProcesses.size} active download processes...`);
+    for (const [_id, proc] of this.activeProcesses.entries()) {
+      try {
+        proc.kill('SIGTERM');
+      } catch (_e) {}
+    }
+    this.activeProcesses.clear();
   }
 
   add(itemData) {
@@ -151,7 +163,52 @@ class DownloadQueue {
     } catch (e) {
       console.error('Lỗi khi dọn dẹp bộ nhớ tạm:', e.message);
     }
+    this.enforceStorageQuota();
     return deletedCount;
+  }
+
+  /**
+   * Enforces MAX_STORAGE_MB quota using FIFO (removes oldest files first)
+   */
+  enforceStorageQuota(maxQuotaMb = MAX_STORAGE_MB) {
+    let prunedCount = 0;
+    try {
+      if (!fs.existsSync(DOWNLOADS_DIR)) return 0;
+      const files = fs.readdirSync(DOWNLOADS_DIR)
+        .filter(f => f.endsWith('.mp3') || f.endsWith('.mp4') || f.endsWith('.m4a'))
+        .map(file => {
+          const fullPath = path.join(DOWNLOADS_DIR, file);
+          try {
+            const stat = fs.statSync(fullPath);
+            return { name: file, fullPath, size: stat.size, mtimeMs: stat.mtimeMs };
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      const totalBytes = files.reduce((acc, f) => acc + f.size, 0);
+      const quotaBytes = (maxQuotaMb || 2048) * 1024 * 1024;
+
+      if (totalBytes > quotaBytes) {
+        // FIFO: Sort oldest modified first
+        files.sort((a, b) => a.mtimeMs - b.mtimeMs);
+        let currentBytes = totalBytes;
+        const targetBytes = quotaBytes * 0.8; // Prune down to 80% of max
+
+        for (const file of files) {
+          if (currentBytes <= targetBytes) break;
+          try {
+            fs.unlinkSync(file.fullPath);
+            currentBytes -= file.size;
+            prunedCount++;
+          } catch (e) {}
+        }
+      }
+    } catch (e) {
+      console.error('Lỗi khi kiểm tra quota đĩa:', e.message);
+    }
+    return prunedCount;
   }
 
   get(id) {
@@ -198,12 +255,38 @@ class DownloadQueue {
     this.sseClients.add(res);
     res.write(`data: ${JSON.stringify(this.getAll())}\n\n`);
 
-    res.on('close', () => {
+    const cleanup = () => {
       this.sseClients.delete(res);
-    });
+    };
+
+    res.on('close', cleanup);
+    res.on('error', cleanup);
   }
 
-  broadcast() {
+  /**
+   * Throttles SSE progress broadcasting to prevent CPU exhaustion and event-loop churn
+   */
+  broadcast(force = false) {
+    const now = Date.now();
+    if (!force && now - this.lastBroadcast < 300) {
+      if (!this.broadcastTimer) {
+        this.broadcastTimer = setTimeout(() => {
+          this.broadcastTimer = null;
+          this.doBroadcast();
+        }, 300 - (now - this.lastBroadcast));
+      }
+      return;
+    }
+
+    if (this.broadcastTimer) {
+      clearTimeout(this.broadcastTimer);
+      this.broadcastTimer = null;
+    }
+    this.doBroadcast();
+  }
+
+  doBroadcast() {
+    this.lastBroadcast = Date.now();
     if (this.sseClients.size === 0) return;
     const data = JSON.stringify(this.getAll());
     for (const client of this.sseClients) {
@@ -243,7 +326,7 @@ class DownloadQueue {
   async executeItem(item) {
     item.status = 'downloading';
     item.progress = 5;
-    this.broadcast();
+    this.broadcast(true);
 
     // Isolated temp download target
     const tempRawPath = path.join(TEMP_DIR, `${item.id}.%(ext)s`);
@@ -252,15 +335,24 @@ class DownloadQueue {
     try {
       // Step 1: Download stream using yt-dlp (keeping partial .part files for resume)
       await new Promise((resolve, reject) => {
-        const args = [
-          '--js-runtimes', 'node:node',
+        const args = ['--js-runtimes', 'node:node'];
+        if (YTDLP_EXTRACTOR_ARGS) {
+          args.push('--extractor-args', YTDLP_EXTRACTOR_ARGS);
+        }
+        if (YTDLP_COOKIES_PATH && fs.existsSync(YTDLP_COOKIES_PATH)) {
+          args.push('--cookies', YTDLP_COOKIES_PATH);
+        }
+        if (YTDLP_PROXY) {
+          args.push('--proxy', YTDLP_PROXY);
+        }
+        args.push(
           '-x',
           '--no-playlist',
           '--newline',
           '-o', tempRawPath,
           '--',
           item.url
-        ];
+        );
 
         const proc = spawn('yt-dlp', args, { windowsHide: true });
         this.activeProcesses.set(item.id, proc);
@@ -279,7 +371,7 @@ class DownloadQueue {
             const etaMatch = line.match(/ETA\s+([^\s]+)/);
             if (etaMatch) item.eta = etaMatch[1];
 
-            this.broadcast();
+            this.broadcast(false);
           }
         });
 
@@ -308,7 +400,7 @@ class DownloadQueue {
       // Step 2: Convert to pristine 320kbps MP3
       item.status = 'converting';
       item.progress = 90;
-      this.broadcast();
+      this.broadcast(true);
 
       await convertToMp3(downloadedTempFile, finalMp3Path, {
         title: item.title,
@@ -326,7 +418,10 @@ class DownloadQueue {
       item.progress = 100;
       item.completedFilePath = finalMp3Path;
       item.checksum = checksum;
-      this.broadcast();
+      this.broadcast(true);
+
+      // Enforce storage quota after new file completion
+      this.enforceStorageQuota();
 
     } catch (err) {
       if (item.status === 'cancelled') return;
@@ -334,11 +429,11 @@ class DownloadQueue {
       if (item.retries < MAX_RETRIES) {
         item.retries++;
         item.status = 'queued'; // Re-queue for retry with existing .part file
-        this.broadcast();
+        this.broadcast(true);
       } else {
         item.status = 'failed';
         item.error = err.message || 'Lỗi không xác định khi xử lý bài hát';
-        this.broadcast();
+        this.broadcast(true);
       }
     }
   }

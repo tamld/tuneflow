@@ -12,7 +12,7 @@
   - Kích thước nút $\ge 44\text{px}$, màu xanh ngọc với chữ trắng tương phản cao.
 - **FR-603 (Background Service Worker Dispatch)**:
   - Bắt sự kiện click nút, trích xuất `videoId`, gửi payload `POST http://tuneflow.local:3000/api/queue/add`.
-  - Hiển thị Toast thông báo trạng thái: *"Đang tải nhạc về máy chủ gia đình... Ba mẹ chờ một lát nhé!"*.
+  - Hiển thị Toast thông báo trạng thái: *"Đang tải nhạc về máy chủ gia đình... Bố mẹ chờ một lát nhé!"*.
 
 ## 2. Yêu Cầu Phi Chức Năng & Pháp Lý (Non-Functional & Compliance)
 - **NFR-601 (Tốc độ khởi động Extension)**: Tải mã content script dưới 50ms, không làm chậm tốc độ lướt YouTube của trình duyệt.

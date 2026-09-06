@@ -1,11 +1,64 @@
 const { spawn } = require('child_process');
+const fs = require('fs');
+const { YTDLP_COOKIES_PATH, YTDLP_PROXY, YTDLP_EXTRACTOR_ARGS } = require('../config');
+
+/**
+ * In-memory LRU/TTL Cache to avoid repeated child process spawns
+ */
+class SimpleCache {
+  constructor(ttlMs = 15 * 60 * 1000, maxSize = 100) {
+    this.ttlMs = ttlMs;
+    this.maxSize = maxSize;
+    this.cache = new Map();
+  }
+
+  get(key) {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.expiry) {
+      this.cache.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  set(key, value) {
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+    this.cache.set(key, {
+      value,
+      expiry: Date.now() + this.ttlMs
+    });
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+}
+
+const searchCache = new SimpleCache(15 * 60 * 1000, 100);
+const playlistCache = new SimpleCache(15 * 60 * 1000, 50);
 
 /**
  * Execute yt-dlp with argument injection protection (using '--' delimiter)
+ * Includes bot challenge bypasses: extractor-args, cookies, and proxy (Issue #23)
  */
 function runYtDlp(args) {
   return new Promise((resolve, reject) => {
-    const fullArgs = ['--js-runtimes', 'node:node', ...args];
+    const fullArgs = ['--js-runtimes', 'node:node'];
+    if (YTDLP_EXTRACTOR_ARGS) {
+      fullArgs.push('--extractor-args', YTDLP_EXTRACTOR_ARGS);
+    }
+    if (YTDLP_COOKIES_PATH && fs.existsSync(YTDLP_COOKIES_PATH)) {
+      fullArgs.push('--cookies', YTDLP_COOKIES_PATH);
+    }
+    if (YTDLP_PROXY) {
+      fullArgs.push('--proxy', YTDLP_PROXY);
+    }
+    fullArgs.push(...args);
+
     const process = spawn('yt-dlp', fullArgs, {
       windowsHide: true
     });
@@ -86,6 +139,11 @@ async function getVideoMetadata(url) {
 async function searchYouTube(query, options = {}) {
   const limit = options.limit || 10;
   const isPlaylist = options.type === 'playlist';
+  const cacheKey = `${query.trim().toLowerCase()}:${limit}:${options.sp || ''}:${isPlaylist}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
   
   let targetUrl = '';
   if (options.sp) {
@@ -128,6 +186,7 @@ async function searchYouTube(query, options = {}) {
       }
     }
 
+    searchCache.set(cacheKey, results);
     return results;
   } catch (err) {
     throw new Error(`Lỗi tìm kiếm bài hát: ${err.message}`);
@@ -140,6 +199,12 @@ async function searchYouTube(query, options = {}) {
 async function parsePlaylist(url, limit = 50) {
   if (!url || typeof url !== 'string' || url.trim() === '') {
     throw new Error('Vui lòng cung cấp đường dẫn danh sách phát (Playlist URL) hợp lệ');
+  }
+
+  const cacheKey = `${url.trim()}:${limit}`;
+  const cached = playlistCache.get(cacheKey);
+  if (cached) {
+    return cached;
   }
 
   const args = [
@@ -173,12 +238,15 @@ async function parsePlaylist(url, limit = 50) {
       };
     });
 
-    return {
+    const parsedResult = {
       title: data.title || 'Danh sách phát',
       uploader: data.uploader || data.channel || 'Tuyển tập',
       count: entries.length,
       entries
     };
+
+    playlistCache.set(cacheKey, parsedResult);
+    return parsedResult;
   } catch (err) {
     throw new Error(`Không thể đọc danh sách phát: ${err.message}`);
   }
@@ -205,5 +273,7 @@ module.exports = {
   getVideoMetadata,
   searchYouTube,
   parsePlaylist,
-  formatDuration
+  formatDuration,
+  searchCache,
+  playlistCache
 };

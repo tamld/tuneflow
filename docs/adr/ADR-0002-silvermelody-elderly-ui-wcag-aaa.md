@@ -1,7 +1,7 @@
 # ADR-0002: Hệ Thống Thiết Kế SilverMelody Đạt Chuẩn WCAG 2.2 AAA Cho Người Lớn Tuổi
 
 ## Bối Cảnh (Context)
-Đối tượng người dùng chính là Ba Mẹ (người cao tuổi). Đa số người cao tuổi gặp trở ngại:
+Đối tượng người dùng chính là Bố Mẹ (người cao tuổi). Đa số người cao tuổi gặp trở ngại:
 1. Thị lực suy giảm, dễ mỏi mắt khi nhìn màn hình trắng sáng hoặc tương phản kém.
 2. Thao tác tay run, ngón tay to, dễ bấm trượt các nút bấm kích thước nhỏ thông thường (32px - 40px).
 3. Cảm thấy hoảng sợ khi gặp thông báo lỗi kỹ thuật tiếng Anh hoặc bảng điều khiển có quá nhiều nút bấm rối mắt.
@@ -18,8 +18,8 @@ Thiết lập chuẩn giao diện **SilverMelody Design Tokens**:
 3. **Phản hồi xúc giác cơ học (Tactile Mechanical Feedback)**:
    - Hiệu ứng `transform: scale(0.98)` và đổ bóng viền sâu tạo cảm giác bấm phím thật như radio cassette.
 4. **Ngôn ngữ 100% Tiếng Việt Tự Nhiên & Ấm Áp**:
-   - Triệt tiêu mọi thuật ngữ IT. Dùng kính ngữ thân mật: *"Dạ, máy đang tải bài hát về...", "Đã tải xong bài nhạc về máy của Ba Mẹ rồi ạ!"*.
+   - Triệt tiêu mọi thuật ngữ IT. Dùng kính ngữ thân mật: *"Dạ, máy đang tải bài hát về...", "Đã tải xong bài nhạc về máy của Bố Mẹ rồi ạ!"*.
 
 ## Hậu Quả (Consequences)
-- **Tích cực**: Ba Mẹ sử dụng độc lập hoàn toàn mà không cần con cháu hướng dẫn từng bước. Loại bỏ hoàn toàn tỷ lệ click nhầm.
+- **Tích cực**: Bố Mẹ sử dụng độc lập hoàn toàn mà không cần con cháu hướng dẫn từng bước. Loại bỏ hoàn toàn tỷ lệ click nhầm.
 - **Tiêu cực**: Mật độ thông tin trên một màn hình thấp hơn các ứng dụng thông thường (phù hợp với người già, nhưng người dùng trẻ có thể thấy giao diện chiếm nhiều không gian).

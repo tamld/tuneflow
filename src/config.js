@@ -24,5 +24,8 @@ module.exports = {
   DOWNLOAD_TTL_HOURS: parseInt(process.env.DOWNLOAD_TTL_HOURS || '24', 10),
   MAX_STORAGE_MB: parseInt(process.env.MAX_STORAGE_MB || '2048', 10),
   DEFAULT_FORMAT: 'mp3',
-  SUPPORTED_FORMATS: ['mp3', 'mp4', 'm4a']
+  SUPPORTED_FORMATS: ['mp3', 'mp4', 'm4a'],
+  YTDLP_COOKIES_PATH: process.env.YTDLP_COOKIES_PATH || (fs.existsSync(path.join(ROOT_DIR, 'cookies.txt')) ? path.join(ROOT_DIR, 'cookies.txt') : null),
+  YTDLP_PROXY: process.env.YTDLP_PROXY || null,
+  YTDLP_EXTRACTOR_ARGS: process.env.YTDLP_EXTRACTOR_ARGS || 'youtube:player_client=android,web'
 };
