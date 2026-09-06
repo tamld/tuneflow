@@ -33,8 +33,8 @@ jobs:
       - name: Install Puppeteer Chrome
         run: npx puppeteer browsers install chrome
 
-      - name: Run Full Test Suite with Coverage
-        run: npm run test:coverage
+      - name: Run Full Test Suite
+        run: npm test
 
   container-smoke-test:
     name: Docker Build & Container Health Smoke Test
