@@ -5,6 +5,8 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const DOWNLOADS_DIR = process.env.DOWNLOADS_DIR || path.join(ROOT_DIR, 'downloads');
 const TEMP_DIR = process.env.TEMP_DIR || path.join(DOWNLOADS_DIR, 'temp');
 
+const DATA_DIR = process.env.DATA_DIR || path.join(ROOT_DIR, 'data');
+
 // Ensure directories exist
 if (!fs.existsSync(DOWNLOADS_DIR)) {
   fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
@@ -12,6 +14,11 @@ if (!fs.existsSync(DOWNLOADS_DIR)) {
 if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR, { recursive: true });
 }
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'tuneflow.db');
 
 module.exports = {
   PORT: parseInt(process.env.PORT || '3000', 10),
@@ -23,6 +30,11 @@ module.exports = {
   MAX_RETRIES: parseInt(process.env.MAX_RETRIES || '3', 10),
   DOWNLOAD_TTL_HOURS: parseInt(process.env.DOWNLOAD_TTL_HOURS || '24', 10),
   MAX_STORAGE_MB: parseInt(process.env.MAX_STORAGE_MB || '2048', 10),
+  DATA_DIR,
+  DB_PATH,
+  GUEST_MAX_LISTEN_SEC: parseInt(process.env.GUEST_MAX_LISTEN_SEC || '1800', 10),
+  GUEST_COOLDOWN_SEC: parseInt(process.env.GUEST_COOLDOWN_SEC || '3600', 10),
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin',
   DEFAULT_FORMAT: 'mp3',
   SUPPORTED_FORMATS: ['mp3', 'mp4', 'm4a'],
   YTDLP_COOKIES_PATH: process.env.YTDLP_COOKIES_PATH || (fs.existsSync(path.join(ROOT_DIR, 'cookies.txt')) ? path.join(ROOT_DIR, 'cookies.txt') : null),
