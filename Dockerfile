@@ -12,9 +12,11 @@ RUN apk add --no-cache \
     curl \
     ca-certificates
 
-# Pin standalone yt-dlp binary release
+# Pin standalone yt-dlp binary release with SHA-256 verification (Issue #25, #58)
 ARG YTDLP_VERSION=2025.02.19
+ARG YTDLP_SHA256=a18843c75b04756ed1d8e261b54de8b7ddf918f73134175d5acab745455dcbc8
 RUN curl -fsSL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" -o /usr/local/bin/yt-dlp && \
+    echo "${YTDLP_SHA256}  /usr/local/bin/yt-dlp" | sha256sum -c - && \
     chmod a+rwx /usr/local/bin/yt-dlp && \
     chown node:node /usr/local/bin/yt-dlp
 

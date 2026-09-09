@@ -49,12 +49,14 @@ if (require.main === module) {
     console.log(`📂 Ready for parents to search, preview, and download music!`);
   });
 
-  // Graceful shutdown (Issue #22)
+  // Graceful shutdown (Issue #22, #56)
   const gracefulShutdown = () => {
     console.log('\n🛑 TuneFlow shutting down safely...');
     try {
-      const { downloadQueue } = require('./engine/queue');
-      downloadQueue.shutdown();
+      const queue = require('./engine/queue');
+      if (queue && typeof queue.shutdown === 'function') {
+        queue.shutdown();
+      }
     } catch (_e) {}
 
     // Fallback safety timeout to prevent hanging on orphaned processes

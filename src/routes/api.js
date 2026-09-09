@@ -406,6 +406,7 @@ router.get('/stream/pipe/:id', guestGuard, async (req, res) => {
       } catch (e) {}
     });
   } catch (err) {
+    if (err && err.name === 'AbortError') return;
     res.status(500).json({ error: 'Lỗi khi truyền phát luồng âm thanh: ' + err.message });
   }
 });
