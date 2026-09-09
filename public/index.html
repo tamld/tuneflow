@@ -36,6 +36,11 @@
           <button id="btn-font-reset" class="font-scale-btn" title="Cỡ chữ chuẩn">A</button>
           <button id="btn-font-inc" class="font-scale-btn" title="Chữ to rõ hơn">A+</button>
         </div>
+        <!-- User / Guest Auth Status & Login Trigger (Issue #52) -->
+        <button id="btn-auth-status" class="font-scale-btn auth-status-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" title="Tài khoản truy cập / Thời gian nghe thử">
+          <span id="auth-status-icon">⏱️</span>
+          <span id="auth-status-text">Khách: 30:00</span>
+        </button>
         <!-- Persistent Queue Trigger (Issue #9) -->
         <button id="btn-floating-queue" class="floating-queue-btn" title="Mở danh sách các bài hát đang tải">
           📥 Hàng Đợi (<span id="queue-badge-count">0</span>)
@@ -242,11 +247,60 @@
     </div>
   </div>
 
+  <!-- Login & Access Control Modal (Issue #52) -->
+  <div id="modal-auth-login" class="modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2 id="auth-modal-title" style="margin: 0; font-size: 20px;">🔐 Đăng Nhập Hệ Thống</h2>
+        <button id="btn-close-auth-modal" class="btn-close" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 0;">
+        <p style="margin-top: 0; color: var(--text-secondary); font-size: 14px;">
+          Đăng nhập tài khoản <strong>Gia Đình</strong> hoặc <strong>Quản Trị</strong> để thưởng thức âm nhạc không giới hạn thời gian và tải bài hát tốc độ cao.
+        </p>
+        <form id="form-auth-login">
+          <div style="margin-bottom: 14px;">
+            <label for="input-auth-username" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px;">Tên đăng nhập:</label>
+            <input type="text" id="input-auth-username" required placeholder="admin hoặc tên gia đình" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; box-sizing: border-box; background: var(--surface-card); color: var(--text-primary);">
+          </div>
+          <div style="margin-bottom: 18px;">
+            <label for="input-auth-password" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px;">Mật khẩu:</label>
+            <input type="password" id="input-auth-password" required placeholder="Nhập mật khẩu..." style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; box-sizing: border-box; background: var(--surface-card); color: var(--text-primary);">
+          </div>
+          <div id="auth-error-msg" style="display: none; color: #e53e3e; font-size: 13px; margin-bottom: 12px; padding: 8px; background: rgba(229, 62, 62, 0.1); border-radius: 6px;"></div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" id="btn-cancel-auth" class="secondary-btn" style="padding: 8px 16px; border-radius: 8px;">Hủy</button>
+            <button type="submit" id="btn-submit-auth" class="primary-btn" style="padding: 8px 20px; border-radius: 8px;">Đăng Nhập</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guest Cooldown Expiration Modal (Issue #52) -->
+  <div id="modal-guest-cooldown" class="modal-backdrop" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width: 460px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 12px;">😴</div>
+      <h2 style="margin: 0 0 10px 0; font-size: 22px;">Hết Thời Gian Nghe Thử</h2>
+      <p style="color: var(--text-secondary); font-size: 15px; line-height: 1.5; margin-bottom: 16px;">
+        Quý khách đã sử dụng hết <strong>30 phút</strong> nghe nhạc miễn phí. Hệ thống đang kích hoạt chế độ làm mới (cooldown: <span id="cooldown-timer-text">60:00</span>).
+      </p>
+      <div style="background: rgba(237, 137, 54, 0.1); border: 1px solid rgba(237, 137, 54, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 14px; color: var(--text-primary);">
+        💡 Để nghe nhạc không giới hạn và tải bài hát, Bố Mẹ và các thành viên hãy đăng nhập tài khoản Gia Đình nhé!
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="btn-guest-open-login" class="primary-btn" style="padding: 10px 24px; border-radius: var(--radius-pill); font-size: 15px;">🔐 Đăng Nhập Ngay</button>
+        <button id="btn-guest-close-cooldown" class="secondary-btn" style="padding: 10px 20px; border-radius: var(--radius-pill); font-size: 15px;">Để Sau</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
 
   <!-- Scripts -->
   <script src="/js/i18n.js"></script>
+  <script src="/js/auth.js"></script>
   <script src="/js/player.js"></script>
   <script src="/js/tv-leanback.js"></script>
   <script src="/js/app.js"></script>
