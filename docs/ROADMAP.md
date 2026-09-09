@@ -19,6 +19,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 │ Phase 4  │ Phân Loại Bố & Mẹ, Curation & Zero-Login │ v1.3.0      │ ✅ Completed       │
 │ Phase 5  │ Hybrid Client-Server Compute & Web Stream│ v1.4.0      │ ✅ Completed       │
 │ Phase 6  │ Browser Extension MV3 & Pháp Lý Bản Quyền│ v2.0.0      │ ✅ Completed       │
+│ Phase 7  │ Android TV D-Pad Leanback & Mobile Client│ v2.1.0      │ ✅ Completed       │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
@@ -119,6 +120,21 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 
 ---
 
+### CHẶNG 7: Điều Hướng D-Pad Android TV & Chế Độ Tĩnh Dưỡng Ambient (v2.1.0)
+- **Vấn đề giải quyết**:
+  - **Trải nghiệm 10-foot Android TV (Leanback Remote D-Pad)**:
+    - Cơ chế điều hướng không gian 2D ma trận (`public/js/tv-leanback.js`) hỗ trợ toàn bộ phím remote TV tiêu chuẩn: `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`, `Enter`, `Escape`/`Backspace`.
+    - Focus Ring siêu tương phản đạt chuẩn WCAG 2.2 AAA (`.focused-tv` viền vàng 4px `#f39c12`, phóng to $1.06\times$, glow 24px) nhìn rõ từ cự ly 3 mét trên ghế sofa.
+    - Cuộn mượt mà `scrollIntoView` định vị thẻ bài hát và thanh điều khiển trung tâm màn hình.
+  - **Chế độ Tĩnh Dưỡng Toàn Màn Hình (Ambient Leanback Player)**:
+    - Lớp phủ tràn màn hình hiển thị ảnh bìa album kích thước lớn (320px), cỡ chữ 38px–24px cho người cao tuổi thư giãn, nghe kinh Phật hoặc nhạc vàng xưa.
+    - Nút chuyển đổi nhanh chế độ TV (`#btn-toggle-tv`) và tham số URL `?mode=tv`.
+- **Bộ hồ sơ tài liệu**:
+  - **ADR**: `docs/adr/ADR-0012-android-mobile-and-tv-leanback-architecture.md`
+  - **SPEC**: `docs/spec/SPEC-0007-android-tv-and-mobile-client.md`
+
+---
+
 ## 📋 TRẠNG THÁI TRIỂN KHAI VÀ THEO DÕI (TRACEABILITY MATRIX)
 
 | Mã Yêu Cầu | Hạng Mục Công Việc | Tài Liệu Quy Chiếu | Mã Kiểm Thử / Artifact |
@@ -134,3 +150,4 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 | **RM-09** | Persona presets (Bố/Mẹ/Thiền) | `docs/adr/ADR-0009` | `tests/playlist.test.js` (Phase 4) |
 | **RM-10** | Hybrid Client-Side WASM Compute | `docs/adr/ADR-0010` | `tests/wasm-stream.test.js` (Phase 5)|
 | **RM-11** | Browser Extension MV3 Integration | `docs/adr/ADR-0011` | `tests/extension.test.js` (Phase 6) |
+| **RM-12** | Android TV D-Pad Leanback & Ambient Player | `docs/adr/ADR-0012` | `tests/tv-leanback.test.js` (Phase 7) |
