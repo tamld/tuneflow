@@ -41,11 +41,13 @@ class SimpleCache {
 
 const searchCache = new SimpleCache(15 * 60 * 1000, 100);
 const playlistCache = new SimpleCache(15 * 60 * 1000, 50);
+const streamUrlCache = new SimpleCache(2 * 60 * 60 * 1000, 200);
 
 let isJsRuntimesSupportedCache = null;
 
 /**
- * Dynamically check if installed yt-dlp binary supports --js-runtimes (Issue #64)
+ * Dynamically check if installed yt-dlp binary supports --js-runtimes (Issue #64, #67)
+ * Probes --help output to see if --js-runtimes flag is documented.
  */
 function supportsJsRuntimes() {
   if (isJsRuntimesSupportedCache !== null) {
@@ -53,8 +55,9 @@ function supportsJsRuntimes() {
   }
   try {
     const { spawnSync } = require('child_process');
-    const res = spawnSync('yt-dlp', ['--js-runtimes', 'node:node', '--version'], { windowsHide: true, timeout: 2000 });
-    isJsRuntimesSupportedCache = (res.status === 0);
+    const res = spawnSync('yt-dlp', ['--help'], { windowsHide: true, timeout: 3000 });
+    const stdout = res.stdout ? res.stdout.toString() : '';
+    isJsRuntimesSupportedCache = (res.status === 0 && stdout.includes('--js-runtimes'));
   } catch (_e) {
     isJsRuntimesSupportedCache = false;
   }
@@ -80,9 +83,13 @@ function parseDurationString(str) {
 /**
  * Execute yt-dlp with argument injection protection (using '--' delimiter)
  * Includes bot challenge bypasses: extractor-args, cookies, and proxy (Issue #23, #64)
+ * Added timeout guard to prevent hung child processes (Issue #67)
  */
-function runYtDlp(args) {
+function runYtDlp(args, options = {}) {
   return new Promise((resolve, reject) => {
+    const timeoutMs = options.timeout || 15000;
+    let timer = null;
+
     const fullArgs = [];
     if (supportsJsRuntimes()) {
       fullArgs.push('--js-runtimes', 'node:node');
@@ -102,6 +109,14 @@ function runYtDlp(args) {
       windowsHide: true
     });
 
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        try { process.kill('SIGKILL'); } catch (_e) {}
+        reject(new Error(`yt-dlp timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+      if (timer.unref) timer.unref();
+    }
+
     let stdout = '';
     let stderr = '';
 
@@ -114,6 +129,7 @@ function runYtDlp(args) {
     });
 
     process.on('close', (code) => {
+      if (timer) clearTimeout(timer);
       if (code === 0) {
         resolve(stdout.trim());
       } else {
@@ -122,15 +138,21 @@ function runYtDlp(args) {
     });
 
     process.on('error', (err) => {
+      if (timer) clearTimeout(timer);
       reject(err);
     });
   });
 }
 
 /**
- * Extract direct playable audio stream URL for In-App Preview Player
+ * Extract direct playable audio stream URL for In-App Preview Player (Issue #67)
  */
 async function getPreviewStreamUrl(url) {
+  const cached = streamUrlCache.get(url);
+  if (cached) {
+    return cached;
+  }
+
   try {
     const streamUrl = await runYtDlp([
       '-g',
@@ -139,10 +161,31 @@ async function getPreviewStreamUrl(url) {
       '--',
       url
     ]);
-    return streamUrl.split('\n')[0].trim();
-  } catch (err) {
-    throw new Error(`Không thể lấy luồng nghe thử: ${err.message}`);
+    const parsed = streamUrl.split('\n')[0].trim();
+    if (parsed) {
+      streamUrlCache.set(url, parsed);
+      return parsed;
+    }
+  } catch (_primaryErr) {
+    // Fallback to broader audio formats (140=m4a, 251=opus, 139=low-m4a, b=best)
+    try {
+      const fallbackStreamUrl = await runYtDlp([
+        '-g',
+        '-f', '140/251/139/ba/b',
+        '--no-playlist',
+        '--',
+        url
+      ]);
+      const parsed = fallbackStreamUrl.split('\n')[0].trim();
+      if (parsed) {
+        streamUrlCache.set(url, parsed);
+        return parsed;
+      }
+    } catch (fallbackErr) {
+      throw new Error(`Không thể lấy luồng nghe thử: ${fallbackErr.message}`);
+    }
   }
+  throw new Error('Không thể lấy luồng nghe thử: URL luồng rỗng');
 }
 
 /**
@@ -495,7 +538,7 @@ async function getSystemDiagnostics() {
 async function updateYtDlpBinary() {
   const currentVersion = await getYtDlpVersion();
   try {
-    const updateOutput = await runYtDlp(['-U']);
+    const updateOutput = await runYtDlp(['-U'], { timeout: 6000 });
     const newVersion = await getYtDlpVersion();
     return {
       success: true,
@@ -528,5 +571,6 @@ module.exports = {
   getSystemDiagnostics,
   updateYtDlpBinary,
   searchCache,
-  playlistCache
+  playlistCache,
+  streamUrlCache
 };

@@ -4,12 +4,14 @@ const http = require('http');
 const express = require('express');
 const apiRoutes = require('../src/routes/api');
 const { formatDuration } = require('../src/engine/ytdlp');
+const queue = require('../src/engine/queue');
 
 describe('TuneFlow Test Suite: HAPPY PATH SCENARIOS', () => {
   let server;
   let baseUrl;
 
   before(async () => {
+    queue.isPaused = true;
     const app = express();
     app.use(express.json());
     app.use('/api', apiRoutes);
@@ -28,10 +30,8 @@ describe('TuneFlow Test Suite: HAPPY PATH SCENARIOS', () => {
       if (server.closeAllConnections) server.closeAllConnections();
       await new Promise((resolve) => server.close(resolve));
     }
-    const queue = require('../src/engine/queue');
-    for (const item of queue.getAll()) {
-      queue.cancel(item.id);
-    }
+    queue.isPaused = false;
+    queue.clearCompleted();
   });
 
   it('Format Duration correctly transforms seconds into MM:SS and HH:MM:SS', () => {

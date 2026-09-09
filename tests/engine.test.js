@@ -1,6 +1,6 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
-const { formatDuration, parseDurationString, supportsJsRuntimes, searchYouTube } = require('../src/engine/ytdlp');
+const { formatDuration, parseDurationString, supportsJsRuntimes, searchYouTube, getPreviewStreamUrl, streamUrlCache } = require('../src/engine/ytdlp');
 const queue = require('../src/engine/queue');
 
 describe('TuneFlow Core Engine Unit Tests', () => {
@@ -45,6 +45,13 @@ describe('TuneFlow Core Engine Unit Tests', () => {
     assert.ok(first.duration_string);
     assert.ok(first.thumbnail);
     assert.ok(first.url);
+  });
+
+  it('should cache preview stream URL lookups in streamUrlCache', () => {
+    const testUrl = 'https://www.youtube.com/watch?v=mock_cached_url';
+    const fakeStream = 'https://googlevideo.com/mock_stream_123';
+    streamUrlCache.set(testUrl, fakeStream);
+    assert.equal(streamUrlCache.get(testUrl), fakeStream);
   });
 
   it('should initialize download queue with zero active items', () => {
