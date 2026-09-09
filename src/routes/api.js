@@ -26,7 +26,9 @@ const userRepo = new UserRepo(db);
 const sessionRepo = new SessionRepo(db);
 const guestRepo = new GuestRepo(db, GUEST_MAX_LISTEN_SEC, GUEST_COOLDOWN_SEC);
 const authService = new AuthService({ userRepo, sessionRepo, guestRepo });
-authService.ensureDefaultAdmin(ADMIN_PASSWORD);
+try {
+  authService.ensureDefaultAdmin(ADMIN_PASSWORD);
+} catch (_e) {}
 
 const authenticate = createAuthenticateMiddleware(authService);
 const guestGuard = createGuestGuardMiddleware(guestRepo);

@@ -1,4 +1,4 @@
-const { describe, it } = require('node:test');
+const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
@@ -6,6 +6,14 @@ const queue = require('../src/engine/queue');
 const { DOWNLOADS_DIR } = require('../src/config');
 
 describe('TuneFlow Queue Concurrency, FSM Transitions & Quota Engine Tests', () => {
+  before(() => {
+    queue.isPaused = true;
+  });
+
+  after(() => {
+    queue.isPaused = false;
+    queue.clearCompleted();
+  });
   it('should initialize and maintain task lifecycle states in DownloadQueue', () => {
     const item = queue.add({
       id: 'fsm_task_test_1',
