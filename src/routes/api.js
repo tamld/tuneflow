@@ -5,9 +5,38 @@ const { Readable } = require('stream');
 const router = express.Router();
 const { searchYouTube, getVideoMetadata, getPreviewStreamUrl, parsePlaylist, getSystemDiagnostics, updateYtDlpBinary } = require('../engine/ytdlp');
 const queue = require('../engine/queue');
-const { DOWNLOADS_DIR } = require('../config');
+const { DOWNLOADS_DIR, DB_PATH, GUEST_MAX_LISTEN_SEC, GUEST_COOLDOWN_SEC, ADMIN_PASSWORD } = require('../config');
 const { isValidYouTubeUrl, isValidVideoId } = require('../utils/validator');
 const { createRateLimiter } = require('../utils/rateLimiter');
+
+// SQLite DB & Auth Services (Issue #52)
+const { initDatabase } = require('../db/database');
+const { UserRepo } = require('../db/repositories/user_repo');
+const { SessionRepo } = require('../db/repositories/session_repo');
+const { GuestRepo } = require('../db/repositories/guest_repo');
+const { AuthService } = require('../auth/auth_service');
+const { createAuthenticateMiddleware } = require('../middleware/authenticate');
+const { authorize } = require('../middleware/authorize');
+const { createGuestGuardMiddleware } = require('../middleware/guest_guard');
+const { createAuthRouter } = require('./auth_routes');
+const { createAdminRouter } = require('./admin_routes');
+
+const db = initDatabase(DB_PATH);
+const userRepo = new UserRepo(db);
+const sessionRepo = new SessionRepo(db);
+const guestRepo = new GuestRepo(db, GUEST_MAX_LISTEN_SEC, GUEST_COOLDOWN_SEC);
+const authService = new AuthService({ userRepo, sessionRepo, guestRepo });
+authService.ensureDefaultAdmin(ADMIN_PASSWORD);
+
+const authenticate = createAuthenticateMiddleware(authService);
+const guestGuard = createGuestGuardMiddleware(guestRepo);
+
+// Apply authentication to all API endpoints
+router.use(authenticate);
+
+// Mount Auth & Admin sub-routers
+router.use('/auth', createAuthRouter({ authService }));
+router.use('/admin', createAdminRouter({ userRepo, guestRepo }));
 
 // Rate Limiters to protect homelab resources against DoS / Container OOMKill
 const searchRateLimiter = createRateLimiter({
@@ -51,8 +80,8 @@ router.get('/search', searchRateLimiter, async (req, res) => {
   }
 });
 
-// Fast In-App Preview stream proxy for HTML5 audio element (Issue #20: Prevents YouTube CDN 403)
-router.get('/preview/:id', async (req, res) => {
+// Fast In-App Preview stream proxy for HTML5 audio element (Issue #20: Prevents YouTube CDN 403, Issue #52: 30-min Guest Guard)
+router.get('/preview/:id', guestGuard, async (req, res) => {
   const { id } = req.params;
   if (!isValidVideoId(id)) {
     return res.status(400).json({ error: 'Mã video YouTube không hợp lệ' });
@@ -118,8 +147,8 @@ router.get('/info', async (req, res) => {
   }
 });
 
-// Add item to queue with rate limiting & YouTube URL validation
-router.post('/queue/add', queueRateLimiter, (req, res) => {
+// Add item to queue with rate limiting & YouTube URL validation (Requires Admin or User)
+router.post('/queue/add', queueRateLimiter, authorize('admin', 'user'), (req, res) => {
   const { url, title, uploader, thumbnail, duration, format } = req.body;
   if (!url) {
     return res.status(400).json({ error: 'Đường dẫn bài hát không hợp lệ' });
@@ -140,8 +169,8 @@ router.post('/queue/add', queueRateLimiter, (req, res) => {
   res.json({ success: true, item });
 });
 
-// Batch add tracks to queue with rate limiting & YouTube URL validation
-router.post('/queue/batch-add', queueRateLimiter, (req, res) => {
+// Batch add tracks to queue with rate limiting & YouTube URL validation (Requires Admin or User)
+router.post('/queue/batch-add', queueRateLimiter, authorize('admin', 'user'), (req, res) => {
   const { items, format } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ success: false, error: 'Danh sách bài hát không hợp lệ hoặc đang trống' });
@@ -321,8 +350,8 @@ router.get('/download/:id/file', (req, res) => {
   });
 });
 
-// Phase 5: Zero-Disk Direct Streaming Pipeline (Streams audio chunks directly from YouTube CDN to client)
-router.get('/stream/pipe/:id', async (req, res) => {
+// Phase 5: Zero-Disk Direct Streaming Pipeline (Streams audio chunks directly from YouTube CDN to client, Issue #52: 30-min Guest Guard)
+router.get('/stream/pipe/:id', guestGuard, async (req, res) => {
   const { id } = req.params;
   if (!isValidVideoId(id)) {
     return res.status(400).json({ error: 'Mã video YouTube không hợp lệ' });
@@ -379,8 +408,8 @@ router.get('/stream/pipe/:id', async (req, res) => {
   }
 });
 
-// System diagnostics and runtime versions (Issue #39)
-router.get('/system/status', async (req, res) => {
+// System diagnostics and runtime versions (Issue #39, Issue #52: Admin only)
+router.get('/system/status', authorize('admin'), async (req, res) => {
   try {
     const diagnostics = await getSystemDiagnostics();
     res.json({
@@ -393,8 +422,8 @@ router.get('/system/status', async (req, res) => {
   }
 });
 
-// System yt-dlp hot-update endpoint (Issue #39)
-router.post('/system/update-ytdlp', async (req, res) => {
+// System yt-dlp hot-update endpoint (Issue #39, Issue #52: Admin only)
+router.post('/system/update-ytdlp', authorize('admin'), async (req, res) => {
   try {
     const result = await updateYtDlpBinary();
     if (result.success) {
