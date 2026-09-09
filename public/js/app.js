@@ -108,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentPersona = 'mom';
 
-  btnPersonaMom.addEventListener('click', () => switchPersona('mom'));
-  btnPersonaDad.addEventListener('click', () => switchPersona('dad'));
+  btnPersonaMom.addEventListener('click', () => switchPersona('mom', true));
+  btnPersonaDad.addEventListener('click', () => switchPersona('dad', true));
   btnPersonaFavs.addEventListener('click', showFavoritesView);
 
   const btnLangToggle = document.getElementById('btn-lang-toggle');
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function refreshCurrentPersonaPresets() {
-    switchPersona(currentPersona);
+    switchPersona(currentPersona, false);
   }
 
   function removeFavBatchBar() {
@@ -134,7 +134,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (existingBar) existingBar.remove();
   }
 
-  function switchPersona(type) {
+  // Event delegation on category pills container (Issue #40)
+  // Ensures any category pill button click always triggers search reliably across all tabs/languages
+  if (categoryPillsContainer) {
+    categoryPillsContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pill-btn');
+      if (!btn) return;
+      const query = btn.getAttribute('data-query');
+      const label = btn.textContent.trim();
+      if (query) {
+        categoryPillsContainer.querySelectorAll('.pill-btn').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        searchInput.value = query;
+        if (btnClearSearch) btnClearSearch.style.display = 'flex';
+        executeSearch(query, label);
+      }
+    });
+  }
+
+  function switchPersona(type, autoSearch = true) {
     currentPersona = type;
     removeFavBatchBar();
     btnPersonaMom.classList.toggle('active', type === 'mom');
@@ -156,18 +174,18 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.className = 'pill-btn' + (idx === 0 ? ' active' : '');
       btn.setAttribute('data-query', pillData.query);
       btn.textContent = pillData.label;
-      btn.addEventListener('click', () => {
-        categoryPillsContainer.querySelectorAll('.pill-btn').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        searchInput.value = pillData.query;
-        executeSearch(pillData.query, pillData.label);
-      });
       categoryPillsContainer.appendChild(btn);
     });
 
-    searchInput.value = preset.defaultQuery;
-    executeSearch(preset.defaultQuery, preset.pills[0].label);
+    if (autoSearch) {
+      searchInput.value = preset.defaultQuery;
+      if (btnClearSearch) btnClearSearch.style.display = 'flex';
+      executeSearch(preset.defaultQuery, preset.pills[0].label);
+    }
   }
+
+  // Initial load: Bind default Mom persona pills without heavy auto search (Issue #40)
+  switchPersona('mom', false);
 
   // 2. Vocal / Instrumental Filter Chips
   filterChips.forEach(chip => {

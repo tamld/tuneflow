@@ -89,9 +89,16 @@ describe('TuneFlow End-to-End & Elderly Accessibility Suite', () => {
       const searchBtnHeight = await page.$eval('#search-btn', (el) => el.getBoundingClientRect().height);
       assert.ok(searchBtnHeight >= 50, `Search button is too small: ${searchBtnHeight}px (Target >= 50px)`);
 
-      // 3. Verify Category Pills (Bố & Mẹ curation)
+      // 3. Verify Category Pills (Bố & Mẹ curation) and Initial Load Click (Issue #40)
       const pillsCount = await page.$$eval('.pill-btn', (els) => els.length);
       assert.ok(pillsCount >= 6, `Too few category pills: ${pillsCount}`);
+
+      // Verify clicking category pill on initial load immediately populates search input and sets active
+      const secondPill = (await page.$$('.pill-btn'))[1];
+      const secondPillQuery = await page.evaluate(el => el.getAttribute('data-query'), secondPill);
+      await secondPill.click();
+      const inputValAfterPillClick = await page.$eval('#search-input', el => el.value);
+      assert.strictEqual(inputValAfterPillClick, secondPillQuery, 'Clicking category pill on initial load did not populate search input');
 
       // 4. Verify Accessible Guidance Modal (Issue #10)
       await page.click('#btn-help');
