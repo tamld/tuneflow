@@ -1,5 +1,6 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('path');
 const http = require('http');
 const express = require('express');
 const apiRoutes = require('../src/routes/api');
@@ -38,31 +39,43 @@ describe('TuneFlow Stream Pipe & Download Edge Cases Suite', () => {
   });
 
   it('GET /api/download/:id/file should reject items not in completed state', async () => {
-    const item = queue.add({
+    const item = {
       id: 'test_incomplete_task',
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      title: 'Bài hát đang tải dở'
-    });
-    item.status = 'downloading';
-    item.completedFilePath = null;
+      title: 'Bài hát đang tải dở',
+      sanitizedTitle: 'Bai_hat_dang_tai_do',
+      status: 'downloading',
+      completedFilePath: null
+    };
+    queue.items.set(item.id, item);
 
-    const res = await fetch(`${baseUrl}/api/download/${item.id}/file`);
-    assert.strictEqual(res.status, 404);
+    try {
+      const res = await fetch(`${baseUrl}/api/download/${item.id}/file`);
+      assert.strictEqual(res.status, 404);
+    } finally {
+      queue.items.delete(item.id);
+    }
   });
 
   it('GET /api/download/:id/file should reject path traversal outside downloads directory with 403', async () => {
-    const item = queue.add({
+    const item = {
       id: 'test_traversal_attack',
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      title: 'Tấn Công Path Traversal'
-    });
-    item.status = 'completed';
-    item.completedFilePath = 'C:\\Windows\\System32\\calc.exe';
+      title: 'Tấn Công Path Traversal',
+      sanitizedTitle: 'Tan_Cong_Path_Traversal',
+      status: 'completed',
+      completedFilePath: path.resolve(__dirname, '../package.json')
+    };
+    queue.items.set(item.id, item);
 
-    const res = await fetch(`${baseUrl}/api/download/${item.id}/file`);
-    assert.strictEqual(res.status, 403);
-    const text = await res.text();
-    assert.ok(text.includes('không hợp lệ'));
+    try {
+      const res = await fetch(`${baseUrl}/api/download/${item.id}/file`);
+      assert.strictEqual(res.status, 403);
+      const text = await res.text();
+      assert.ok(text.includes('không hợp lệ'));
+    } finally {
+      queue.items.delete(item.id);
+    }
   });
 
   it('GET /api/stream/pipe/:id should reject invalid video IDs with 400', async () => {
