@@ -21,6 +21,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 │ Phase 6  │ Browser Extension MV3 & Pháp Lý Bản Quyền│ v2.0.0      │ ✅ Completed       │
 │ Phase 7  │ Android TV D-Pad Leanback & Mobile Client│ v2.1.0      │ ✅ Completed       │
 │ Phase 8  │ PWA Ngoại Tuyến, Giọng Nói & Ghép Nối LAN│ v2.2.0      │ ✅ Completed       │
+│ Phase 9  │ SQLite RBAC, Phân Quyền & Hẹn Giờ 2x     │ v2.3.0      │ ✅ Completed       │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
@@ -152,6 +153,24 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 
 ---
 
+### CHẶNG 9: Hệ Quản Trị Dữ Liệu SQLite, Xác Thực Phân Quyền (RBAC) & Hẹn Giờ 2x (v2.3.0)
+- **Vấn đề giải quyết**:
+  - **Cơ Sở Dữ Liệu SQLite & Thiết Kế Phân Tách Ranh Giới (SoC)**:
+    - Sử dụng module gốc của Node.js: `node:sqlite` (`DatabaseSync`) với chế độ WAL và toàn vẹn khóa ngoại `foreign_keys = ON`, zero dependency bên ngoài.
+    - Tổ chức phân tách ranh giới rõ ràng: `src/db/` (kết nối, schema DDL), `src/db/repositories/` (user, session, guest repositories), `src/auth/` (scrypt, timingSafeEqual, auth service), `src/middleware/` (authenticate, authorize RBAC, guest guard).
+  - **Bảo Mật 3 Bậc Quyền (Three-Tier RBAC) Bảo Vệ Máy Chủ Khi Đưa Ra Internet**:
+    - **Admin (Tier 1)**: Quản lý người dùng, chẩn đoán hệ thống, cập nhật yt-dlp, đặt lại thời gian chờ cho khách.
+    - **User (Tier 2)**: Nghe và tải bài hát không giới hạn thời gian cho các thành viên Gia Đình.
+    - **Guest (Tier 3)**: Khách vãng lai chỉ được nghe thử tối đa 30 phút (1800 giây). Hết thời lượng tự động ngắt kết nối và chuyển sang trạng thái cooldown 60 phút. Chống vượt rào bằng cách liên kết IP và mã băm vân tay trình duyệt. Khóa quyền đưa bài vào hàng đợi tải để chống spam tài nguyên máy chủ.
+  - **Hẹn Giờ Tắt Nhạc Cấp Số Nhân (Exponential 2x Sleep Timer) & Cỡ Chữ TV**:
+    - Bổ sung các mốc hẹn giờ theo quy tắc $\times 2$: 15m, 30m, 1h, 2h, 4h với 30 giây giảm dần âm lượng nhẹ nhàng trước khi tắt.
+    - Khắc phục lỗi cỡ chữ TV/Web bằng biến CSS `--user-font-scale` và hàm `calc()`.
+- **Bộ hồ sơ tài liệu**:
+  - **Plan**: `docs/superpowers/plans/2026-09-09-rbac-auth-guest-cooldown.md`
+  - **Issues**: #49, #50, #52
+
+---
+
 ## 📋 TRẠNG THÁI TRIỂN KHAI VÀ THEO DÕI (TRACEABILITY MATRIX)
 
 | Mã Yêu Cầu | Hạng Mục Công Việc | Tài Liệu Quy Chiếu | Mã Kiểm Thử / Artifact |
@@ -169,3 +188,6 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 | **RM-11** | Browser Extension MV3 Integration | `docs/adr/ADR-0011` | `tests/extension.test.js` (Phase 6) |
 | **RM-12** | Android TV D-Pad Leanback & Ambient Player | `docs/adr/ADR-0012` | `tests/tv-leanback.test.js` (Phase 7) |
 | **RM-13** | PWA Offline Shell, Voice Search & LAN QR | `docs/spec/SPEC-0007` | `tests/pwa-voice.test.js` (Phase 8) |
+| **RM-14** | Dynamic CSS Variable Font Scaler on TV/Web | `docs/superpowers/plans` | `tests/font-scaler-and-sleep-timer.test.js` |
+| **RM-15** | Exponential 2x Sleep Timer & 30s Fade-Out | `docs/superpowers/plans` | `tests/font-scaler-and-sleep-timer.test.js` |
+| **RM-16** | SQLite RBAC, 3-Tier Auth & 30m Guest Limit | `docs/superpowers/plans` | `tests/auth-*.test.js` (5 suites) |

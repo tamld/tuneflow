@@ -1,6 +1,41 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] - 2026-09-09
+
+### Đã Thêm (Added)
+- **Hệ Quản Trị Dữ Liệu SQLite & Xác Thực Phân Quyền (RBAC - Issue #52)**:
+  - Tích hợp động cơ cơ sở dữ liệu SQLite nhúng trực tiếp qua module gốc của Node.js: `node:sqlite` (`DatabaseSync`), kích hoạt chế độ WAL (`PRAGMA journal_mode = WAL;`) và toàn vẹn khóa ngoại `foreign_keys = ON` mà không cần cài đặt thêm dependency bên ngoài ([Issue #52](https://github.com/tamld/tuneflow/issues/52)).
+  - Thiết kế kiến trúc phân tách ranh giới rõ ràng (SoC):
+    - `src/db/`: Quản lý kết nối, di chuyển lược đồ bảng `users`, `sessions`, `guest_quotas`, `system_config`.
+    - `src/db/repositories/`: Tách biệt các kho truy vấn dữ liệu `user_repo.js`, `session_repo.js`, `guest_repo.js`.
+    - `src/auth/`: Tiện ích mã hóa mật khẩu bằng `scrypt` với muối ngẫu nhiên 16-byte (`crypto_utils.js`), phòng chống tấn công dò thời gian bằng `crypto.timingSafeEqual`, và dịch vụ quản trị xác thực `auth_service.js`.
+  - Phân định 3 bậc truy cập (Three-Tier RBAC) bảo vệ máy chủ khi đưa ra Internet:
+    - **Tier 1: Admin (Quản trị viên)**: Quyền quản lý người dùng (CRUD), cập nhật yt-dlp nóng, xem thông số chẩn đoán hệ thống và đặt lại thời gian chờ (cooldown) cho khách.
+    - **Tier 2: User (Thành viên Gia Đình)**: Thưởng thức âm nhạc không giới hạn thời gian, nghe thử và đưa bài hát vào hàng đợi tải về máy chủ.
+    - **Tier 3: Guest (Khách vãng lai)**: Được nghe thử tích lũy tối đa **30 phút (1800 giây)**. Khi hết thời lượng, luồng phát tự động ngắt kết nối và kích hoạt chế độ làm mới (cooldown 60 phút). Chống gian lận bằng cách liên kết địa chỉ IP và mã băm vân tay trình duyệt. Chặn quyền đưa bài hát vào hàng đợi tải để chống spam cạn kiệt tài nguyên.
+  - Giao diện người dùng:
+    - Huy hiệu tài khoản trực quan trên thanh tiêu đề (`👑 Quản trị`, `👤 Gia Đình`, `⏱️ Khách: 28:30`).
+    - Hộp thoại đăng nhập hiện đại, trợ năng.
+    - Cảnh báo tự động ngắt nhạc và thông báo cooldown êm ái khi khách dùng hết 30 phút nghe thử.
+- **Hẹn Giờ Tắt Nhạc Cấp Số Nhân (Exponential 2x Sleep Timer - Issue #50)**:
+  - Bổ sung các mốc hẹn giờ theo quy tắc $\times 2$: `15m`, `30m`, `1h`, `2h`, `4h` ([Issue #50](https://github.com/tamld/tuneflow/issues/50)).
+  - Cơ chế giảm dần âm lượng nhẹ nhàng (Smooth Volume Fade-Out) trong 30 giây trước khi tắt hẳn, tự khôi phục âm lượng gốc sau đó.
+- **Thu Phóng Cỡ Chữ Động Trợ Năng (Dynamic Accessibility Font Scaler - Issue #49)**:
+  - Khắc phục triệt để lỗi cỡ chữ không đổi trên Android TV và Web khi bấm cụm nút `A-` / `A` / `A+` bằng cách chuyển đổi toàn bộ kiểu chữ sang biến số CSS `--user-font-scale` kết hợp hàm `calc()` ([Issue #49](https://github.com/tamld/tuneflow/issues/49)).
+
+### Kiểm Thử & Đảm Bảo Chất Lượng
+- Bổ sung 5 bộ kiểm thử tự động toàn diện:
+  - `tests/font-scaler-and-sleep-timer.test.js`
+  - `tests/auth-db-repositories.test.js`
+  - `tests/auth-service.test.js`
+  - `tests/auth-middleware.test.js`
+  - `tests/auth-api-endpoints.test.js`
+  - `tests/auth-security-fuzzing.test.js`
+- Nâng tổng số ca kiểm thử tự động từ 107 lên **134/134 bài test chạy xanh 100%** (`exit 0`).
+
+---
+
 ## [2.2.0] - 2026-09-09
 
 ### Đã Thêm (Added)

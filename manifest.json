@@ -3,7 +3,7 @@
   "name": "tuneflow",
   "display_name": "TuneFlow",
   "tagline": "An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted Homelab ready.",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "license": "MIT",
   "repository": "https://github.com/tamld/tuneflow",
   "governance": {
