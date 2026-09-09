@@ -506,6 +506,11 @@ document.addEventListener('DOMContentLoaded', () => {
         previewBtn.addEventListener('click', playItemHandler);
       }
 
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.playlist-checkbox')) return;
+        playItemHandler(e);
+      });
+
       row.querySelector('.playlist-checkbox').addEventListener('change', updateSelectedBatchCount);
       playlistItemsList.appendChild(row);
     });
@@ -637,6 +642,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const favBtn = card.querySelector(`#btn-fav-${song.id}`);
       favBtn.addEventListener('click', () => {
         toggleFavorite(song, favBtn);
+      });
+
+      // Make entire card clickable to play (Issue #70)
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('title', `Bấm để nghe thử bài hát: ${song.title}`);
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-download') || e.target.closest('.btn-fav')) {
+          return;
+        }
+        playHandler();
+      });
+
+      card.addEventListener('keydown', (e) => {
+        if (e.target === card && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          playHandler();
+        }
+      });
+
+      // Speculative stream prewarm on pointer hover (debounced 150ms)
+      let prewarmTimer = null;
+      card.addEventListener('pointerenter', () => {
+        prewarmTimer = setTimeout(() => {
+          fetch('/api/preview/prewarm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: song.id })
+          }).catch(() => {});
+        }, 150);
+      });
+      card.addEventListener('pointerleave', () => {
+        if (prewarmTimer) clearTimeout(prewarmTimer);
       });
 
       resultsContainer.appendChild(card);

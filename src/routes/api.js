@@ -77,9 +77,30 @@ router.get('/search', searchRateLimiter, async (req, res) => {
       limit: parseInt(limit || '10', 10)
     });
     res.json({ success: true, count: results.length, results });
+
+    // Speculatively pre-warm audio stream for the top results in background (Issue #70)
+    if (Array.isArray(results) && results.length > 0) {
+      for (const item of results.slice(0, 2)) {
+        if (item && item.url) {
+          getPreviewStreamUrl(item.url).catch(() => {});
+        }
+      }
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Prewarm preview stream cache on user hover / pointer focus (Issue #70)
+router.post('/preview/prewarm', guestGuard, async (req, res) => {
+  const { id } = req.body || {};
+  if (!id || !isValidVideoId(id)) {
+    return res.status(400).json({ error: 'Mã video YouTube không hợp lệ' });
+  }
+
+  const videoUrl = `https://www.youtube.com/watch?v=${id}`;
+  getPreviewStreamUrl(videoUrl).catch(() => {});
+  res.json({ success: true, prewarming: id });
 });
 
 // Fast In-App Preview stream proxy for HTML5 audio element (Issue #20: Prevents YouTube CDN 403, Issue #52: 30-min Guest Guard)

@@ -7,6 +7,7 @@ class PreviewPlayer {
     this.audio = new Audio();
     this.currentTrack = null;
     this.isPlaying = false;
+    this.isLoading = false;
 
     // Audio Control State
     this.volumeLevels = [1.0, 0.6, 0.3];
@@ -307,24 +308,32 @@ class PreviewPlayer {
 
   playTrack(track) {
     if (this.currentTrack && this.currentTrack.id === track.id) {
+      if (this.isLoading) {
+        // Prevent double-click disruption during stream handshake (Issue #70)
+        return;
+      }
       this.togglePlay();
       return;
     }
 
     this.currentTrack = track;
+    this.isLoading = true;
+    this.isPlaying = false;
+
     if (this.playerContainer) this.playerContainer.classList.add('visible');
     if (this.trackTitle) this.trackTitle.textContent = `${track.title} - ${track.uploader || ''}`;
-    if (this.trackStatus) this.trackStatus.textContent = 'Đang kết nối luồng nhạc...';
+    if (this.trackStatus) this.trackStatus.textContent = '⏳ Đang kết nối luồng nhạc...';
 
-    // Highlight playing card on UI & reset other cards
+    // Highlight loading card on UI & reset other cards immediately
     this.resetAllCards();
-    this.highlightCard(track.id, true);
+    this.highlightCard(track.id, false, true);
+    this.updatePlayPauseIcon();
 
-    // Load stream from backend preview route
+    // Load stream from backend preview route (HTML5 audio auto-loads on src assignment)
     this.audio.src = `/api/preview/${track.id}`;
-    this.audio.load();
 
     this.audio.play().then(() => {
+      this.isLoading = false;
       this.isPlaying = true;
       this.initWebAudio();
       this.startVisualizer();
@@ -333,6 +342,7 @@ class PreviewPlayer {
       this.updateCardState();
       this.setupMediaSession(track);
     }).catch((err) => {
+      this.isLoading = false;
       if (err && err.name === 'AbortError') {
         return;
       }
@@ -369,6 +379,7 @@ class PreviewPlayer {
   resetAllCards() {
     document.querySelectorAll('.song-card').forEach(card => {
       card.classList.remove('playing');
+      card.classList.remove('loading');
       const btn = card.querySelector('.btn-preview');
       if (btn) btn.innerHTML = '▶️ Nghe Thử Trước';
       const icon = card.querySelector('.play-icon-overlay');
@@ -376,6 +387,7 @@ class PreviewPlayer {
     });
     document.querySelectorAll('.playlist-item-row').forEach(row => {
       row.classList.remove('playing');
+      row.classList.remove('loading');
       const btn = row.querySelector('.btn-preview');
       if (btn) btn.innerHTML = '▶️ Nghe';
       const icon = row.querySelector('.playlist-play-icon-overlay');
@@ -383,29 +395,47 @@ class PreviewPlayer {
     });
   }
 
-  highlightCard(trackId, isPlaying) {
+  highlightCard(trackId, isPlaying, isLoading = false) {
     const card = document.getElementById(`card-${trackId}`);
     if (card) {
       card.classList.toggle('playing', isPlaying);
+      card.classList.toggle('loading', isLoading);
       const btn = card.querySelector('.btn-preview');
-      if (btn) btn.innerHTML = isPlaying ? '⏸️ Tạm Dừng' : '▶️ Tiếp Tục Nghe';
+      if (btn) {
+        if (isLoading) {
+          btn.innerHTML = '⏳ Đang tải...';
+        } else {
+          btn.innerHTML = isPlaying ? '⏸️ Tạm Dừng' : '▶️ Tiếp Tục Nghe';
+        }
+      }
       const icon = card.querySelector('.play-icon-overlay');
-      if (icon) icon.textContent = isPlaying ? '⏸' : '▶';
+      if (icon) {
+        icon.textContent = isLoading ? '⏳' : (isPlaying ? '⏸' : '▶');
+      }
     }
 
     const plRow = document.getElementById(`playlist-row-${trackId}`);
     if (plRow) {
       plRow.classList.toggle('playing', isPlaying);
+      plRow.classList.toggle('loading', isLoading);
       const btn = plRow.querySelector('.btn-preview');
-      if (btn) btn.innerHTML = isPlaying ? '⏸️ Dừng' : '▶️ Nghe';
+      if (btn) {
+        if (isLoading) {
+          btn.innerHTML = '⏳ Đang tải...';
+        } else {
+          btn.innerHTML = isPlaying ? '⏸️ Dừng' : '▶️ Nghe';
+        }
+      }
       const icon = plRow.querySelector('.playlist-play-icon-overlay');
-      if (icon) icon.textContent = isPlaying ? '⏸' : '▶';
+      if (icon) {
+        icon.textContent = isLoading ? '⏳' : (isPlaying ? '⏸' : '▶');
+      }
     }
   }
 
   updateCardState() {
     if (!this.currentTrack) return;
-    this.highlightCard(this.currentTrack.id, this.isPlaying);
+    this.highlightCard(this.currentTrack.id, this.isPlaying, this.isLoading);
   }
 
   toggleRepeat() {
@@ -581,7 +611,13 @@ class PreviewPlayer {
 
   updatePlayPauseIcon() {
     if (this.btnPlayPause) {
-      this.btnPlayPause.innerHTML = this.isPlaying ? '⏸️' : '▶️';
+      if (this.isLoading) {
+        this.btnPlayPause.innerHTML = '⏳';
+        this.btnPlayPause.title = 'Đang kết nối luồng nhạc...';
+      } else {
+        this.btnPlayPause.innerHTML = this.isPlaying ? '⏸️' : '▶️';
+        this.btnPlayPause.title = this.isPlaying ? 'Tạm dừng nghe thử' : 'Tiếp tục nghe thử';
+      }
     }
   }
 

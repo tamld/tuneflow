@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const http = require('http');
 const { app } = require('../src/server');
 const queue = require('../src/engine/queue');
+const { streamUrlCache } = require('../src/engine/ytdlp');
 
 describe('TuneFlow API Integration Tests', () => {
   let server;
@@ -10,6 +11,7 @@ describe('TuneFlow API Integration Tests', () => {
 
   before(async () => {
     queue.isPaused = true;
+    streamUrlCache.set('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'https://mock.googlevideo.com/videoplayback');
     await new Promise((resolve) => {
       server = http.createServer(app);
       server.listen(0, '127.0.0.1', () => {
@@ -23,6 +25,7 @@ describe('TuneFlow API Integration Tests', () => {
   after(async () => {
     queue.isPaused = false;
     queue.clearCompleted();
+    streamUrlCache.clear();
     await new Promise((resolve) => server.close(resolve));
   });
 
@@ -65,5 +68,28 @@ describe('TuneFlow API Integration Tests', () => {
     const data = await res.json();
     assert.ok(Array.isArray(data.items));
     assert.ok(data.items.length > 0);
+  });
+
+  it('POST /api/preview/prewarm should reject invalid video ID with 400', async () => {
+    const res = await fetch(`${baseUrl}/api/preview/prewarm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'bad@id!' })
+    });
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.ok(data.error.includes('không hợp lệ'));
+  });
+
+  it('POST /api/preview/prewarm should accept valid video ID and return 200 with prewarming status', async () => {
+    const res = await fetch(`${baseUrl}/api/preview/prewarm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'dQw4w9WgXcQ' })
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.prewarming, 'dQw4w9WgXcQ');
   });
 });
