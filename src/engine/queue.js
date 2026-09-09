@@ -142,10 +142,14 @@ class DownloadQueue {
         for (const file of files) {
           if (file === 'temp') continue;
           const fullPath = path.join(DOWNLOADS_DIR, file);
-          const stat = fs.statSync(fullPath);
-          if (stat.isFile() && (now - stat.mtimeMs > maxAgeMs)) {
-            fs.unlinkSync(fullPath);
-            deletedCount++;
+          try {
+            const stat = fs.statSync(fullPath);
+            if (stat.isFile() && (now - stat.mtimeMs > maxAgeMs)) {
+              fs.unlinkSync(fullPath);
+              deletedCount++;
+            }
+          } catch {
+            // Concurrent deletion or inaccessible file, safe to skip
           }
         }
       }
@@ -154,10 +158,14 @@ class DownloadQueue {
         const tempFiles = fs.readdirSync(TEMP_DIR);
         for (const file of tempFiles) {
           const fullPath = path.join(TEMP_DIR, file);
-          const stat = fs.statSync(fullPath);
-          if (stat.isFile() && (now - stat.mtimeMs > 6 * 60 * 60 * 1000)) {
-            fs.unlinkSync(fullPath);
-            deletedCount++;
+          try {
+            const stat = fs.statSync(fullPath);
+            if (stat.isFile() && (now - stat.mtimeMs > 6 * 60 * 60 * 1000)) {
+              fs.unlinkSync(fullPath);
+              deletedCount++;
+            }
+          } catch {
+            // Concurrent deletion or inaccessible file, safe to skip
           }
         }
       }

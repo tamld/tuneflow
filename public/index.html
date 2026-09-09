@@ -295,12 +295,140 @@
     </div>
   </div>
 
+  <!-- Admin Control Panel Modal (Issue #71) -->
+  <div id="modal-admin-panel" class="modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+    <div class="modal-card" style="max-width: 860px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 26px;">👑</span>
+          <h2 id="admin-modal-title" style="margin: 0; font-size: 22px;">Bảng Quản Trị TuneFlow</h2>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button type="button" id="btn-admin-logout" class="secondary-btn" style="padding: 6px 14px; font-size: 13px; border-radius: 8px;">🚪 Đăng Xuất</button>
+          <button type="button" id="btn-close-admin-modal" class="btn-close" aria-label="Đóng bảng quản trị">✕</button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="admin-tabs" style="display: flex; gap: 10px; margin: 16px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; overflow-x: auto;">
+        <button type="button" class="admin-tab-btn active" data-tab="accounts">👥 Tài Khoản Gia Đình</button>
+        <button type="button" class="admin-tab-btn" data-tab="guests">⏱️ Khách & Hạn Mức</button>
+        <button type="button" class="admin-tab-btn" data-tab="system">🖥️ Hệ Thống Homelab</button>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+        <!-- Tab 1: Accounts -->
+        <div id="admin-tab-accounts" class="admin-tab-content">
+          <div style="background: var(--surface-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 12px 0; font-size: 16px; color: var(--accent-gold);">➕ Thêm Tài Khoản Mới</h3>
+            <form id="form-admin-create-user" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+              <div style="flex: 1; min-width: 160px;">
+                <label for="input-admin-new-username" style="display: block; font-size: 13px; margin-bottom: 4px;">Tên đăng nhập:</label>
+                <input type="text" id="input-admin-new-username" required placeholder="vd: bo_me, con_gai..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; background: var(--bg-card); color: var(--text-primary);">
+              </div>
+              <div style="flex: 1; min-width: 160px;">
+                <label for="input-admin-new-password" style="display: block; font-size: 13px; margin-bottom: 4px;">Mật khẩu:</label>
+                <input type="password" id="input-admin-new-password" required placeholder="Nhập mật khẩu..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; background: var(--bg-card); color: var(--text-primary);">
+              </div>
+              <div style="width: 140px;">
+                <label for="select-admin-new-role" style="display: block; font-size: 13px; margin-bottom: 4px;">Vai trò:</label>
+                <select id="select-admin-new-role" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; background: var(--bg-card); color: var(--text-primary);">
+                  <option value="user" selected>👤 Gia Đình</option>
+                  <option value="admin">👑 Quản Trị</option>
+                </select>
+              </div>
+              <button type="submit" class="primary-btn" style="padding: 9px 20px; border-radius: 6px; font-weight: 600;">Tạo Mới</button>
+            </form>
+            <div id="admin-account-msg" style="display: none; margin-top: 10px; padding: 8px 12px; border-radius: 6px; font-size: 13px;"></div>
+          </div>
+
+          <h3 style="margin: 0 0 10px 0; font-size: 16px;">📋 Danh Sách Thành Viên & Quản Trị</h3>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                  <th style="padding: 8px 12px;">ID</th>
+                  <th style="padding: 8px 12px;">Tên Người Dùng</th>
+                  <th style="padding: 8px 12px;">Vai Trò</th>
+                  <th style="padding: 8px 12px;">Ngày Tạo</th>
+                  <th style="padding: 8px 12px; text-align: right;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="admin-user-list-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Guests -->
+        <div id="admin-tab-guests" class="admin-tab-content" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="margin: 0; font-size: 16px;">⏱️ Phiên Truy Cập Khách (Tổng: <span id="admin-guest-total-count">0</span>)</h3>
+            <span style="font-size: 13px; color: var(--text-secondary);">Hạn mức: 30 phút / Cooldown: 30 phút</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                  <th style="padding: 8px 12px;">Mã Khách</th>
+                  <th style="padding: 8px 12px;">Địa Chỉ IP</th>
+                  <th style="padding: 8px 12px;">Đã Nghe</th>
+                  <th style="padding: 8px 12px;">Trạng Thái</th>
+                  <th style="padding: 8px 12px; text-align: right;">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="admin-guest-list-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: System Ops -->
+        <div id="admin-tab-system" class="admin-tab-content" style="display: none;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
+            <div style="background: var(--surface-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+              <div style="font-size: 13px; color: var(--text-secondary);">Node.js / Nền Tảng</div>
+              <div id="admin-sys-node" style="font-weight: 700; font-size: 16px; margin: 4px 0;">—</div>
+              <div id="admin-sys-platform" style="font-size: 12px; color: var(--text-secondary);">—</div>
+            </div>
+            <div style="background: var(--surface-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+              <div style="font-size: 13px; color: var(--text-secondary);">Thời Gian Hoạt Động (Uptime)</div>
+              <div id="admin-sys-uptime" style="font-weight: 700; font-size: 16px; margin: 4px 0; color: #48bb78;">—</div>
+            </div>
+            <div style="background: var(--surface-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+              <div style="font-size: 13px; color: var(--text-secondary);">Bộ Nhớ RAM</div>
+              <div id="admin-sys-memory" style="font-weight: 700; font-size: 14px; margin: 4px 0;">—</div>
+            </div>
+            <div style="background: var(--surface-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+              <div style="font-size: 13px; color: var(--text-secondary);">Dung Lượng Tải Nhạc</div>
+              <div id="admin-sys-storage" style="font-weight: 700; font-size: 14px; margin: 4px 0; color: var(--accent-gold);">—</div>
+            </div>
+          </div>
+
+          <div style="background: var(--surface-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="margin: 0; font-size: 16px;">⚡ Công Cụ Trích Xuất YouTube (yt-dlp)</h3>
+                <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-secondary);">
+                  Phiên bản hiện tại: <strong id="admin-sys-ytdlp" style="color: var(--accent-gold);">—</strong>
+                </p>
+              </div>
+              <button type="button" id="btn-admin-update-ytdlp" class="primary-btn" style="padding: 10px 20px; border-radius: 8px; font-weight: 600;">
+                🔄 Cập Nhật yt-dlp Ngay
+              </button>
+            </div>
+            <div id="admin-ytdlp-update-msg" style="display: none; margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 13px; background: var(--bg-card);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
 
   <!-- Scripts -->
   <script src="/js/i18n.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/admin.js"></script>
   <script src="/js/player.js"></script>
   <script src="/js/tv-leanback.js"></script>
   <script src="/js/app.js"></script>
