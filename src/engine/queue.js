@@ -274,6 +274,9 @@ class DownloadQueue {
           this.broadcastTimer = null;
           this.doBroadcast();
         }, 300 - (now - this.lastBroadcast));
+        if (this.broadcastTimer && typeof this.broadcastTimer.unref === 'function') {
+          this.broadcastTimer.unref();
+        }
       }
       return;
     }

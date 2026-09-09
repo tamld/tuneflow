@@ -1,9 +1,17 @@
-const { describe, it } = require('node:test');
+const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { formatDuration, searchYouTube } = require('../src/engine/ytdlp');
 const queue = require('../src/engine/queue');
 
 describe('TuneFlow Core Engine Unit Tests', () => {
+  before(() => {
+    queue.isPaused = true;
+  });
+
+  after(() => {
+    queue.isPaused = false;
+    queue.clearCompleted();
+  });
   it('should correctly format duration seconds to MM:SS string', () => {
     assert.equal(formatDuration(0), '00:00');
     assert.equal(formatDuration(65), '01:05');

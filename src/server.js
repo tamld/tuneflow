@@ -34,16 +34,16 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(ROOT_DIR, 'public', 'index.html'));
 });
 
-// Global Crash Shield (Issue #25)
-process.on('uncaughtException', (err) => {
-  console.error('💥 Uncaught Exception caught by TuneFlow server shield:', err);
-});
-process.on('unhandledRejection', (reason) => {
-  console.error('💥 Unhandled Rejection caught by TuneFlow server shield:', reason);
-});
-
 let server = null;
 if (require.main === module) {
+  // Global Crash Shield (Issue #25)
+  process.on('uncaughtException', (err) => {
+    console.error('💥 Uncaught Exception caught by TuneFlow server shield:', err);
+  });
+  process.on('unhandledRejection', (reason) => {
+    console.error('💥 Unhandled Rejection caught by TuneFlow server shield:', reason);
+  });
+
   server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🎶 TuneFlow Server is running on http://localhost:${PORT}`);
     console.log(`📂 Ready for parents to search, preview, and download music!`);
