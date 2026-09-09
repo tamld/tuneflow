@@ -597,8 +597,11 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      // Play action handler for thumbnail, title, and preview button
-      const playHandler = () => {
+      // Play action handler for thumbnail, title, preview button, and card click
+      const playHandler = (e) => {
+        if (e && typeof e.stopPropagation === 'function') {
+          e.stopPropagation();
+        }
         if (window.previewPlayer) {
           window.previewPlayer.playTrack(song);
         }
@@ -610,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
         thumbWrapper.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            playHandler();
+            playHandler(e);
           }
         });
       }
@@ -621,7 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
         titleEl.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            playHandler();
+            playHandler(e);
           }
         });
       }
@@ -634,13 +637,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Event: Download
       const downloadBtn = card.querySelector(`#btn-download-${song.id}`);
-      downloadBtn.addEventListener('click', () => {
+      downloadBtn.addEventListener('click', (e) => {
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
         queueDownload(song);
       });
 
       // Event: Favorite Toggle
       const favBtn = card.querySelector(`#btn-fav-${song.id}`);
-      favBtn.addEventListener('click', () => {
+      favBtn.addEventListener('click', (e) => {
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
         toggleFavorite(song, favBtn);
       });
 
@@ -653,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.closest('.btn-download') || e.target.closest('.btn-fav')) {
           return;
         }
-        playHandler();
+        playHandler(e);
       });
 
       card.addEventListener('keydown', (e) => {

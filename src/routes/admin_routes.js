@@ -45,6 +45,10 @@ function createAdminRouter({ userRepo, guestRepo }) {
       return res.status(400).json({ error: 'INVALID_ID' });
     }
 
+    if (req.user && req.user.id === userId) {
+      return res.status(400).json({ error: 'CANNOT_DELETE_SELF', message: 'Bạn không thể tự xóa tài khoản đang đăng nhập' });
+    }
+
     const success = userRepo.deleteUser(userId);
     return res.status(200).json({ ok: success });
   });

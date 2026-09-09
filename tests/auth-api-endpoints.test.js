@@ -222,10 +222,35 @@ describe('Task 4: Auth & Admin API Endpoints Tests', () => {
       const userList = await listRes.json();
       assert.equal(userList.length, 2);
 
-      // 3. Reset guest cooldown
+      // 3. Prevent self-deletion of currently logged-in admin
+      const selfDeleteRes = await fetch(`${baseUrl}/api/admin/users/1`, {
+        method: 'DELETE',
+        headers: authHeader
+      });
+      assert.equal(selfDeleteRes.status, 400);
+      const selfDeleteData = await selfDeleteRes.json();
+      assert.equal(selfDeleteData.error, 'CANNOT_DELETE_SELF');
+
+      // 4. Delete created family user
+      const deleteUserRes = await fetch(`${baseUrl}/api/admin/users/${createdUser.user.id}`, {
+        method: 'DELETE',
+        headers: authHeader
+      });
+      assert.equal(deleteUserRes.status, 200);
+      const deleteUserData = await deleteUserRes.json();
+      assert.equal(deleteUserData.ok, true);
+
+      // 5. List guests
       guestRepo.getOrCreateGuest({ guestId: 'g-stuck', clientIp: '1.2.3.4', fingerprintHash: 'f' });
       guestRepo.recordListeningTime('g-stuck', 1800);
 
+      const listGuestsRes = await fetch(`${baseUrl}/api/admin/guests`, { headers: authHeader });
+      assert.equal(listGuestsRes.status, 200);
+      const guests = await listGuestsRes.json();
+      assert.ok(Array.isArray(guests));
+      assert.ok(guests.length >= 1);
+
+      // 6. Reset guest cooldown
       const resetRes = await fetch(`${baseUrl}/api/admin/guests/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeader },

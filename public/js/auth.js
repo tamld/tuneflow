@@ -79,8 +79,12 @@ class TuneFlowAuth {
   bindEvents() {
     if (this.btnAuthStatus) {
       this.btnAuthStatus.addEventListener('click', () => {
-        if (this.role === 'admin' || this.role === 'user') {
-          if (confirm(`Bạn đang đăng nhập với vai trò: ${this.user.username} (${this.role}).\nBạn có muốn đăng xuất không?`)) {
+        if (this.role === 'admin') {
+          if (window.adminPanel) {
+            window.adminPanel.open();
+          }
+        } else if (this.role === 'user') {
+          if (confirm(`Bạn đang đăng nhập với tài khoản: ${this.user.username}.\nBạn có muốn đăng xuất không?`)) {
             this.logout();
           }
         } else {
@@ -139,7 +143,7 @@ class TuneFlowAuth {
     if (this.role === 'admin') {
       this.authStatusIcon.textContent = '👑';
       this.authStatusText.textContent = `Quản trị (${this.user.username})`;
-      this.btnAuthStatus.title = `Tài khoản Quản trị: ${this.user.username} (Bấm để đăng xuất)`;
+      this.btnAuthStatus.title = `Tài khoản Quản trị: ${this.user.username} (Bấm để mở Bảng Quản Trị)`;
     } else {
       this.authStatusIcon.textContent = '👤';
       this.authStatusText.textContent = `Gia Đình (${this.user.username})`;

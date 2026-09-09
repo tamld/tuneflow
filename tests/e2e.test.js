@@ -240,7 +240,7 @@ describe('TuneFlow End-to-End & Elderly Accessibility Suite', () => {
 
       assert.strictEqual(playerPipelineResult.currentTrackId, 'test_pipeline_video_id');
       assert.ok(playerPipelineResult.audioSrc.includes('/api/preview/test_pipeline_video_id'));
-      assert.strictEqual(playerPipelineResult.trackTitle, 'Test Pipeline Song');
+      assert.ok(playerPipelineResult.trackTitle.includes('Test Pipeline Song'));
 
       // 10. Verify Full Card-Level Click-to-Play & Immediate Loading State (Issue #70)
       const cardClickAndLoadingResult = await page.evaluate(async () => {

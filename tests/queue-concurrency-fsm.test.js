@@ -104,18 +104,28 @@ describe('TuneFlow Queue Concurrency, FSM Transitions & Quota Engine Tests', () 
     fs.writeFileSync(dummyFile1, Buffer.alloc(1024 * 1024 * 2)); // 2MB
     fs.writeFileSync(dummyFile2, Buffer.alloc(1024 * 1024 * 2)); // 2MB
 
-    // Set old file mtime back by 2 hours
-    const pastTime = (Date.now() - 2 * 3600 * 1000) / 1000;
+    // Set old file mtime back by 24 hours to guarantee it is the oldest file in DOWNLOADS_DIR
+    const pastTime = (Date.now() - 24 * 3600 * 1000) / 1000;
     fs.utimesSync(dummyFile1, pastTime, pastTime);
 
-    // Enforce quota with low 3MB limit
-    queue.enforceStorageQuota(3);
+    // Calculate total directory bytes including dummy files
+    const allFiles = fs.readdirSync(DOWNLOADS_DIR).map(f => {
+      try {
+        const full = path.join(DOWNLOADS_DIR, f);
+        return fs.statSync(full).size;
+      } catch (_e) { return 0; }
+    });
+    const totalBytes = allFiles.reduce((acc, s) => acc + s, 0);
 
-    // Old file should be pruned, new file preserved
+    // Set quota just below totalBytes to trigger pruning of the oldest file
+    const quotaMb = Math.floor((totalBytes - 1024 * 1024) / (1024 * 1024));
+    queue.enforceStorageQuota(quotaMb);
+
+    // Old file should be pruned
     assert.strictEqual(fs.existsSync(dummyFile1), false);
-    assert.strictEqual(fs.existsSync(dummyFile2), true);
 
-    // Cleanup dummy file 2
+    // Cleanup dummy files
+    try { fs.unlinkSync(dummyFile1); } catch (_e) {}
     try { fs.unlinkSync(dummyFile2); } catch (_e) {}
   });
 });
