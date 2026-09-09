@@ -789,6 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 10. Connect Server-Sent Events (SSE) with Reconnection & Error Guard (FARD Resiliency)
   let eventSource = null;
   let sseReconnectAttempts = 0;
+  let isInitialSSEMessage = true;
 
   function initSSE() {
     if (eventSource) {
@@ -805,6 +806,16 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const items = JSON.parse(event.data);
         if (!Array.isArray(items)) return;
+
+        // Prevent accidental automatic downloads on page reload / initial connect (Issue #59)
+        if (isInitialSSEMessage) {
+          items.forEach(item => {
+            if (item.status === 'completed') {
+              activeDownloadedIds.add(item.id);
+            }
+          });
+          isInitialSSEMessage = false;
+        }
 
         // Update Floating Queue Badge & Drawer Header Count
         const activeCount = items.filter(i => i.status === 'downloading' || i.status === 'converting' || i.status === 'queued').length;
@@ -850,40 +861,38 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
 
-        // Update Visible Song Cards on Main View
+        // Update Visible Song Cards on Main View via direct O(1) ID lookup (Issue #60)
         items.forEach(item => {
-          document.querySelectorAll('.song-card').forEach(card => {
-            const titleEl = card.querySelector('.song-title');
-            if (titleEl && titleEl.textContent === item.title) {
-              const statusBadge = card.querySelector('.song-status-badge');
-              const downloadBtn = card.querySelector('.btn-download');
+          const card = document.getElementById(`card-${item.id}`);
+          if (card) {
+            const statusBadge = card.querySelector('.song-status-badge');
+            const downloadBtn = card.querySelector('.btn-download');
 
-              if (statusBadge) {
-                statusBadge.style.display = 'block';
-                if (item.status === 'downloading') {
-                  statusBadge.textContent = `📥 Đang tải về... (${item.progress}%) ${item.speed ? '• ' + item.speed : ''}`;
-                  statusBadge.style.color = 'var(--accent-gold)';
-                } else if (item.status === 'converting') {
-                  statusBadge.textContent = `⚙️ Đang ghép âm thanh MP3 320kbps... (90%)`;
-                  statusBadge.style.color = 'var(--accent-gold)';
-                } else if (item.status === 'completed') {
-                  statusBadge.textContent = `✅ Đã xong! File đang lưu vào máy tính Bố Mẹ.`;
-                  statusBadge.style.color = 'var(--accent-green)';
-                  if (downloadBtn) {
-                    downloadBtn.textContent = '✅ Đã Tải Xong';
-                  }
-
-                  if (!activeDownloadedIds.has(item.id)) {
-                    activeDownloadedIds.add(item.id);
-                    triggerClientBrowserDownload(item);
-                  }
-                } else if (item.status === 'failed') {
-                  statusBadge.textContent = `⚠️ Bài này bị lỗi tải, Bố Mẹ chọn bài khác nhé!`;
-                  statusBadge.style.color = 'var(--accent-red)';
+            if (statusBadge) {
+              statusBadge.style.display = 'block';
+              if (item.status === 'downloading') {
+                statusBadge.textContent = `📥 Đang tải về... (${item.progress}%) ${item.speed ? '• ' + item.speed : ''}`;
+                statusBadge.style.color = 'var(--accent-gold)';
+              } else if (item.status === 'converting') {
+                statusBadge.textContent = `⚙️ Đang ghép âm thanh MP3 320kbps... (90%)`;
+                statusBadge.style.color = 'var(--accent-gold)';
+              } else if (item.status === 'completed') {
+                statusBadge.textContent = `✅ Đã xong! File đang lưu vào máy tính Bố Mẹ.`;
+                statusBadge.style.color = 'var(--accent-green)';
+                if (downloadBtn) {
+                  downloadBtn.textContent = '✅ Đã Tải Xong';
                 }
+
+                if (!activeDownloadedIds.has(item.id)) {
+                  activeDownloadedIds.add(item.id);
+                  triggerClientBrowserDownload(item);
+                }
+              } else if (item.status === 'failed') {
+                statusBadge.textContent = `⚠️ Bài này bị lỗi tải, Bố Mẹ chọn bài khác nhé!`;
+                statusBadge.style.color = 'var(--accent-red)';
               }
             }
-          });
+          }
         });
       } catch (err) {
         console.error('[SSE Event Processing Error]', err);
