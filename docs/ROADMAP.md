@@ -20,6 +20,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 │ Phase 5  │ Hybrid Client-Server Compute & Web Stream│ v1.4.0      │ ✅ Completed       │
 │ Phase 6  │ Browser Extension MV3 & Pháp Lý Bản Quyền│ v2.0.0      │ ✅ Completed       │
 │ Phase 7  │ Android TV D-Pad Leanback & Mobile Client│ v2.1.0      │ ✅ Completed       │
+│ Phase 8  │ PWA Ngoại Tuyến, Giọng Nói & Ghép Nối LAN│ v2.2.0      │ ✅ Completed       │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
@@ -135,6 +136,22 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 
 ---
 
+### CHẶNG 8: PWA Ngoại Tuyến, Tìm Kiếm Giọng Nói & Ghép Nối LAN (v2.2.0)
+- **Vấn đề giải quyết**:
+  - **Progressive Web App (PWA) & Bộ Nhớ Đệm Ngoại Tuyến (Cache API)**:
+    - Web App Manifest (`public/manifest.webmanifest`) hỗ trợ cài đặt trực tiếp lên màn hình chính (Add to Home Screen) trên Android TV, điện thoại Android và Desktop.
+    - Service Worker (`public/sw.js`) chiến lược Cache-first lưu trữ vỏ ứng dụng tĩnh, cho phép mở ứng dụng tức thì ngay cả khi mất kết nối mạng Wi-Fi gia đình.
+  - **Tìm Kiếm Bằng Giọng Nói Tiếng Việt (Web Speech API Voice Search)**:
+    - Nút micro lớn (`#btn-voice-search`) trợ năng cho người cao tuổi ngại gõ phím.
+    - Tự động nhận diện phát âm tiếng Việt (`vi-VN`) với hiệu ứng nhịp đập ghi âm trực quan (`.recording`), tự động điền từ khóa và kích hoạt tìm kiếm chỉ với 1 chạm.
+  - **Ghép Nối Mạng Cục Bộ LAN & Chẩn Đoán Không Cần Cấu Hình**:
+    - API `GET /api/system/network` tự động quét các giao diện mạng IPv4, cung cấp URL mạng LAN gia đình và tải trọng mã QR để thiết bị di động quét kết nối nhanh.
+- **Bộ hồ sơ tài liệu**:
+  - **SPEC**: `docs/spec/SPEC-0007-android-tv-and-mobile-client.md`
+  - **ADR**: `docs/adr/ADR-0012-android-mobile-and-tv-leanback-architecture.md`
+
+---
+
 ## 📋 TRẠNG THÁI TRIỂN KHAI VÀ THEO DÕI (TRACEABILITY MATRIX)
 
 | Mã Yêu Cầu | Hạng Mục Công Việc | Tài Liệu Quy Chiếu | Mã Kiểm Thử / Artifact |
@@ -151,3 +168,4 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 | **RM-10** | Hybrid Client-Side WASM Compute | `docs/adr/ADR-0010` | `tests/wasm-stream.test.js` (Phase 5)|
 | **RM-11** | Browser Extension MV3 Integration | `docs/adr/ADR-0011` | `tests/extension.test.js` (Phase 6) |
 | **RM-12** | Android TV D-Pad Leanback & Ambient Player | `docs/adr/ADR-0012` | `tests/tv-leanback.test.js` (Phase 7) |
+| **RM-13** | PWA Offline Shell, Voice Search & LAN QR | `docs/spec/SPEC-0007` | `tests/pwa-voice.test.js` (Phase 8) |

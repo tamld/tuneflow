@@ -407,4 +407,41 @@ router.post('/system/update-ytdlp', async (req, res) => {
   }
 });
 
+// System network interfaces & local LAN QR pairing (Phase 8 - Issue #45)
+router.get('/system/network', (req, res) => {
+  try {
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    const localIPs = [];
+
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          localIPs.push(iface.address);
+        }
+      }
+    }
+
+    if (localIPs.length === 0) {
+      localIPs.push('127.0.0.1');
+    }
+
+    const port = process.env.PORT || 3000;
+    const primaryIP = localIPs[0];
+    const lanUrl = `http://${primaryIP}:${port}`;
+
+    res.json({
+      success: true,
+      hostname: os.hostname(),
+      port: port,
+      localIPs: localIPs,
+      primaryIP: primaryIP,
+      lanUrl: lanUrl,
+      qrPayload: lanUrl
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

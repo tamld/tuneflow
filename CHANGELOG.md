@@ -1,6 +1,23 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.2.0] - 2026-09-09
+
+### Đã Thêm (Added)
+- **Progressive Web App (PWA) & Lưu Trữ Ngoại Tuyến (Cache API - Phase 8)**:
+  - Bản kê khai ứng dụng web chuẩn PWA `public/manifest.webmanifest` hỗ trợ cài đặt ứng dụng độc lập (Add to Home Screen / Standalone PWA) trên Android TV, điện thoại Android và máy tính bảng ([Issue #45](https://github.com/tamld/tuneflow/issues/45)).
+  - Service Worker `public/sw.js` áp dụng chiến lược Cache-first cho toàn bộ vỏ giao diện tĩnh (HTML/CSS/JS/Icons), đảm bảo mở ứng dụng tức thì và duy trì trải nghiệm khi mất kết nối mạng ([Issue #45](https://github.com/tamld/tuneflow/issues/45)).
+- **Tìm Kiếm Bằng Giọng Nói Tiếng Việt (Web Speech API Voice Search)**:
+  - Nút micro lớn (`#btn-voice-search`) trợ năng cho người cao tuổi ngại gõ phím ảo ([Issue #45](https://github.com/tamld/tuneflow/issues/45)).
+  - Tự động nhận diện phát âm tiếng Việt (`vi-VN`) với hiệu ứng ghi âm nhịp đập trực quan (`.recording`), tự động điền từ khóa và kích hoạt tìm kiếm chỉ với 1 chạm ([Issue #45](https://github.com/tamld/tuneflow/issues/45)).
+- **Ghép Nối Mạng Nội Bộ LAN & Chẩn Đoán Không Cần Cấu Hình**:
+  - API `GET /api/system/network` tự động quét các giao diện mạng IPv4, cung cấp URL mạng LAN gia đình và tải trọng mã QR để thiết bị di động quét kết nối nhanh ([Issue #45](https://github.com/tamld/tuneflow/issues/45)).
+- **Kiểm Thử & Đảm Bảo Chất Lượng**:
+  - Bổ sung bộ kiểm thử tự động `tests/pwa-voice.test.js` kiểm tra cấu trúc PWA manifest, service worker lifecycle, network API và nhận diện giọng nói.
+  - Toàn bộ 101/101 ca kiểm thử tự động trong 27 bộ test suite chạy xanh 100%.
+
+---
+
 ## [2.1.0] - 2026-09-09
 
 ### Đã Thêm (Added)
