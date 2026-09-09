@@ -29,12 +29,14 @@
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-player: 0 -8px 30px rgba(0, 0, 0, 0.6);
 
-  /* Typography Scale for Elderly Readability */
+  /* Typography Scale for Elderly Readability (Issue #49) */
+  --user-font-scale: 1;
+  --font-scale: var(--user-font-scale, 1);
   --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-  --text-title: 32px;
-  --text-subtitle: 22px;
-  --text-body: 18px;
-  --text-small: 16px;
+  --text-title: calc(32px * var(--font-scale, 1));
+  --text-subtitle: calc(22px * var(--font-scale, 1));
+  --text-body: calc(18px * var(--font-scale, 1));
+  --text-small: calc(16px * var(--font-scale, 1));
 
   /* Touch/Click Target Dimension (Strictly >= 56px) */
   --target-height: 56px;
@@ -1382,39 +1384,40 @@ body {
   z-index: 100 !important;
 }
 
-/* TV Mode Layout Scaling (10-Foot Leanback Experience) */
+/* TV Mode Layout Scaling (10-Foot Leanback Experience - Issue #49) */
 body.tv-mode {
+  --font-scale: calc(1.2 * var(--user-font-scale, 1));
   padding-bottom: 120px;
-  font-size: 20px;
+  font-size: calc(20px * var(--font-scale, 1));
 }
 
 body.tv-mode .brand-title {
-  font-size: 38px;
+  font-size: calc(38px * var(--font-scale, 1));
 }
 
 body.tv-mode .brand-tagline {
-  font-size: 20px;
+  font-size: calc(20px * var(--font-scale, 1));
 }
 
 body.tv-mode .persona-text {
-  font-size: 22px;
+  font-size: calc(22px * var(--font-scale, 1));
 }
 
 body.tv-mode .search-input {
-  font-size: 22px;
+  font-size: calc(22px * var(--font-scale, 1));
   padding: 18px 24px;
 }
 
 body.tv-mode .song-title {
-  font-size: 22px;
+  font-size: calc(22px * var(--font-scale, 1));
 }
 
 body.tv-mode .song-uploader {
-  font-size: 18px;
+  font-size: calc(18px * var(--font-scale, 1));
 }
 
 body.tv-mode .player-title {
-  font-size: 22px;
+  font-size: calc(22px * var(--font-scale, 1));
 }
 
 /* Ambient Leanback Fullscreen Player Overlay */
