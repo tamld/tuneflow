@@ -241,8 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
+        const rawTranscript = event.results[0][0].transcript;
+        if (rawTranscript) {
+          const transcript = rawTranscript.replace(/[\.\,\?\!]+$/, '').trim();
           searchInput.value = transcript;
           if (btnClearSearch) btnClearSearch.style.display = 'flex';
           showToast(`🎙️ Đã nghe: "${transcript}" - Đang tìm kiếm...`, 'success');
@@ -394,7 +395,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
 
-      if (!data.success || !data.results || data.results.length === 0) {
+      if (!res.ok || !data.success) {
+        resultsHeader.textContent = '⚠️ Lỗi tìm kiếm bài hát';
+        resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--accent-red);">${escapeHtml(data.error || 'Dạ hệ thống tìm kiếm đang gặp trục trặc, Bố Mẹ bấm thử lại nha!')}</div>`;
+        return;
+      }
+
+      if (!data.results || data.results.length === 0) {
         resultsHeader.textContent = 'Không tìm thấy bài hát';
         resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 20px;">Dạ không tìm thấy bài hát này. Bố Mẹ thử chọn thể loại khác hoặc gõ tên khác xem sao nhé!</div>';
         return;
