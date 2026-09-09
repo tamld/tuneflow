@@ -16,6 +16,31 @@ class PreviewPlayer {
     this.sleepTimerId = null;
     this.sleepMinutes = 0;
 
+    // Web Audio API State (Phase 5: Hybrid Client-Side Compute)
+    this.audioCtx = null;
+    this.sourceNode = null;
+    this.lowFilter = null;
+    this.midFilter = null;
+    this.highFilter = null;
+    this.gainNode = null;
+    this.compressorNode = null;
+    this.analyserNode = null;
+    this.dataArray = null;
+    this.visualizerAnimId = null;
+
+    // EQ Presets: standard | clarity (voice boost) | warm (bolero/relax)
+    this.eqPresets = ['standard', 'clarity', 'warm'];
+    this.eqLabels = {
+      standard: { icon: '🎛️', name: 'Chuẩn', desc: 'Âm thanh cân bằng tự nhiên' },
+      clarity: { icon: '🗣️', name: 'Trong Rõ', desc: 'Tăng cường giọng ca, giảm ù rè' },
+      warm: { icon: '☕', name: 'Trầm Ấm', desc: 'Dày dặn, êm ái cho Bolero & Thư giãn' }
+    };
+    this.eqIndex = 0;
+
+    // Volume Boost Levels: 1.0 (100%), 1.25 (125%), 1.5 (150%)
+    this.boostLevels = [1.0, 1.25, 1.5];
+    this.boostIndex = 0;
+
     // DOM Elements
     this.playerContainer = document.getElementById('bottom-player');
     this.trackTitle = document.getElementById('player-track-title');
@@ -27,6 +52,10 @@ class PreviewPlayer {
     this.btnRepeat = document.getElementById('btn-player-repeat');
     this.btnVolume = document.getElementById('btn-player-volume');
     this.btnSleep = document.getElementById('btn-player-sleep');
+    this.btnEq = document.getElementById('btn-player-eq');
+    this.btnBoost = document.getElementById('btn-player-boost');
+    this.visualizerCanvas = document.getElementById('player-visualizer');
+    this.visualizerCtx = this.visualizerCanvas ? this.visualizerCanvas.getContext('2d') : null;
 
     this.bindEvents();
   }
@@ -46,6 +75,14 @@ class PreviewPlayer {
 
     if (this.btnSleep) {
       this.btnSleep.addEventListener('click', () => this.cycleSleepTimer());
+    }
+
+    if (this.btnEq) {
+      this.btnEq.addEventListener('click', () => this.cycleEq());
+    }
+
+    if (this.btnBoost) {
+      this.btnBoost.addEventListener('click', () => this.cycleBoost());
     }
 
     this.audio.addEventListener('timeupdate', () => {
@@ -73,6 +110,7 @@ class PreviewPlayer {
       }
 
       this.isPlaying = false;
+      this.stopVisualizer();
       this.updatePlayPauseIcon();
       this.updateCardState();
       this.trackStatus.textContent = 'Đã nghe hết bài';
@@ -85,10 +123,183 @@ class PreviewPlayer {
 
     this.audio.addEventListener('error', () => {
       this.isPlaying = false;
+      this.stopVisualizer();
       this.updatePlayPauseIcon();
       this.updateCardState();
       this.trackStatus.textContent = 'Dạ bài này đang bị giới hạn, Bố Mẹ thử chọn bài khác nhé!';
     });
+  }
+
+  /**
+   * Initialize Web Audio API node graph lazily on first audio interaction
+   */
+  initWebAudio() {
+    if (this.audioCtx) {
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+      return;
+    }
+
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      this.audioCtx = new AudioContextClass();
+      this.sourceNode = this.audioCtx.createMediaElementSource(this.audio);
+
+      // 3-Band Biquad Filter Equalizer
+      this.lowFilter = this.audioCtx.createBiquadFilter();
+      this.lowFilter.type = 'lowshelf';
+      this.lowFilter.frequency.value = 250;
+      this.lowFilter.gain.value = 0;
+
+      this.midFilter = this.audioCtx.createBiquadFilter();
+      this.midFilter.type = 'peaking';
+      this.midFilter.frequency.value = 3000;
+      this.midFilter.Q.value = 1.0;
+      this.midFilter.gain.value = 0;
+
+      this.highFilter = this.audioCtx.createBiquadFilter();
+      this.highFilter.type = 'highshelf';
+      this.highFilter.frequency.value = 6000;
+      this.highFilter.gain.value = 0;
+
+      // Gain Booster & Compressor (Anti-Clipping Protection)
+      this.gainNode = this.audioCtx.createGain();
+      this.gainNode.gain.value = this.boostLevels[this.boostIndex];
+
+      this.compressorNode = this.audioCtx.createDynamicsCompressor();
+      this.compressorNode.threshold.value = -12;
+      this.compressorNode.knee.value = 20;
+      this.compressorNode.ratio.value = 6;
+      this.compressorNode.attack.value = 0.003;
+      this.compressorNode.release.value = 0.25;
+
+      // Real-time Visualizer Analyser
+      this.analyserNode = this.audioCtx.createAnalyser();
+      this.analyserNode.fftSize = 64;
+      this.analyserNode.smoothingTimeConstant = 0.8;
+      this.dataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
+
+      // Connect DSP pipeline: source -> low -> mid -> high -> gain -> compressor -> analyser -> speakers
+      this.sourceNode.connect(this.lowFilter);
+      this.lowFilter.connect(this.midFilter);
+      this.midFilter.connect(this.highFilter);
+      this.highFilter.connect(this.gainNode);
+      this.gainNode.connect(this.compressorNode);
+      this.compressorNode.connect(this.analyserNode);
+      this.analyserNode.connect(this.audioCtx.destination);
+
+      this.applyEq();
+    } catch (e) {
+      console.warn('Web Audio API initialization fallback to direct audio:', e);
+    }
+  }
+
+  applyEq() {
+    if (!this.lowFilter || !this.midFilter || !this.highFilter) return;
+    const current = this.eqPresets[this.eqIndex];
+
+    if (current === 'clarity') {
+      // Voice clarity: Low cut -3dB, Vocal presence +4.5dB, Air +2dB
+      this.lowFilter.gain.value = -3.0;
+      this.midFilter.gain.value = 4.5;
+      this.highFilter.gain.value = 2.0;
+    } else if (current === 'warm') {
+      // Warm Bolero: Warm low +4dB, Neutral mid, Gentle high roll-off -2dB
+      this.lowFilter.gain.value = 4.0;
+      this.midFilter.gain.value = 0.0;
+      this.highFilter.gain.value = -2.0;
+    } else {
+      // Standard Flat
+      this.lowFilter.gain.value = 0.0;
+      this.midFilter.gain.value = 0.0;
+      this.highFilter.gain.value = 0.0;
+    }
+  }
+
+  cycleEq() {
+    this.initWebAudio();
+    this.eqIndex = (this.eqIndex + 1) % this.eqPresets.length;
+    const presetKey = this.eqPresets[this.eqIndex];
+    const info = this.eqLabels[presetKey];
+    this.applyEq();
+
+    if (this.btnEq) {
+      this.btnEq.textContent = info.icon;
+      this.btnEq.title = `Bộ chỉnh âm: ${info.name} (${info.desc})`;
+      this.btnEq.classList.toggle('active', presetKey !== 'standard');
+    }
+
+    if (typeof window.showToast === 'function') {
+      window.showToast(`${info.icon} Chỉnh âm: ${info.name} — ${info.desc}`, 'info');
+    }
+  }
+
+  cycleBoost() {
+    this.initWebAudio();
+    this.boostIndex = (this.boostIndex + 1) % this.boostLevels.length;
+    const level = this.boostLevels[this.boostIndex];
+    const pct = Math.round(level * 100);
+
+    if (this.gainNode) {
+      this.gainNode.gain.value = level;
+    }
+
+    if (this.btnBoost) {
+      this.btnBoost.classList.toggle('boosted', level > 1.0);
+      this.btnBoost.title = `Khuếch đại âm lượng: ${pct}% (Bấm để đổi)`;
+      this.btnBoost.textContent = level > 1.0 ? `⚡${pct}%` : '⚡';
+    }
+
+    if (typeof window.showToast === 'function') {
+      window.showToast(`⚡ Khuếch đại âm thanh: ${pct}%${level > 1.0 ? ' (Đã bật chống rè loa)' : ''}`, 'info');
+    }
+  }
+
+  startVisualizer() {
+    if (!this.visualizerCanvas || !this.visualizerCtx || !this.analyserNode) return;
+    if (this.visualizerAnimId) window.cancelAnimationFrame(this.visualizerAnimId);
+
+    const render = () => {
+      if (!this.isPlaying) return;
+      this.visualizerAnimId = window.requestAnimationFrame(render);
+
+      this.analyserNode.getByteFrequencyData(this.dataArray);
+      const ctx = this.visualizerCtx;
+      const width = this.visualizerCanvas.width;
+      const height = this.visualizerCanvas.height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const barCount = 10;
+      const barWidth = (width / barCount) - 2;
+      const step = Math.floor(this.dataArray.length / barCount);
+
+      for (let i = 0; i < barCount; i++) {
+        const val = this.dataArray[i * step] || 0;
+        const barHeight = Math.max(3, (val / 255) * height);
+        const x = i * (barWidth + 2);
+        const y = height - barHeight;
+
+        // Gold to Emerald gradient
+        ctx.fillStyle = i % 2 === 0 ? '#e6b800' : '#2b825b';
+        ctx.fillRect(x, y, barWidth, barHeight);
+      }
+    };
+
+    render();
+  }
+
+  stopVisualizer() {
+    if (this.visualizerAnimId) {
+      window.cancelAnimationFrame(this.visualizerAnimId);
+      this.visualizerAnimId = null;
+    }
+    if (this.visualizerCtx && this.visualizerCanvas) {
+      this.visualizerCtx.clearRect(0, 0, this.visualizerCanvas.width, this.visualizerCanvas.height);
+    }
   }
 
   playTrack(track) {
@@ -112,6 +323,8 @@ class PreviewPlayer {
 
     this.audio.play().then(() => {
       this.isPlaying = true;
+      this.initWebAudio();
+      this.startVisualizer();
       if (this.trackStatus) this.trackStatus.textContent = '🟢 Đang nghe thử trực tiếp...';
       this.updatePlayPauseIcon();
       this.updateCardState();
@@ -121,6 +334,7 @@ class PreviewPlayer {
         return;
       }
       this.isPlaying = false;
+      this.stopVisualizer();
       if (this.trackStatus) this.trackStatus.textContent = 'Bấm nút Play để bắt đầu nghe thử';
       this.updatePlayPauseIcon();
       this.updateCardState();
@@ -132,12 +346,16 @@ class PreviewPlayer {
     if (this.isPlaying) {
       this.audio.pause();
       this.isPlaying = false;
+      this.stopVisualizer();
       if (this.trackStatus) this.trackStatus.textContent = 'Tạm dừng nghe thử';
     } else {
       if (this.audio.ended) {
         this.audio.currentTime = 0;
       }
-      this.audio.play();
+      this.audio.play().then(() => {
+        this.initWebAudio();
+        this.startVisualizer();
+      }).catch(() => {});
       this.isPlaying = true;
       if (this.trackStatus) this.trackStatus.textContent = '🟢 Đang nghe thử trực tiếp...';
     }

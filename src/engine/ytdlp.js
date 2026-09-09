@@ -1,4 +1,5 @@
 const { spawn } = require('child_process');
+const path = require('path');
 const fs = require('fs');
 const { YTDLP_COOKIES_PATH, YTDLP_PROXY, YTDLP_EXTRACTOR_ARGS } = require('../config');
 
@@ -267,6 +268,113 @@ function formatDuration(seconds) {
   return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
+/**
+ * Get yt-dlp binary version
+ */
+async function getYtDlpVersion() {
+  try {
+    const version = await runYtDlp(['--version']);
+    return version || 'unknown';
+  } catch (_e) {
+    return 'not_installed';
+  }
+}
+
+/**
+ * Get FFmpeg binary version
+ */
+function getFFmpegVersion() {
+  return new Promise((resolve) => {
+    try {
+      const proc = spawn('ffmpeg', ['-version'], { windowsHide: true });
+      let output = '';
+      proc.stdout.on('data', (d) => { output += d.toString('utf8'); });
+      proc.on('close', (code) => {
+        if (code === 0 && output) {
+          const firstLine = output.split('\n')[0].trim();
+          resolve(firstLine);
+        } else {
+          resolve('unknown');
+        }
+      });
+      proc.on('error', () => resolve('not_installed'));
+    } catch (_e) {
+      resolve('not_installed');
+    }
+  });
+}
+
+/**
+ * Gather system diagnostic metrics
+ */
+async function getSystemDiagnostics() {
+  const { DOWNLOADS_DIR, MAX_STORAGE_MB } = require('../config');
+  const ytDlpVersion = await getYtDlpVersion();
+  const ffmpegVersion = await getFFmpegVersion();
+
+  let storageUsedMb = 0;
+  let fileCount = 0;
+  try {
+    if (fs.existsSync(DOWNLOADS_DIR)) {
+      const files = fs.readdirSync(DOWNLOADS_DIR);
+      for (const f of files) {
+        const full = path.join(DOWNLOADS_DIR, f);
+        try {
+          const stat = fs.statSync(full);
+          if (stat.isFile()) {
+            storageUsedMb += stat.size / (1024 * 1024);
+            fileCount++;
+          }
+        } catch (_e) {}
+      }
+    }
+  } catch (_e) {}
+
+  return {
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    uptime: process.uptime(),
+    ytDlpVersion,
+    ffmpegVersion,
+    memory: {
+      rssMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
+      heapUsedMb: Math.round(process.memoryUsage().heapUsed / (1024 * 1024)),
+      heapTotalMb: Math.round(process.memoryUsage().heapTotal / (1024 * 1024))
+    },
+    storage: {
+      downloadsDir: DOWNLOADS_DIR,
+      fileCount,
+      usedMb: Math.round(storageUsedMb * 100) / 100,
+      quotaMb: MAX_STORAGE_MB
+    }
+  };
+}
+
+/**
+ * In-place update of yt-dlp binary (Issue #39)
+ */
+async function updateYtDlpBinary() {
+  const currentVersion = await getYtDlpVersion();
+  try {
+    const updateOutput = await runYtDlp(['-U']);
+    const newVersion = await getYtDlpVersion();
+    return {
+      success: true,
+      oldVersion: currentVersion,
+      newVersion,
+      message: updateOutput || 'Cập nhật yt-dlp thành công'
+    };
+  } catch (err) {
+    return {
+      success: false,
+      oldVersion: currentVersion,
+      newVersion: currentVersion,
+      error: `Không thể tự động cập nhật yt-dlp: ${err.message}`
+    };
+  }
+}
+
 module.exports = {
   runYtDlp,
   getPreviewStreamUrl,
@@ -274,6 +382,10 @@ module.exports = {
   searchYouTube,
   parsePlaylist,
   formatDuration,
+  getYtDlpVersion,
+  getFFmpegVersion,
+  getSystemDiagnostics,
+  updateYtDlpBinary,
   searchCache,
   playlistCache
 };

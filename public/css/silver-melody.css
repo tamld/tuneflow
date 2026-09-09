@@ -1276,6 +1276,28 @@ body {
   border-color: #fff;
 }
 
+.player-ctrl-btn.boosted {
+  background: #ffaa00;
+  color: #000;
+  border-color: #ffe680;
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.6);
+}
+
+.player-visualizer {
+  height: 28px;
+  width: 72px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(230, 184, 0, 0.3);
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .player-visualizer {
+    display: none;
+  }
+}
+
 /* ==========================================================================
    Web Interface Guidelines & Senior Accessibility (WCAG 2.2 AAA Compliance)
    ========================================================================== */

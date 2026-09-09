@@ -3,6 +3,25 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 
 ---
 
+## [1.4.0] - 2026-09-09
+
+### Đã Thêm (Added)
+- **Kiến trúc Hybrid Client-Server Compute & Web Audio API (Phase 5)**:
+  - Tích hợp bộ xử lý âm thanh số Web Audio API (3-Band BiquadFilter Equalizer) với các chế độ tùy biến: "🗣️ Trong Rõ" (tăng giọng hát, giảm ù rè), "☕ Trầm Ấm" (tối ưu cho Bolero, nhạc quê hương), "🎛️ Chuẩn" ([Issue #38](https://github.com/tamld/tuneflow/issues/38)).
+  - Bổ sung bộ khuếch đại âm lượng (Volume Booster 100% - 150%) kết hợp `DynamicsCompressorNode` chống méo tiếng/rè loa ([Issue #38](https://github.com/tamld/tuneflow/issues/38)).
+  - Trình hiển thị sóng âm phổ động (Real-time Canvas Frequency Visualizer) trên thanh phát nhạc với giao diện tương phản cao SilverMelody ([Issue #38](https://github.com/tamld/tuneflow/issues/38)).
+  - Nâng cấp luồng Zero-Disk Direct Stream `GET /api/stream/pipe/:id` hỗ trợ Range headers và ngắt luồng an toàn khi đóng kết nối ([Issue #38](https://github.com/tamld/tuneflow/issues/38)).
+  - Đa ngôn ngữ i18n cho các nút điều khiển âm thanh mới trên thanh phát nhạc ([Issue #38](https://github.com/tamld/tuneflow/issues/38)).
+- **Vận Hành Container & Tự Động Cập Nhật yt-dlp (Container Ops & Maintenance)**:
+  - API chẩn đoán hệ thống `GET /api/system/status` cung cấp thông tin thời gian thực về phiên bản `yt-dlp`, FFmpeg, Node.js, bộ nhớ RAM, thời gian chạy và dung lượng lưu trữ đĩa ([Issue #39](https://github.com/tamld/tuneflow/issues/39)).
+  - API cập nhật nóng `POST /api/system/update-ytdlp` cho phép cập nhật nhị phân `yt-dlp` ngay trên máy chủ container mà không cần rebuild container image ([Issue #39](https://github.com/tamld/tuneflow/issues/39)).
+  - Bổ sung script bảo trì `scripts/update-ytdlp.sh` và `scripts/update-ytdlp.ps1` cho quản trị viên homelab ([Issue #39](https://github.com/tamld/tuneflow/issues/39)).
+  - Cấu hình phân quyền `node` user trong Dockerfile và bổ sung `healthcheck` chuẩn trong `docker-compose.yml` ([Issue #39](https://github.com/tamld/tuneflow/issues/39)).
+- **Kiểm Thử & Đảm Bảo Chất Lượng**:
+  - Bổ sung bộ kiểm thử `tests/stream-webaudio.test.js` và `tests/system-ops.test.js` nâng tổng số bài test tự động lên 48/48 ca kiểm thử xanh 100%.
+
+---
+
 ## [1.3.0] - 2026-09-06
 
 ### Đã Thêm (Added)

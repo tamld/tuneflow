@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { Readable } = require('stream');
 const router = express.Router();
-const { searchYouTube, getVideoMetadata, getPreviewStreamUrl, parsePlaylist } = require('../engine/ytdlp');
+const { searchYouTube, getVideoMetadata, getPreviewStreamUrl, parsePlaylist, getSystemDiagnostics, updateYtDlpBinary } = require('../engine/ytdlp');
 const queue = require('../engine/queue');
 const { DOWNLOADS_DIR } = require('../config');
 const { isValidYouTubeUrl, isValidVideoId } = require('../utils/validator');
@@ -331,19 +331,41 @@ router.get('/stream/pipe/:id', async (req, res) => {
   const videoUrl = `https://www.youtube.com/watch?v=${id}`;
   try {
     const streamUrl = await getPreviewStreamUrl(videoUrl);
-    const audioRes = await fetch(streamUrl);
-    if (!audioRes.ok) {
+
+    // Forward Range headers for seeking/buffering
+    const headers = {};
+    if (req.headers.range) {
+      headers['Range'] = req.headers.range;
+    }
+
+    const abortController = new AbortController();
+    req.on('close', () => {
+      try {
+        abortController.abort();
+      } catch (_e) {}
+    });
+
+    const audioRes = await fetch(streamUrl, {
+      headers,
+      signal: abortController.signal
+    });
+
+    if (!audioRes.ok && audioRes.status !== 206) {
       return res.status(audioRes.status).send('Không thể kết nối đến luồng âm thanh YouTube');
     }
 
+    res.status(audioRes.status);
     res.setHeader('Content-Type', audioRes.headers.get('content-type') || 'audio/webm');
-    if (audioRes.headers.get('content-length')) {
-      res.setHeader('Content-Length', audioRes.headers.get('content-length'));
-    }
     res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Cache-Control', 'no-cache');
 
-    const { Readable } = require('stream');
+    if (audioRes.headers.get('content-range')) {
+      res.setHeader('Content-Range', audioRes.headers.get('content-range'));
+    }
+    if (audioRes.headers.get('content-length')) {
+      res.setHeader('Content-Length', audioRes.headers.get('content-length'));
+    }
+
     const nodeStream = Readable.fromWeb(audioRes.body);
     nodeStream.pipe(res);
 
@@ -354,6 +376,34 @@ router.get('/stream/pipe/:id', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: 'Lỗi khi truyền phát luồng âm thanh: ' + err.message });
+  }
+});
+
+// System diagnostics and runtime versions (Issue #39)
+router.get('/system/status', async (req, res) => {
+  try {
+    const diagnostics = await getSystemDiagnostics();
+    res.json({
+      success: true,
+      system: diagnostics,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// System yt-dlp hot-update endpoint (Issue #39)
+router.post('/system/update-ytdlp', async (req, res) => {
+  try {
+    const result = await updateYtDlpBinary();
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(500).json(result);
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

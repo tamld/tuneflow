@@ -35,7 +35,9 @@
       btnPreview: '▶️ Nghe Thử Trước',
       favBatchDl: '⬇️ Tải Toàn Bộ Về Máy',
       favBatchClear: '🗑️ Xóa Toàn Bộ',
-      favBatchTitle: '❤️ Tuyển Tập Yêu Thích Của Bố Mẹ'
+      favBatchTitle: '❤️ Tuyển Tập Yêu Thích Của Bố Mẹ',
+      playerEq: '🎛️ Bộ Chỉnh Âm Giọng Ca',
+      playerBoost: '⚡ Khuếch Đại Âm Lượng'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -68,7 +70,9 @@
       btnPreview: '▶️ Preview First',
       favBatchDl: '⬇️ Download All Favorites',
       favBatchClear: '🗑️ Clear All',
-      favBatchTitle: "❤️ Parents' Favorite Collection"
+      favBatchTitle: "❤️ Parents' Favorite Collection",
+      playerEq: '🎛️ Audio Equalizer',
+      playerBoost: '⚡ Volume Booster'
     }
   };
 

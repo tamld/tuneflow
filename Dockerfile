@@ -15,7 +15,8 @@ RUN apk add --no-cache \
 # Pin standalone yt-dlp binary release
 ARG YTDLP_VERSION=2025.02.19
 RUN curl -fsSL "https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp" -o /usr/local/bin/yt-dlp && \
-    chmod a+rx /usr/local/bin/yt-dlp
+    chmod a+rwx /usr/local/bin/yt-dlp && \
+    chown node:node /usr/local/bin/yt-dlp
 
 WORKDIR /app
 
@@ -29,10 +30,11 @@ ENV NODE_ENV=production \
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy source code and assets
+# Copy source code, assets, and maintenance scripts
 COPY manifest.json ./
 COPY src/ ./src/
 COPY public/ ./public/
+COPY scripts/ ./scripts/
 
 # Create downloads directory with proper permissions
 RUN mkdir -p /app/downloads/temp && chown -R node:node /app

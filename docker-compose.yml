@@ -17,6 +17,12 @@ services:
     volumes:
       - ./downloads:/app/downloads
       # - ./cookies.txt:/app/cookies.txt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     # Resource limits for container host
     deploy:
       resources:
