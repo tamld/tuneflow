@@ -37,7 +37,10 @@
       favBatchClear: '🗑️ Xóa Toàn Bộ',
       favBatchTitle: '❤️ Tuyển Tập Yêu Thích Của Bố Mẹ',
       playerEq: '🎛️ Bộ Chỉnh Âm Giọng Ca',
-      playerBoost: '⚡ Khuếch Đại Âm Lượng'
+      playerBoost: '⚡ Khuếch Đại Âm Lượng',
+      tv_mode: '📺 Chế Độ TV',
+      exit_tv_mode: '📺 Thoát TV',
+      ambient_mode: '🖼️ Toàn Màn Hình Tĩnh Dưỡng'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -72,7 +75,10 @@
       favBatchClear: '🗑️ Clear All',
       favBatchTitle: "❤️ Parents' Favorite Collection",
       playerEq: '🎛️ Audio Equalizer',
-      playerBoost: '⚡ Volume Booster'
+      playerBoost: '⚡ Volume Booster',
+      tv_mode: '📺 TV Mode',
+      exit_tv_mode: '📺 Exit TV',
+      ambient_mode: '🖼️ Ambient Leanback Mode'
     }
   };
 

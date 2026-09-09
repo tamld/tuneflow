@@ -1,6 +1,21 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.1.0] - 2026-09-09
+
+### Đã Thêm (Added)
+- **Điều Hướng Không Gian Remote TV D-Pad (Android TV Leanback - Phase 7)**:
+  - Triển khai động cơ điều hướng không gian 2D ma trận (`public/js/tv-leanback.js`) chuyên dụng cho remote Android TV với các phím tiêu chuẩn: `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`, `Enter`, `Escape`/`Backspace`, `MediaPlayPause` ([Issue #43](https://github.com/tamld/tuneflow/issues/43)).
+  - Trạng thái tiêu điểm trực quan chuẩn WCAG 2.2 AAA (`.focused-tv`) với viền vàng sáng 4px (`--accent-gold`), hiệu ứng phóng to phần cứng $1.06\times$, quầng sáng vàng 24px nhìn rõ ràng từ khoảng cách 3 mét trên ghế sofa ([Issue #43](https://github.com/tamld/tuneflow/issues/43)).
+  - Nút chuyển đổi nhanh chế độ TV (`#btn-toggle-tv`) trên thanh điều hướng và tự động nhận diện chế độ qua tham số URL `?mode=tv` hoặc bộ nhớ `localStorage` ([Issue #43](https://github.com/tamld/tuneflow/issues/43)).
+  - Bổ sung chế độ tĩnh dưỡng toàn màn hình (Ambient Leanback Player Overlay `#tv-ambient-player`) với ảnh bìa khổ lớn 320px, kích thước chữ 38px–24px chống mỏi mắt cho người cao tuổi ([Issue #43](https://github.com/tamld/tuneflow/issues/43)).
+  - Cập nhật đa ngôn ngữ i18n hỗ trợ đầy đủ các thuật ngữ TV Mode và Ambient Player ([Issue #43](https://github.com/tamld/tuneflow/issues/43)).
+- **Kiểm Thử & Đảm Bảo Chất Lượng**:
+  - Bổ sung bộ kiểm thử tự động `tests/tv-leanback.test.js` kiểm tra điều hướng không gian, giới hạn biên và bộ chuyển trạng thái máy.
+  - Toàn bộ 95/95 ca kiểm thử tự động trong 26 bộ test suite chạy xanh 100%.
+
+---
+
 ## [2.0.0] - 2026-09-09
 
 ### Đã Thêm (Added)
