@@ -18,6 +18,8 @@ const VIDEO_ID_REGEX = /^[a-zA-Z0-9_-]{11}$/;
  */
 function isValidYouTubeUrl(urlStr) {
   if (!urlStr || typeof urlStr !== 'string') return false;
+  // Reject URLs containing shell metacharacters or control characters
+  if (/[;\r\n`|<>$]/.test(urlStr)) return false;
   try {
     const parsed = new URL(urlStr.trim());
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
