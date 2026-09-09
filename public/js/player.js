@@ -14,6 +14,9 @@ class PreviewPlayer {
     this.volumeIndex = 0;
     this.isLooping = false;
     this.sleepTimerId = null;
+    this.sleepFadeTimerId = null;
+    this.fadeIntervalId = null;
+    this.originalVolumeBeforeFade = null;
     this.sleepMinutes = 0;
 
     // Web Audio API State (Phase 5: Hybrid Client-Side Compute)
@@ -434,19 +437,74 @@ class PreviewPlayer {
     }
   }
 
-  cycleSleepTimer() {
-    const sleepOptions = [0, 15, 30, 60];
-    const currentIdx = sleepOptions.indexOf(this.sleepMinutes);
-    const nextIdx = (currentIdx + 1) % sleepOptions.length;
-    this.sleepMinutes = sleepOptions[nextIdx];
+  formatSleepLabel(mins) {
+    if (!mins) return 'Tắt';
+    if (mins >= 60) {
+      const hours = mins / 60;
+      return `${hours}h`;
+    }
+    return `${mins}m`;
+  }
 
+  clearSleepTimers() {
     if (this.sleepTimerId) {
       clearTimeout(this.sleepTimerId);
       this.sleepTimerId = null;
     }
+    if (this.sleepFadeTimerId) {
+      clearTimeout(this.sleepFadeTimerId);
+      this.sleepFadeTimerId = null;
+    }
+    if (this.fadeIntervalId) {
+      clearInterval(this.fadeIntervalId);
+      this.fadeIntervalId = null;
+    }
+    if (this.originalVolumeBeforeFade !== null) {
+      this.audio.volume = this.originalVolumeBeforeFade;
+      this.originalVolumeBeforeFade = null;
+    }
+  }
+
+  cycleSleepTimer() {
+    const sleepOptions = [0, 15, 30, 60, 120, 240];
+    const currentIdx = sleepOptions.indexOf(this.sleepMinutes);
+    const nextIdx = (currentIdx + 1) % sleepOptions.length;
+    this.sleepMinutes = sleepOptions[nextIdx];
+
+    this.clearSleepTimers();
 
     if (this.sleepMinutes > 0) {
+      const label = this.formatSleepLabel(this.sleepMinutes);
+      const totalMs = this.sleepMinutes * 60 * 1000;
+      const fadeDurationMs = Math.min(30000, totalMs);
+      const fadeStartDelay = Math.max(0, totalMs - fadeDurationMs);
+
+      // Start fade-out timer 30s before final stop
+      this.sleepFadeTimerId = setTimeout(() => {
+        if (!this.isPlaying) return;
+        const initialVol = this.audio.volume;
+        this.originalVolumeBeforeFade = initialVol;
+        const steps = 30;
+        const stepMs = fadeDurationMs / steps;
+        let currentStep = 0;
+
+        this.fadeIntervalId = setInterval(() => {
+          currentStep++;
+          const newVol = Math.max(0, initialVol * (1 - currentStep / steps));
+          this.audio.volume = newVol;
+          if (currentStep >= steps) {
+            clearInterval(this.fadeIntervalId);
+            this.fadeIntervalId = null;
+          }
+        }, stepMs);
+      }, fadeStartDelay);
+
+      // Final stop timer
       this.sleepTimerId = setTimeout(() => {
+        if (this.fadeIntervalId) {
+          clearInterval(this.fadeIntervalId);
+          this.fadeIntervalId = null;
+        }
         if (this.isPlaying) {
           this.audio.pause();
           this.isPlaying = false;
@@ -456,13 +514,18 @@ class PreviewPlayer {
             window.showToast('😴 Hẹn giờ tắt nhạc: Chúc Bố Mẹ ngủ ngon!', 'success');
           }
         }
+        if (this.originalVolumeBeforeFade !== null) {
+          this.audio.volume = this.originalVolumeBeforeFade;
+          this.originalVolumeBeforeFade = null;
+        }
         this.sleepMinutes = 0;
         this.updateSleepBtn();
-      }, this.sleepMinutes * 60 * 1000);
+        if (this.btnSleep) this.btnSleep.classList.remove('active');
+      }, totalMs);
 
       if (this.btnSleep) this.btnSleep.classList.add('active');
       if (typeof window.showToast === 'function') {
-        window.showToast(`⏱️ Đã hẹn giờ tự động tắt nhạc sau ${this.sleepMinutes} phút`, 'info');
+        window.showToast(`⏱️ Đã hẹn giờ tự động tắt nhạc sau ${label}`, 'info');
       }
     } else {
       if (this.btnSleep) this.btnSleep.classList.remove('active');
@@ -477,11 +540,12 @@ class PreviewPlayer {
   updateSleepBtn() {
     if (!this.btnSleep) return;
     if (this.sleepMinutes > 0) {
-      this.btnSleep.textContent = `⏱️ ${this.sleepMinutes}m`;
-      this.btnSleep.title = `Hẹn giờ tắt nhạc: còn ${this.sleepMinutes} phút (Bấm để đổi)`;
+      const label = this.formatSleepLabel(this.sleepMinutes);
+      this.btnSleep.textContent = `⏱️ ${label}`;
+      this.btnSleep.title = `Hẹn giờ tắt nhạc: còn ${label} (Bấm để đổi)`;
     } else {
       this.btnSleep.textContent = '⏱️';
-      this.btnSleep.title = 'Hẹn giờ tắt nhạc: Đang tắt (Bấm để bật 15p, 30p, 60p)';
+      this.btnSleep.title = 'Hẹn giờ tắt nhạc: Đang tắt (Bấm để bật 15m, 30m, 1h, 2h, 4h)';
     }
   }
 

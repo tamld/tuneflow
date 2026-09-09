@@ -319,26 +319,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 6. Font Size Scaling (Issue #12)
-  const fontScales = ['90%', '100%', '115%', '130%'];
+  // 6. Font Size Scaling (Issue #12 & Issue #49: Dynamic Typography Scaling)
+  const fontScales = [
+    { label: '90%', multiplier: 0.9 },
+    { label: '100%', multiplier: 1.0 },
+    { label: '115%', multiplier: 1.15 },
+    { label: '130%', multiplier: 1.3 }
+  ];
   let currentScaleIdx = 1; // Default 100%
-  try {
-    const savedScale = localStorage.getItem('tuneflow_font_scale');
-    if (savedScale && fontScales.includes(savedScale)) {
-      currentScaleIdx = fontScales.indexOf(savedScale);
-      document.documentElement.style.fontSize = savedScale;
-    }
-  } catch (e) {}
 
   function applyFontScale(idx) {
     currentScaleIdx = Math.max(0, Math.min(fontScales.length - 1, idx));
-    const scale = fontScales[currentScaleIdx];
-    document.documentElement.style.fontSize = scale;
+    const { label, multiplier } = fontScales[currentScaleIdx];
+    document.documentElement.style.fontSize = label;
+    document.documentElement.style.setProperty('--user-font-scale', multiplier);
     try {
-      localStorage.setItem('tuneflow_font_scale', scale);
+      localStorage.setItem('tuneflow_font_scale', label);
     } catch (e) {}
-    showToast(`🔤 Cỡ chữ hiển thị: ${scale}`, 'info');
+    showToast(`🔤 Cỡ chữ hiển thị: ${label}`, 'info');
   }
+
+  try {
+    const savedScale = localStorage.getItem('tuneflow_font_scale');
+    const matchedIdx = fontScales.findIndex(s => s.label === savedScale);
+    if (matchedIdx !== -1) {
+      currentScaleIdx = matchedIdx;
+      const { label, multiplier } = fontScales[currentScaleIdx];
+      document.documentElement.style.fontSize = label;
+      document.documentElement.style.setProperty('--user-font-scale', multiplier);
+    }
+  } catch (e) {}
 
   if (btnFontDec) btnFontDec.addEventListener('click', () => applyFontScale(currentScaleIdx - 1));
   if (btnFontReset) btnFontReset.addEventListener('click', () => applyFontScale(1));
