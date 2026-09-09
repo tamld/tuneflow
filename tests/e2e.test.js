@@ -219,6 +219,28 @@ describe('TuneFlow End-to-End & Elderly Accessibility Suite', () => {
         'pointer',
         `Expected cursor: pointer, got title=${cardAffordanceResult.titleCursor}`
       );
+
+      // Verify real PreviewPlayer pipeline updates audio src and state (Issue #68)
+      const playerPipelineResult = await page.evaluate(() => {
+        const testTrack = {
+          id: 'test_pipeline_video_id',
+          title: 'Test Pipeline Song',
+          uploader: 'Test Artist',
+          thumbnail: 'data:image/svg+xml;utf8,<svg></svg>',
+          duration: 180,
+          duration_string: '03:00'
+        };
+        window.previewPlayer.playTrack(testTrack);
+        return {
+          currentTrackId: window.previewPlayer.currentTrack ? window.previewPlayer.currentTrack.id : null,
+          audioSrc: window.previewPlayer.audio ? window.previewPlayer.audio.src : null,
+          trackTitle: document.getElementById('player-track-title').textContent
+        };
+      });
+
+      assert.strictEqual(playerPipelineResult.currentTrackId, 'test_pipeline_video_id');
+      assert.ok(playerPipelineResult.audioSrc.includes('/api/preview/test_pipeline_video_id'));
+      assert.strictEqual(playerPipelineResult.trackTitle, 'Test Pipeline Song');
     } finally {
       if (browser) {
         await browser.close();

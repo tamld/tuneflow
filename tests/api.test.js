@@ -2,12 +2,14 @@ const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('http');
 const { app } = require('../src/server');
+const queue = require('../src/engine/queue');
 
 describe('TuneFlow API Integration Tests', () => {
   let server;
   let baseUrl;
 
   before(async () => {
+    queue.isPaused = true;
     await new Promise((resolve) => {
       server = http.createServer(app);
       server.listen(0, '127.0.0.1', () => {
@@ -19,6 +21,8 @@ describe('TuneFlow API Integration Tests', () => {
   });
 
   after(async () => {
+    queue.isPaused = false;
+    queue.clearCompleted();
     await new Promise((resolve) => server.close(resolve));
   });
 
