@@ -1,6 +1,22 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] - 2026-09-09
+
+### Đã Thêm (Added)
+- **Tiện Ích Mở Rộng Trình Duyệt Browser Extension (Manifest V3 - Phase 6)**:
+  - Triển khai trọn bộ Chrome/Edge Browser Extension (`extension/`) đạt chuẩn Manifest V3 không xâm phạm quyền riêng tư ([Issue #42](https://github.com/tamld/tuneflow/issues/42)).
+  - Content script (`extension/content.js`) tự động tiêm nút tải 1-chạm màu vàng nổi bật ("🎵 Tải MP3 TuneFlow") trực tiếp dưới tiêu đề video trên trang phát YouTube (`youtube.com/watch?v=...`).
+  - Background Service Worker (`extension/background.js`) giao tiếp nền với máy chủ TuneFlow cục bộ (`http://localhost:3000` / `http://tuneflow.local:3000`), bắt lỗi mất kết nối máy chủ và hiển thị thông báo tiến độ trực quan.
+  - Giao diện Popup cài đặt thân thiện (`extension/popup.html`, `extension/popup.js`, `extension/popup.css`) hỗ trợ cấu hình địa chỉ máy chủ tùy biến, kiểm tra tình trạng kết nối thời gian thực và theo dõi danh sách bài đang tải.
+  - Bộ biểu tượng nhận diện thương hiệu độ phân giải cao (`extension/icons/` 16px, 48px, 128px) chuẩn Chrome Web Store.
+- **Khung Pháp Lý Bản Quyền & Chính Sách Vận Hành (Legal Compliance & Safe Harbor)**:
+  - Tài liệu pháp lý toàn diện `docs/LEGAL_COMPLIANCE.md` quy định rõ ranh giới bản quyền MIT License, quyền sử dụng hợp pháp cá nhân (Personal Fair Use), điều khoản dịch vụ YouTube ToS và cơ chế gỡ bỏ bản quyền DMCA 512 Safe Harbor ([Issue #42](https://github.com/tamld/tuneflow/issues/42)).
+  - Phân định rõ chiến lược thương mại hóa Appliance/Tooling phần cứng gia đình, cấm kinh doanh thương mại nội dung âm thanh có bản quyền.
+- **Kiểm Thử & Đảm Bảo Chất Lượng**:
+  - Bổ sung bộ kiểm thử tự động `tests/extension.test.js` kiểm tra cấu trúc Manifest V3, phân quyền tối thiểu (zero-intrusive permissions), tệp nội dung và tài liệu tuân thủ pháp lý.
+  - Toàn bộ 87/87 ca kiểm thử tự động trong 25 bộ suite chạy xanh 100%.
+
 ---
 
 ## [1.4.0] - 2026-09-09

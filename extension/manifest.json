@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "TuneFlow - Tải Nhạc YouTube Cho Bố Mẹ",
+  "short_name": "TuneFlow",
+  "version": "2.0.0",
+  "description": "Tiện ích 1-chạm gửi bài hát YouTube về máy chủ TuneFlow gia đình với chất lượng MP3 320kbps.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*",
+    "http://tuneflow.local:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/watch*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  }
+}

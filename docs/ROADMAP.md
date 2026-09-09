@@ -18,7 +18,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 │ Phase 3  │ Tải Playlist, Batch Selection & Checksum │ v1.2.0      │ ✅ Completed       │
 │ Phase 4  │ Phân Loại Bố & Mẹ, Curation & Zero-Login │ v1.3.0      │ ✅ Completed       │
 │ Phase 5  │ Hybrid Client-Server Compute & Web Stream│ v1.4.0      │ ✅ Completed       │
-│ Phase 6  │ Browser Extension MV3 & Pháp Lý Bản Quyền│ v2.0.0      │ 📋 Next            │
+│ Phase 6  │ Browser Extension MV3 & Pháp Lý Bản Quyền│ v2.0.0      │ ✅ Completed       │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 

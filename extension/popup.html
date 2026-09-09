@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TuneFlow Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="brand">
+        <span class="logo-icon">🎶</span>
+        <h2>TuneFlow</h2>
+      </div>
+      <span id="server-badge" class="badge badge-offline">Đang kiểm tra...</span>
+    </header>
+
+    <main class="popup-main">
+      <div class="field-group">
+        <label for="server-url-input">Địa chỉ máy chủ gia đình (Server URL):</label>
+        <div class="input-inline">
+          <input type="text" id="server-url-input" placeholder="http://localhost:3000" autocomplete="off">
+          <button id="btn-save-server" class="btn-primary">Lưu</button>
+        </div>
+      </div>
+
+      <div class="status-box">
+        <div class="status-row">
+          <span>Thời gian chạy máy chủ:</span>
+          <strong id="server-uptime">--</strong>
+        </div>
+        <div class="status-row">
+          <span>Tác vụ đang tải:</span>
+          <strong id="server-tasks">--</strong>
+        </div>
+      </div>
+
+      <div class="actions-group">
+        <button id="btn-open-web" class="btn-action-large">
+          🌐 Mở Giao Diện TuneFlow Đầy Đủ
+        </button>
+      </div>
+    </main>
+
+    <footer class="popup-footer">
+      <small>Thiết kế dành riêng cho Bố Mẹ • v2.0.0</small>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
