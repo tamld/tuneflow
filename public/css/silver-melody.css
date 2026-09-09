@@ -940,7 +940,7 @@ body {
 /* Clear Search Button (Issue #12) */
 .btn-clear-search {
   position: absolute;
-  right: 170px;
+  right: 224px;
   top: 50%;
   transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.1);
@@ -961,6 +961,46 @@ body {
 .btn-clear-search:hover {
   background: var(--accent-red);
   color: #fff;
+}
+
+/* Voice Search Button (Phase 8 - Issue #45) */
+.btn-voice-search {
+  position: absolute;
+  right: 170px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1c202d;
+  border: 1.5px solid var(--border-color);
+  color: var(--accent-gold);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.btn-voice-search:hover {
+  background: #2a2e40;
+  border-color: var(--accent-gold);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.btn-voice-search.recording {
+  background: var(--accent-red) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(231, 76, 60, 0.9);
+  animation: pulseRecording 1s infinite alternate;
+}
+
+@keyframes pulseRecording {
+  from { transform: translateY(-50%) scale(1); }
+  to { transform: translateY(-50%) scale(1.15); box-shadow: 0 0 24px rgba(231, 76, 60, 1); }
 }
 
 /* Floating Persistent Download Queue Button (Issue #9) */

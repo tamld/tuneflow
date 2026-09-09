@@ -40,7 +40,10 @@
       playerBoost: '⚡ Khuếch Đại Âm Lượng',
       tv_mode: '📺 Chế Độ TV',
       exit_tv_mode: '📺 Thoát TV',
-      ambient_mode: '🖼️ Toàn Màn Hình Tĩnh Dưỡng'
+      ambient_mode: '🖼️ Toàn Màn Hình Tĩnh Dưỡng',
+      voice_search: '🎙️ Nói Để Tìm Bài',
+      voice_listening: '🔴 Đang nghe Bố Mẹ nói...',
+      voice_unsupported: 'Trình duyệt chưa hỗ trợ tìm bằng giọng nói'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -78,7 +81,10 @@
       playerBoost: '⚡ Volume Booster',
       tv_mode: '📺 TV Mode',
       exit_tv_mode: '📺 Exit TV',
-      ambient_mode: '🖼️ Ambient Leanback Mode'
+      ambient_mode: '🖼️ Ambient Leanback Mode',
+      voice_search: '🎙️ Voice Search',
+      voice_listening: '🔴 Listening to Parents...',
+      voice_unsupported: 'Voice search is not supported in this browser'
     }
   };
 

@@ -221,6 +221,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Vietnamese Voice Search (Phase 8 - Issue #45)
+  const btnVoiceSearch = document.getElementById('btn-voice-search');
+  if (btnVoiceSearch) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = (localStorage.getItem('tuneflow_lang') === 'en') ? 'en-US' : 'vi-VN';
+
+      let isRecording = false;
+
+      recognition.onstart = () => {
+        isRecording = true;
+        btnVoiceSearch.classList.add('recording');
+        btnVoiceSearch.title = '🔴 Đang nghe Bố Mẹ nói...';
+        showToast('🎙️ Đang lắng nghe... Bố Mẹ nói tên bài hát nhé!', 'info');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          searchInput.value = transcript;
+          if (btnClearSearch) btnClearSearch.style.display = 'flex';
+          showToast(`🎙️ Đã nghe: "${transcript}" - Đang tìm kiếm...`, 'success');
+          executeSearch(transcript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('[Voice Recognition Error]', event.error);
+        showToast('⚠️ Chưa nghe rõ Bố Mẹ nói, Bố Mẹ thử lại nhé!', 'warn');
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        btnVoiceSearch.classList.remove('recording');
+        btnVoiceSearch.title = 'Tìm kiếm bằng giọng nói';
+      };
+
+      btnVoiceSearch.addEventListener('click', () => {
+        if (isRecording) {
+          try { recognition.stop(); } catch (_e) {}
+        } else {
+          try {
+            recognition.lang = (localStorage.getItem('tuneflow_lang') === 'en') ? 'en-US' : 'vi-VN';
+            recognition.start();
+          } catch (e) {
+            console.warn('[Voice Start Error]', e);
+          }
+        }
+      });
+    } else {
+      btnVoiceSearch.addEventListener('click', () => {
+        showToast('Trình duyệt chưa hỗ trợ tính năng nhận diện giọng nói này.', 'warn');
+      });
+    }
+  }
+
   // 4. Accessible Guidance Modal (Issue #10)
   function openHelpModal() {
     if (helpModal) helpModal.style.display = 'flex';
