@@ -2,12 +2,13 @@
 
 <div align="center">
 
-**An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted and container ready.**
+**An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted and homelab ready.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node: ≥20](https://img.shields.io/badge/Node-%E2%89%A520-green.svg)](#)
 [![Docker: Alpine](https://img.shields.io/badge/Docker-Alpine%20%3C120MB-cyan.svg)](#)
 [![Design: WCAG AAA](https://img.shields.io/badge/Design-SilverMelody%20WCAG%20AAA-orange.svg)](#)
+[![SQLite: Built-in](https://img.shields.io/badge/SQLite-Zero--Config-blueviolet.svg)](#)
 
 [English](README.md) · [Tiếng Việt](README.vi.md)
 
@@ -15,34 +16,40 @@
 
 ---
 
-## 🌟 Key Highlights
+## ⚡ Highlights at a Glance
 
-- 👴👵 **Elderly-Friendly UX ("SilverMelody" Design)**: Large touch targets (≥56px), ultra-high contrast (WCAG AAA), warm Vietnamese typography, zero technical error jargon.
-- 🎧 **In-App Audio Preview Player**: Listen to any song or video directly inside the app before downloading to make sure it's the exact track and artist you love.
-- 💾 **Direct Client Browser Delivery**: Automatically downloads and saves the final high-quality MP3 (320kbps) straight to the user's computer `Downloads` directory.
-- 📦 **Batch & Playlist Support**: 1-Click download for full albums, playlists, or multi-selected search results with safe sequential rate-limiting.
-- 🛡️ **Resilient Crash-Survival**: Preserves `.part` download streams for automatic resume upon network failure or server restart.
-- 🐳 **Lightweight & Container Ready**: Docker / Podman Alpine multi-stage container (<120MB image, <40MB idle RAM) pre-configured with reverse proxy support.
+* 👴👵 **Elderly-Friendly UX ("SilverMelody")**: Large touch targets (≥56px), ultra-high contrast (WCAG AAA), warm Vietnamese typography, and zero confusing error popups.
+* 🎧 **Zero-Disk In-App Audio Preview**: Stream and preview any song instantly with speculative prewarming before downloading to ensure it's the exact version you want.
+* 🎛️ **Web Audio DSP Equalizer & Volume Boost**: Built-in 3-band biquad filters (Vocal Clarity, Warm Bolero) and 125%–150% boost with dynamic audio compression to prevent speaker distortion.
+* 📺 **Android TV D-Pad Leanback Mode**: Full 10-foot spatial navigation (`Arrow Keys` / Remote D-Pad) for smooth living room TV playback.
+* 🔐 **SQLite Authentication & RBAC**:
+  * **Admin**: User accounts CRUD, guest quota unlock, live homelab diagnostics, and 1-click `yt-dlp` updates.
+  * **Family User**: Unlimited listening, favorites playlist, and background MP3/MP4 downloads.
+  * **Guest**: 30-minute cumulative audio preview quota with automatic cooldown timer.
+* 💾 **Direct Client Browser Delivery**: Automatically prompts and saves downloaded 320kbps MP3 / MP4 directly to the client's local computer `Downloads` folder.
+* 🛡️ **Homelab Reliability**: Storage quota enforcement (FIFO pruning), resume-safe `.part` download handling, and graceful child process management.
 
 ---
 
 ## 🚀 Quickstart
 
-### 1. Local Development
+### Option A: Local Node.js
 ```bash
-# Clone the repository
+# 1. Clone repository
 git clone https://github.com/tamld/tuneflow.git
 cd tuneflow
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Start server
+# 3. Start server
 npm start
-# App running at: http://localhost:3000
+# 🌐 Access at: http://localhost:3000
 ```
 
-### 2. Container Deployment (Docker / Podman Compose)
+### Option B: Docker / Podman Compose (Recommended)
+Save as `compose.yaml`:
+
 ```yaml
 services:
   tuneflow:
@@ -54,13 +61,102 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
+      - ADMIN_PASSWORD=admin       # Initial password — change after first login!
+      - STORAGE_MAX_MB=20480       # 20GB downloads threshold before FIFO pruning
     volumes:
-      - ./downloads:/app/downloads
+      - ./downloads:/app/downloads  # Downloaded audio/video media files
+      - ./data:/app/data            # SQLite DB (users, sessions, guest limits)
+```
+
+Start the container:
+```bash
+docker compose up -d
+```
+
+---
+
+## 🌐 Optional Reverse Proxy Recipes
+
+TuneFlow is **100% proxy-agnostic** by default. Choose your preferred reverse proxy recipe below:
+
+### 🔹 Recipe 1: Traefik v3 (Docker Labels)
+If your homelab uses Traefik, attach these labels to the `tuneflow` service in your `compose.yaml`:
+
+```yaml
+services:
+  tuneflow:
+    # ... base container config ...
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tuneflow.rule=Host(`tuneflow.local`)"
+      - "traefik.http.routers.tuneflow.entrypoints=websecure"
+      - "traefik.http.routers.tuneflow.tls=true"
       - "traefik.http.services.tuneflow.loadbalancer.server.port=3000"
 ```
+
+### 🔹 Recipe 2: Nginx / Nginx Proxy Manager
+Ensure `proxy_buffering` is disabled for real-time audio byte-range streaming:
+
+```nginx
+server {
+    listen 80;
+    server_name tuneflow.local;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Critical for instant audio streaming & byte ranges:
+        proxy_buffering off;
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+    }
+}
+```
+
+### 🔹 Recipe 3: Caddy 2
+Add to your `Caddyfile`:
+
+```caddy
+tuneflow.local {
+    reverse_proxy localhost:3000
+}
+```
+
+### 🔹 Recipe 4: Cloudflare Tunnel
+Point your public hostname to `http://localhost:3000` via Cloudflare Zero Trust dashboard. No open ports required.
+
+---
+
+## ⚙️ Environment Variables Reference
+
+| Variable | Default | Purpose |
+| :--- | :--- | :--- |
+| `PORT` | `3000` | HTTP port TuneFlow binds to |
+| `NODE_ENV` | `production` | Node.js execution environment (`production` / `development`) |
+| `ADMIN_PASSWORD` | `admin` | Bootstrap password for initial default `admin` account |
+| `DB_PATH` | `./data/tuneflow.db` | Persistent SQLite database location |
+| `DOWNLOADS_DIR` | `./downloads` | Local directory for completed audio downloads |
+| `GUEST_MAX_LISTEN_SEC` | `1800` (30m) | Guest cumulative preview duration before cooldown |
+| `GUEST_COOLDOWN_SEC` | `1800` (30m) | Cooldown duration for guests before quota resets |
+| `MAX_DOWNLOADS` | `2` | Concurrent active download tasks |
+| `MAX_CONVERSIONS` | `1` | Concurrent active audio conversion processes |
+| `MAX_RETRIES` | `3` | Maximum download retry attempts upon network drop |
+| `STORAGE_MAX_MB` | `20480` (20GB) | Downloads directory threshold before auto-pruning |
+| `YTDLP_PROXY` | *None* | Optional HTTP/SOCKS5 proxy for YouTube requests |
+| `YTDLP_EXTRACTOR_ARGS` | *None* | Custom `yt-dlp` arguments (e.g. `youtube:player_client=android,web`) |
+
+---
+
+## 👑 Default Credentials
+
+* **Username**: `admin`
+* **Password**: `admin` *(or value of `ADMIN_PASSWORD`)*
+* 💡 *Important: Open the Admin Control Panel (`👑 Quản trị`) after logging in to change your password and configure user accounts.*
 
 ---
 

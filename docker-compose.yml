@@ -8,14 +8,17 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
+      - ADMIN_PASSWORD=admin       # Initial bootstrap password for default 'admin' account
       - MAX_DOWNLOADS=2
       - MAX_CONVERSIONS=1
       - MAX_RETRIES=3
+      - STORAGE_MAX_MB=20480       # 20GB downloads storage threshold before auto-pruning
       # Optional YouTube bot challenge bypasses (Issue #23)
       # - YTDLP_PROXY=http://proxy.example.com:8080
       # - YTDLP_EXTRACTOR_ARGS=youtube:player_client=android,web
     volumes:
-      - ./downloads:/app/downloads
+      - ./downloads:/app/downloads  # Downloaded MP3/MP4 media files
+      - ./data:/app/data            # Persistent SQLite database (users, accounts, guest quotas)
       # - ./cookies.txt:/app/cookies.txt:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
@@ -32,9 +35,3 @@ services:
         reservations:
           cpus: '0.10'
           memory: 40M
-    # Reverse Proxy integration (optional)
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.tuneflow.rule=Host(`tuneflow.local`)"
-      - "traefik.http.entrypoints=web"
-      - "traefik.http.services.tuneflow.loadbalancer.server.port=3000"
