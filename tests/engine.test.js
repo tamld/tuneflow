@@ -1,6 +1,6 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
-const { formatDuration, searchYouTube } = require('../src/engine/ytdlp');
+const { formatDuration, parseDurationString, supportsJsRuntimes, searchYouTube } = require('../src/engine/ytdlp');
 const queue = require('../src/engine/queue');
 
 describe('TuneFlow Core Engine Unit Tests', () => {
@@ -18,6 +18,33 @@ describe('TuneFlow Core Engine Unit Tests', () => {
     assert.equal(formatDuration(360), '06:00');
     assert.equal(formatDuration(3665), '1:01:05');
     assert.equal(formatDuration(null), '00:00');
+  });
+
+  it('should correctly parse duration string to total seconds', () => {
+    assert.equal(parseDurationString('00:00'), 0);
+    assert.equal(parseDurationString('01:05'), 65);
+    assert.equal(parseDurationString('05:19'), 319);
+    assert.equal(parseDurationString('1:01:05'), 3665);
+    assert.equal(parseDurationString(null), 0);
+    assert.equal(parseDurationString(''), 0);
+  });
+
+  it('should probe supportsJsRuntimes and return boolean without throwing', () => {
+    const supported = supportsJsRuntimes();
+    assert.equal(typeof supported, 'boolean');
+  });
+
+  it('should perform searchYouTube and return normalized track list', async () => {
+    const results = await searchYouTube('Dan ca que huong', { limit: 2 });
+    assert.ok(Array.isArray(results));
+    assert.ok(results.length > 0);
+    const first = results[0];
+    assert.ok(first.id);
+    assert.ok(first.title);
+    assert.ok(first.uploader);
+    assert.ok(first.duration_string);
+    assert.ok(first.thumbnail);
+    assert.ok(first.url);
   });
 
   it('should initialize download queue with zero active items', () => {

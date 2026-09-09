@@ -4,6 +4,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { TEMP_DIR, DOWNLOADS_DIR, MAX_DOWNLOADS, MAX_RETRIES, DOWNLOAD_TTL_HOURS, MAX_STORAGE_MB, YTDLP_COOKIES_PATH, YTDLP_PROXY, YTDLP_EXTRACTOR_ARGS } = require('../config');
 const { convertToMp3 } = require('./ffmpeg');
+const { supportsJsRuntimes } = require('./ytdlp');
 
 /**
  * Sanitize titles for all operating systems (Windows, Linux, macOS)
@@ -339,7 +340,10 @@ class DownloadQueue {
     try {
       // Step 1: Download stream using yt-dlp (keeping partial .part files for resume)
       await new Promise((resolve, reject) => {
-        const args = ['--js-runtimes', 'node:node'];
+        const args = [];
+        if (supportsJsRuntimes()) {
+          args.push('--js-runtimes', 'node:node');
+        }
         if (YTDLP_EXTRACTOR_ARGS) {
           args.push('--extractor-args', YTDLP_EXTRACTOR_ARGS);
         }

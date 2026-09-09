@@ -42,13 +42,51 @@ class SimpleCache {
 const searchCache = new SimpleCache(15 * 60 * 1000, 100);
 const playlistCache = new SimpleCache(15 * 60 * 1000, 50);
 
+let isJsRuntimesSupportedCache = null;
+
+/**
+ * Dynamically check if installed yt-dlp binary supports --js-runtimes (Issue #64)
+ */
+function supportsJsRuntimes() {
+  if (isJsRuntimesSupportedCache !== null) {
+    return isJsRuntimesSupportedCache;
+  }
+  try {
+    const { spawnSync } = require('child_process');
+    const res = spawnSync('yt-dlp', ['--js-runtimes', 'node:node', '--version'], { windowsHide: true, timeout: 2000 });
+    isJsRuntimesSupportedCache = (res.status === 0);
+  } catch (_e) {
+    isJsRuntimesSupportedCache = false;
+  }
+  return isJsRuntimesSupportedCache;
+}
+
+/**
+ * Parse duration string (e.g. "5:19", "1:01:05") into seconds
+ */
+function parseDurationString(str) {
+  if (!str || typeof str !== 'string') return 0;
+  const parts = str.trim().split(':').map(p => parseInt(p, 10));
+  if (parts.some(isNaN)) return 0;
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+  return parts[0] || 0;
+}
+
 /**
  * Execute yt-dlp with argument injection protection (using '--' delimiter)
- * Includes bot challenge bypasses: extractor-args, cookies, and proxy (Issue #23)
+ * Includes bot challenge bypasses: extractor-args, cookies, and proxy (Issue #23, #64)
  */
 function runYtDlp(args) {
   return new Promise((resolve, reject) => {
-    const fullArgs = ['--js-runtimes', 'node:node'];
+    const fullArgs = [];
+    if (supportsJsRuntimes()) {
+      fullArgs.push('--js-runtimes', 'node:node');
+    }
     if (YTDLP_EXTRACTOR_ARGS) {
       fullArgs.push('--extractor-args', YTDLP_EXTRACTOR_ARGS);
     }
@@ -135,17 +173,79 @@ async function getVideoMetadata(url) {
 }
 
 /**
- * Search YouTube with optional sorting (sp parameter)
+ * Tier-1 Fast zero-subprocess YouTube Innertube search API (Issue #65)
  */
-async function searchYouTube(query, options = {}) {
+async function searchInnertube(query, limit = 10) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const res = await fetch('https://www.youtube.com/youtubei/v1/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      body: JSON.stringify({
+        context: {
+          client: {
+            clientName: 'WEB',
+            clientVersion: '2.20240101.00.00',
+            hl: 'vi',
+            gl: 'VN'
+          }
+        },
+        query
+      }),
+      signal: controller.signal
+    });
+
+    if (!res.ok) {
+      throw new Error(`Innertube responded with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    const contents = data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents || [];
+    const results = [];
+
+    for (const section of contents) {
+      const items = section.itemSectionRenderer?.contents || [];
+      for (const item of items) {
+        const vr = item.videoRenderer;
+        if (!vr || !vr.videoId) continue;
+        const title = vr.title?.runs?.map(r => r.text).join('') || vr.title?.simpleText || '';
+        const uploader = vr.ownerText?.runs?.map(r => r.text).join('') || vr.longBylineText?.runs?.map(r => r.text).join('') || 'Nghệ sĩ';
+        const duration_string = vr.lengthText?.simpleText || '00:00';
+        const thumbList = vr.thumbnail?.thumbnails || [];
+        const thumbnail = thumbList.length > 0 ? thumbList[thumbList.length - 1].url : 'assets/default-thumbnail.jpg';
+
+        results.push({
+          id: vr.videoId,
+          title,
+          uploader,
+          duration: parseDurationString(duration_string),
+          duration_string,
+          thumbnail,
+          url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+          isPlaylist: false
+        });
+        if (results.length >= limit) break;
+      }
+      if (results.length >= limit) break;
+    }
+    return results;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Subprocess search with yt-dlp (Fallback or Sorting/Playlist queries)
+ */
+async function searchWithYtDlp(query, options = {}) {
   const limit = options.limit || 10;
   const isPlaylist = options.type === 'playlist';
-  const cacheKey = `${query.trim().toLowerCase()}:${limit}:${options.sp || ''}:${isPlaylist}`;
-  const cached = searchCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-  
+
   let targetUrl = '';
   if (options.sp) {
     targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=${encodeURIComponent(options.sp)}`;
@@ -156,39 +256,77 @@ async function searchYouTube(query, options = {}) {
   const baseArgs = ['--flat-playlist', '--dump-json', '--playlist-end', String(limit)];
   const args = [...baseArgs, '--', targetUrl];
 
-  try {
-    const raw = await runYtDlp(args);
-    if (!raw) return [];
+  const raw = await runYtDlp(args);
+  if (!raw) return [];
 
-    const lines = raw.split('\n').filter(line => line.trim().length > 0);
-    const results = [];
+  const lines = raw.split('\n').filter(line => line.trim().length > 0);
+  const results = [];
 
-    for (const line of lines) {
-      try {
-        const item = JSON.parse(line);
-        // Normalize thumbnail
-        let thumb = item.thumbnail;
-        if (Array.isArray(item.thumbnails) && item.thumbnails.length > 0) {
-          thumb = item.thumbnails[item.thumbnails.length - 1].url;
-        }
-
-        results.push({
-          id: item.id,
-          title: item.title,
-          uploader: item.uploader || item.channel || 'Nghệ sĩ',
-          duration: item.duration,
-          duration_string: item.duration_string || formatDuration(item.duration),
-          thumbnail: thumb || 'assets/default-thumbnail.jpg',
-          url: item.url && item.url.startsWith('http') ? item.url : `https://www.youtube.com/watch?v=${item.id}`,
-          isPlaylist: item._type === 'playlist' || isPlaylist
-        });
-      } catch (parseErr) {
-        // Skip malformed individual line
+  for (const line of lines) {
+    try {
+      const item = JSON.parse(line);
+      let thumb = item.thumbnail;
+      if (Array.isArray(item.thumbnails) && item.thumbnails.length > 0) {
+        thumb = item.thumbnails[item.thumbnails.length - 1].url;
       }
-    }
 
-    searchCache.set(cacheKey, results);
-    return results;
+      results.push({
+        id: item.id,
+        title: item.title,
+        uploader: item.uploader || item.channel || 'Nghệ sĩ',
+        duration: item.duration,
+        duration_string: item.duration_string || formatDuration(item.duration),
+        thumbnail: thumb || 'assets/default-thumbnail.jpg',
+        url: item.url && item.url.startsWith('http') ? item.url : `https://www.youtube.com/watch?v=${item.id}`,
+        isPlaylist: item._type === 'playlist' || isPlaylist
+      });
+    } catch (_parseErr) {
+      // Skip malformed individual line
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Search YouTube with Tier-1 Innertube and Tier-2 yt-dlp fallback (Issue #64, #65)
+ */
+async function searchYouTube(query, options = {}) {
+  const limit = options.limit || 10;
+  const isPlaylist = options.type === 'playlist';
+  const cacheKey = `${query.trim().toLowerCase()}:${limit}:${options.sp || ''}:${isPlaylist}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  // If sorting (sp) or playlist search requested, use yt-dlp directly
+  if (options.sp || isPlaylist) {
+    try {
+      const results = await searchWithYtDlp(query, options);
+      searchCache.set(cacheKey, results);
+      return results;
+    } catch (err) {
+      throw new Error(`Lỗi tìm kiếm bài hát: ${err.message}`);
+    }
+  }
+
+  // Tier 1: Fast zero-subprocess Innertube search (<200ms)
+  try {
+    const innertubeResults = await searchInnertube(query.trim(), limit);
+    if (innertubeResults && innertubeResults.length > 0) {
+      searchCache.set(cacheKey, innertubeResults);
+      return innertubeResults;
+    }
+  } catch (_innertubeErr) {
+    // Proceed to Tier 2 fallback
+  }
+
+  // Tier 2: yt-dlp CLI fallback
+  try {
+    const ytdlpResults = await searchWithYtDlp(query, options);
+    searchCache.set(cacheKey, ytdlpResults);
+    return ytdlpResults;
   } catch (err) {
     throw new Error(`Lỗi tìm kiếm bài hát: ${err.message}`);
   }
@@ -380,8 +518,11 @@ module.exports = {
   getPreviewStreamUrl,
   getVideoMetadata,
   searchYouTube,
+  searchInnertube,
   parsePlaylist,
   formatDuration,
+  parseDurationString,
+  supportsJsRuntimes,
   getYtDlpVersion,
   getFFmpegVersion,
   getSystemDiagnostics,
