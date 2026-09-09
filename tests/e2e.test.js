@@ -241,6 +241,63 @@ describe('TuneFlow End-to-End & Elderly Accessibility Suite', () => {
       assert.strictEqual(playerPipelineResult.currentTrackId, 'test_pipeline_video_id');
       assert.ok(playerPipelineResult.audioSrc.includes('/api/preview/test_pipeline_video_id'));
       assert.strictEqual(playerPipelineResult.trackTitle, 'Test Pipeline Song');
+
+      // 10. Verify Full Card-Level Click-to-Play & Immediate Loading State (Issue #70)
+      const cardClickAndLoadingResult = await page.evaluate(async () => {
+        const testSong = {
+          id: 'mock_card_click_70',
+          title: 'Diễm Xưa - Trịnh Công Sơn',
+          uploader: 'Khánh Ly',
+          thumbnail: 'data:image/svg+xml;utf8,<svg></svg>',
+          duration: 210,
+          duration_string: '03:30',
+          url: 'https://www.youtube.com/watch?v=mock_card_click_70'
+        };
+
+        window.renderResults([testSong]);
+        const card = document.getElementById(`card-${testSong.id}`);
+        if (!card) return { success: false, reason: 'Card not found' };
+
+        const cardCursor = window.getComputedStyle(card).cursor;
+        const cardRole = card.getAttribute('role');
+        const cardTabIndex = card.getAttribute('tabindex');
+
+        // Click directly on the card background
+        card.click();
+
+        const isCurrent = window.previewPlayer.currentTrack && window.previewPlayer.currentTrack.id === testSong.id;
+        const isLoading = window.previewPlayer.isLoading;
+        const cardHasLoadingClass = card.classList.contains('loading');
+        const btnText = card.querySelector('.btn-preview').textContent;
+        const statusText = document.getElementById('player-track-status').textContent;
+
+        // Verify second click does not interrupt loading
+        card.click();
+        const stillLoadingAfterDouble = window.previewPlayer.isLoading;
+
+        return {
+          success: true,
+          cardCursor,
+          cardRole,
+          cardTabIndex,
+          isCurrent,
+          isLoading,
+          cardHasLoadingClass,
+          btnText,
+          statusText,
+          stillLoadingAfterDouble
+        };
+      });
+
+      assert.strictEqual(cardClickAndLoadingResult.cardCursor, 'pointer');
+      assert.strictEqual(cardClickAndLoadingResult.cardRole, 'button');
+      assert.strictEqual(cardClickAndLoadingResult.cardTabIndex, '0');
+      assert.ok(cardClickAndLoadingResult.isCurrent, 'Clicking card failed to set currentTrack');
+      assert.ok(cardClickAndLoadingResult.isLoading, 'PreviewPlayer should be in isLoading state');
+      assert.ok(cardClickAndLoadingResult.cardHasLoadingClass, 'Card should have .loading class');
+      assert.ok(cardClickAndLoadingResult.btnText.includes('Đang tải'), 'Button should display loading text');
+      assert.ok(cardClickAndLoadingResult.statusText.includes('Đang kết nối'), 'Status should display connecting message');
+      assert.ok(cardClickAndLoadingResult.stillLoadingAfterDouble, 'Double-click while loading should not interrupt');
     } finally {
       if (browser) {
         await browser.close();

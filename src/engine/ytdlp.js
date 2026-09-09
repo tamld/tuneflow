@@ -158,6 +158,9 @@ async function getPreviewStreamUrl(url) {
       '-g',
       '-f', 'ba/b',
       '--no-playlist',
+      '--no-warnings',
+      '--no-call-home',
+      '--prefer-free-formats',
       '--',
       url
     ]);
@@ -173,6 +176,9 @@ async function getPreviewStreamUrl(url) {
         '-g',
         '-f', '140/251/139/ba/b',
         '--no-playlist',
+        '--no-warnings',
+        '--no-call-home',
+        '--prefer-free-formats',
         '--',
         url
       ]);
