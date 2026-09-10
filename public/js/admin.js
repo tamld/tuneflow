@@ -194,10 +194,11 @@ class AdminPanel {
           ? '<span style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); padding: 2px 8px; border-radius: 4px; font-weight: 700;">👑 Quản trị</span>'
           : '<span style="background: rgba(72, 187, 120, 0.2); color: #48bb78; padding: 2px 8px; border-radius: 4px; font-weight: 600;">👤 Gia Đình</span>';
         
-        const createdStr = u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '—';
-        const deleteBtn = isCurrent
-          ? '<span style="font-size: 12px; color: var(--text-secondary);">(Đang dùng)</span>'
-          : `<button class="btn-delete-user secondary-btn" data-id="${u.id}" data-name="${this.escapeHtml(u.username)}" style="padding: 4px 10px; font-size: 13px; color: #e53e3e; border-color: rgba(229, 62, 62, 0.4);">🗑️ Xóa</button>`;
+        const createdStr = u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : 'Không rõ';
+        const resetBtn = `<button class="btn-reset-user-password secondary-btn" data-id="${u.id}" data-name="${this.escapeHtml(u.username)}" style="padding: 4px 8px; font-size: 12px; margin-right: 6px;">🔑 Đổi MK</button>`;
+        const actionHtml = isCurrent
+          ? `${resetBtn} <span style="font-size: 12px; color: var(--text-secondary);">(Đang dùng)</span>`
+          : `${resetBtn} <button class="btn-delete-user secondary-btn" data-id="${u.id}" data-name="${this.escapeHtml(u.username)}" style="padding: 4px 10px; font-size: 13px; color: #e53e3e; border-color: rgba(229, 62, 62, 0.4);">🗑️ Xóa</button>`;
 
         return `
           <tr style="border-bottom: 1px solid var(--border-color);">
@@ -205,10 +206,23 @@ class AdminPanel {
             <td style="padding: 10px 12px; font-weight: 600; color: var(--text-primary);">${this.escapeHtml(u.username)}</td>
             <td style="padding: 10px 12px;">${roleBadge}</td>
             <td style="padding: 10px 12px; font-size: 13px; color: var(--text-secondary);">${createdStr}</td>
-            <td style="padding: 10px 12px; text-align: right;">${deleteBtn}</td>
+            <td style="padding: 10px 12px; text-align: right;">${actionHtml}</td>
           </tr>
         `;
       }).join('');
+
+      this.userListBody.querySelectorAll('.btn-reset-user-password').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          const name = btn.getAttribute('data-name');
+          const newPass = typeof window.prompt === 'function' ? window.prompt(`Nhập mật khẩu mới cho tài khoản "${name}" (tối thiểu 4 ký tự):`) : null;
+          if (newPass && newPass.trim().length >= 4) {
+            await this.handleResetUserPassword(id, name, newPass.trim());
+          } else if (newPass !== null) {
+            alert('Mật khẩu phải có ít nhất 4 ký tự!');
+          }
+        });
+      });
 
       this.userListBody.querySelectorAll('.btn-delete-user').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -273,6 +287,28 @@ class AdminPanel {
       await this.loadUsers();
     } catch (err) {
       alert(`Lỗi khi xóa: ${err.message}`);
+    }
+  }
+
+  async handleResetUserPassword(id, name, newPassword) {
+    try {
+      const res = await fetch(`/api/admin/users/${id}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        alert(data.message || 'Không thể đặt lại mật khẩu');
+        return;
+      }
+      if (typeof window.showToast === 'function') {
+        window.showToast(`🔑 Đã đổi mật khẩu cho "${name}" thành công`, 'success');
+      } else {
+        alert(data.message || `Đã đổi mật khẩu cho "${name}" thành công`);
+      }
+    } catch (err) {
+      alert(`Lỗi khi đổi mật khẩu: ${err.message}`);
     }
   }
 

@@ -792,15 +792,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 8. Favorites Management (Zero-Login)
+  // 8. Favorites Management (Zero-Login & Server-Sync for Authenticated Users)
   function toggleFavorite(song, btnEl) {
     const idx = favorites.findIndex(f => f.id === song.id);
     if (idx >= 0) {
       favorites.splice(idx, 1);
       btnEl.textContent = '🤍';
       showToast(`Đã xóa khỏi danh sách yêu thích: "${song.title}"`, 'info');
+      if (window.authController && window.authController.user) {
+        fetch(`/api/user/favorites/${encodeURIComponent(song.id)}`, { method: 'DELETE' })
+          .catch(err => console.warn('[Favorite DELETE Error]', err));
+      }
     } else {
-      favorites.push({
+      const favItem = {
         id: song.id,
         title: song.title,
         uploader: song.uploader,
@@ -808,9 +812,17 @@ document.addEventListener('DOMContentLoaded', () => {
         duration: song.duration,
         duration_string: song.duration_string,
         url: song.url
-      });
+      };
+      favorites.push(favItem);
       btnEl.textContent = '❤️';
       showToast(`❤️ Đã lưu bài "${song.title}" vào mục yêu thích của Bố Mẹ!`, 'success');
+      if (window.authController && window.authController.user) {
+        fetch('/api/user/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(favItem)
+        }).catch(err => console.warn('[Favorite POST Error]', err));
+      }
     }
     try {
       localStorage.setItem('tuneflow_favorites', JSON.stringify(favorites));
@@ -824,6 +836,36 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateFavCount() {
     if (favCountEl) favCountEl.textContent = favorites.length;
   }
+
+  async function syncFavoritesWithServer() {
+    if (!window.authController || !window.authController.user) return;
+    try {
+      const res = await fetch('/api/user/favorites/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ favorites })
+      });
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.favorites)) {
+        favorites = data.favorites;
+        try {
+          localStorage.setItem('tuneflow_favorites', JSON.stringify(favorites));
+        } catch (_e) {}
+        updateFavCount();
+        if (btnPersonaFavs && btnPersonaFavs.classList.contains('active')) {
+          showFavoritesView();
+        }
+      }
+    } catch (err) {
+      console.warn('[Favorites Sync Error]', err);
+    }
+  }
+
+  window.addEventListener('tuneflow:auth_change', (e) => {
+    if (e.detail && e.detail.authenticated) {
+      syncFavoritesWithServer();
+    }
+  });
 
   function showFavoritesView() {
     removeFavBatchBar();

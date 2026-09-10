@@ -53,6 +53,38 @@ function createAdminRouter({ userRepo, guestRepo, sessionRepo }) {
     return res.status(200).json({ ok: success });
   });
 
+  router.post('/users/:id/reset-password', (req, res) => {
+    const userId = Number(req.params.id);
+    if (!userId) {
+      return res.status(400).json({ error: 'INVALID_ID' });
+    }
+
+    const { newPassword } = req.body || {};
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 4) {
+      return res.status(400).json({
+        error: 'INVALID_PASSWORD',
+        message: 'Mật khẩu mới phải có ít nhất 4 ký tự'
+      });
+    }
+
+    const user = userRepo.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'Không tìm thấy người dùng' });
+    }
+
+    const { hash, salt } = hashPassword(newPassword);
+    userRepo.updatePassword(userId, hash, salt);
+
+    if (sessionRepo) {
+      sessionRepo.deleteSessionsByUser(userId);
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message: `Đã đặt lại mật khẩu cho tài khoản "${user.username}"`
+    });
+  });
+
   router.post('/guests/reset', (req, res) => {
     const { guestId, clientIp } = req.body || {};
     let updated = null;

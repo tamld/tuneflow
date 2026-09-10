@@ -14,17 +14,20 @@ const { initDatabase } = require('../db/database');
 const { UserRepo } = require('../db/repositories/user_repo');
 const { SessionRepo } = require('../db/repositories/session_repo');
 const { GuestRepo } = require('../db/repositories/guest_repo');
+const { FavoriteRepo } = require('../db/repositories/favorite_repo');
 const { AuthService } = require('../auth/auth_service');
 const { createAuthenticateMiddleware } = require('../middleware/authenticate');
 const { authorize } = require('../middleware/authorize');
 const { createGuestGuardMiddleware } = require('../middleware/guest_guard');
 const { createAuthRouter } = require('./auth_routes');
 const { createAdminRouter } = require('./admin_routes');
+const { createUserRouter } = require('./user_routes');
 
 const db = initDatabase(DB_PATH);
 const userRepo = new UserRepo(db);
 const sessionRepo = new SessionRepo(db);
 const guestRepo = new GuestRepo(db, GUEST_MAX_LISTEN_SEC, GUEST_COOLDOWN_SEC);
+const favoriteRepo = new FavoriteRepo(db);
 const authService = new AuthService({ userRepo, sessionRepo, guestRepo });
 try {
   authService.ensureDefaultAdmin(ADMIN_PASSWORD);
@@ -36,9 +39,10 @@ const guestGuard = createGuestGuardMiddleware(guestRepo);
 // Apply authentication to all API endpoints
 router.use(authenticate);
 
-// Mount Auth & Admin sub-routers
+// Mount Auth, Admin & User sub-routers
 router.use('/auth', createAuthRouter({ authService }));
 router.use('/admin', createAdminRouter({ userRepo, guestRepo, sessionRepo }));
+router.use('/user', createUserRouter({ favoriteRepo }));
 
 // Rate Limiters to protect homelab resources against DoS / Container OOMKill
 const searchRateLimiter = createRateLimiter({

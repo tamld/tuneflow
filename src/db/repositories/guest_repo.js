@@ -1,3 +1,5 @@
+const { encryptField, decryptField } = require('../../auth/crypto_utils');
+
 class GuestRepo {
   constructor(db, defaultMaxSec = 1800, defaultCooldownSec = 3600) {
     this.db = db;
@@ -47,6 +49,7 @@ class GuestRepo {
 
     return {
       ...row,
+      client_ip: decryptField(row.client_ip),
       remaining_sec: remainingSec,
       can_listen: canListen
     };
@@ -54,18 +57,19 @@ class GuestRepo {
 
   getOrCreateGuest({ guestId, clientIp, fingerprintHash }) {
     const now = Date.now();
+    const encIp = clientIp ? encryptField(clientIp, undefined, true) : null;
 
     // 1. Look up by guest_id if provided
     let row = guestId ? this.getByIdStmt.get(guestId) : null;
 
     // 2. If not found by ID, look up by IP + fingerprint
-    if (!row && clientIp && fingerprintHash) {
-      row = this.getByIpFpStmt.get(clientIp, fingerprintHash);
+    if (!row && encIp && fingerprintHash) {
+      row = this.getByIpFpStmt.get(encIp, fingerprintHash);
     }
 
     // 3. Fallback: if client IP is currently in active cooldown on another ID, prevent bypass
-    if (!row && clientIp) {
-      const ipRow = this.getByIpStmt.get(clientIp);
+    if (!row && encIp) {
+      const ipRow = this.getByIpStmt.get(encIp);
       if (ipRow && ipRow.status === 'cooldown' && ipRow.cooldown_until > now) {
         row = ipRow;
       }
@@ -78,7 +82,8 @@ class GuestRepo {
     // 4. Create new guest
     const finalGuestId = guestId || `guest_${Math.random().toString(36).substring(2, 12)}`;
     const createdAt = new Date().toISOString();
-    this.insertStmt.run(finalGuestId, clientIp || '127.0.0.1', fingerprintHash || 'default', this.defaultMaxSec, now, createdAt);
+    const storedIp = encIp || encryptField('127.0.0.1', undefined, true);
+    this.insertStmt.run(finalGuestId, storedIp, fingerprintHash || 'default', this.defaultMaxSec, now, createdAt);
 
     const createdRow = this.getByIdStmt.get(finalGuestId);
     return this._formatGuest(createdRow);
@@ -119,7 +124,10 @@ class GuestRepo {
 
   resetCooldownByIp(clientIp) {
     const now = Date.now();
-    this.resetIpStmt.run(now, clientIp);
+    const encIp = clientIp ? encryptField(clientIp, undefined, true) : null;
+    if (encIp) {
+      this.resetIpStmt.run(now, encIp);
+    }
   }
 
   listGuests() {

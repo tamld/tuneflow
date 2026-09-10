@@ -33,6 +33,20 @@ CREATE TABLE IF NOT EXISTS guest_quotas (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS user_favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    video_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    uploader TEXT,
+    duration INTEGER DEFAULT 0,
+    duration_string TEXT,
+    thumbnail TEXT,
+    created_at TEXT NOT NULL,
+    UNIQUE(user_id, video_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_guest_quotas_client_ip ON guest_quotas(client_ip);
 CREATE INDEX IF NOT EXISTS idx_guest_quotas_fingerprint ON guest_quotas(fingerprint_hash);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_user ON user_favorites(user_id);

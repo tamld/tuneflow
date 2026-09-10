@@ -1,4 +1,5 @@
 const express = require('express');
+const { hashPassword, verifyPassword } = require('../auth/crypto_utils');
 
 function createAuthRouter({ authService }) {
   const router = express.Router();
@@ -58,6 +59,62 @@ function createAuthRouter({ authService }) {
         username: req.user.username,
         role: req.user.role
       }
+    });
+  });
+
+  // Password Self-Service (Issue #81)
+  router.post('/change-password', (req, res) => {
+    if (!req.user || req.user.isGuest) {
+      return res.status(401).json({
+        ok: false,
+        error: 'UNAUTHORIZED',
+        message: 'Vui lòng đăng nhập để đổi mật khẩu'
+      });
+    }
+
+    const { oldPassword, newPassword } = req.body || {};
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        ok: false,
+        error: 'MISSING_FIELDS',
+        message: 'Vui lòng nhập đầy đủ mật khẩu cũ và mật khẩu mới'
+      });
+    }
+
+    if (typeof newPassword !== 'string' || newPassword.length < 4) {
+      return res.status(400).json({
+        ok: false,
+        error: 'PASSWORD_TOO_SHORT',
+        message: 'Mật khẩu mới phải có ít nhất 4 ký tự'
+      });
+    }
+
+    const user = authService.userRepo.getUserById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ ok: false, error: 'USER_NOT_FOUND' });
+    }
+
+    const isValid = verifyPassword(oldPassword, user.password_hash, user.salt);
+    if (!isValid) {
+      return res.status(400).json({
+        ok: false,
+        error: 'INVALID_OLD_PASSWORD',
+        message: 'Mật khẩu hiện tại không đúng'
+      });
+    }
+
+    const { hash, salt } = hashPassword(newPassword);
+    authService.userRepo.updatePassword(user.id, hash, salt);
+
+    // Optionally revoke other sessions, preserving caller's current token
+    const currentToken = req.token || null;
+    if (authService.sessionRepo && currentToken) {
+      authService.sessionRepo.deleteSessionsByUser(user.id, currentToken);
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message: 'Đổi mật khẩu thành công'
     });
   });
 
