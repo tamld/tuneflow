@@ -86,19 +86,35 @@ class AdminPanel {
         await this.handleUpdateYtdlp();
       });
     }
+    // Handle popstate for /admin route deep linking
+    window.addEventListener('popstate', () => {
+      if (typeof window !== 'undefined' && (window.location.pathname === '/admin' || window.location.hash === '#admin')) {
+        if (window.tuneFlowAuth && window.tuneFlowAuth.role === 'admin') {
+          this.open(false);
+        }
+      } else {
+        this.close(false);
+      }
+    });
   }
 
-  open() {
+  open(syncUrl = true) { // open()
     if (!this.modal) return;
     this.modal.style.display = 'flex';
     this.switchTab('accounts');
+    if (syncUrl && typeof window !== 'undefined' && window.location.pathname !== '/admin') {
+      window.history.pushState({ modal: 'admin' }, '', '/admin');
+    }
   }
 
-  close() {
+  close(syncUrl = true) { // close()
     if (!this.modal) return;
     this.modal.style.display = 'none';
     if (this.accountMsg) this.accountMsg.style.display = 'none';
     if (this.ytdlpUpdateMsg) this.ytdlpUpdateMsg.style.display = 'none';
+    if (syncUrl && typeof window !== 'undefined' && window.location.pathname === '/admin') {
+      window.history.pushState(null, '', '/');
+    }
   }
 
   switchTab(tabKey) {

@@ -147,8 +147,16 @@ router.get('/preview/:id', guestGuard, async (req, res) => {
       res.setHeader('Content-Length', upstreamRes.headers.get('content-length'));
     }
 
-    // Pipe upstream Web Stream to Express response
-    Readable.fromWeb(upstreamRes.body).pipe(res);
+    // Pipe upstream Web Stream to Express response safely without uncaught abort errors
+    const nodeStream = Readable.fromWeb(upstreamRes.body);
+    nodeStream.on('error', (_err) => {});
+    nodeStream.pipe(res);
+
+    req.on('close', () => {
+      try {
+        nodeStream.destroy();
+      } catch (_e) {}
+    });
   } catch (err) {
     if (err.name === 'AbortError') return;
     res.status(500).json({ error: 'Không thể phát nghe thử bài hát này.' });
@@ -419,6 +427,7 @@ router.get('/stream/pipe/:id', guestGuard, async (req, res) => {
     }
 
     const nodeStream = Readable.fromWeb(audioRes.body);
+    nodeStream.on('error', (_err) => {});
     nodeStream.pipe(res);
 
     req.on('close', () => {

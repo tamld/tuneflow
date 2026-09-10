@@ -76,4 +76,34 @@ describe('TuneFlow Admin Control Panel UI & Operations Suite (Issue #71)', () =>
 
     assert.ok(authJs.includes('window.adminPanel.open()'), 'auth.js must call window.adminPanel.open() when admin badge is clicked');
   });
+
+  it('should verify index.html has prominent admin trigger button in header (Issue #76)', () => {
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    assert.ok(html.includes('id="btn-admin-panel-trigger"'), 'btn-admin-panel-trigger missing in HTML header');
+    assert.ok(html.includes('id="admin-trigger-icon"'), 'admin-trigger-icon missing in HTML');
+    assert.ok(html.includes('id="admin-trigger-text"'), 'admin-trigger-text missing in HTML');
+    assert.ok(html.includes('id="auth-login-subtitle"'), 'auth-login-subtitle missing in login modal');
+  });
+
+  it('should verify auth.js handles dedicated admin trigger button and /admin route detection (Issue #76)', () => {
+    const authJs = fs.readFileSync(authJsPath, 'utf8');
+    assert.ok(authJs.includes('btnAdminTrigger'), 'auth.js must bind to btnAdminTrigger');
+    assert.ok(authJs.includes("'/admin'"), "auth.js must check '/admin' route for deep linking");
+    assert.ok(authJs.includes('updateAdminTriggerBtn'), 'auth.js must update admin trigger button state');
+    assert.ok(authJs.includes('postLoginRedirect'), 'auth.js must support post-login redirect/open for admin');
+  });
+
+  it('should verify admin.js handles history pushState and popstate on /admin route (Issue #76)', () => {
+    const js = fs.readFileSync(jsPath, 'utf8');
+    assert.ok(js.includes("'/admin'"), "admin.js must reference '/admin' route");
+    assert.ok(js.includes('pushState'), 'admin.js must sync URL via history.pushState');
+    assert.ok(js.includes('popstate'), 'admin.js must handle popstate browser navigation');
+  });
+
+  it('should verify silver-melody.css includes high-contrast admin trigger styling (Issue #76)', () => {
+    const css = fs.readFileSync(cssPath, 'utf8');
+    assert.ok(css.includes('.admin-panel-trigger-btn'), '.admin-panel-trigger-btn styling missing in CSS');
+    assert.ok(css.includes('.admin-panel-trigger-btn.admin-active'), '.admin-active styling missing in CSS');
+  });
 });
+

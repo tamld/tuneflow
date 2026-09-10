@@ -1573,3 +1573,33 @@ body.tv-mode .player-title {
   font-weight: 700;
 }
 
+/* Dedicated Admin Panel Trigger Header Button (Issue #76) */
+.admin-panel-trigger-btn {
+  min-height: 40px;
+  font-size: 15px;
+  padding: 6px 14px;
+  border: 1px solid var(--accent-gold, #f59e0b);
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-gold, #f59e0b);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-panel-trigger-btn:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #fbbf24;
+  transform: translateY(-1px);
+}
+
+.admin-panel-trigger-btn.admin-active {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.35));
+  border-color: #fbbf24;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+
