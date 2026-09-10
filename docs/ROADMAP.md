@@ -22,6 +22,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 │ Phase 7  │ Android TV D-Pad Leanback & Mobile Client│ v2.1.0      │ ✅ Completed       │
 │ Phase 8  │ PWA Ngoại Tuyến, Giọng Nói & Ghép Nối LAN│ v2.2.0      │ ✅ Completed       │
 │ Phase 9  │ SQLite RBAC, Phân Quyền & Hẹn Giờ 2x     │ v2.3.0      │ ✅ Completed       │
+│ Phase 10 │ Quản Trị Phiên, Yêu Thích & Mã Hóa At-Rest│ v2.4.0   │ ✅ Completed       │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
@@ -171,6 +172,31 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 
 ---
 
+### CHẶNG 10: Quản Trị Phiên, Bộ Lọc Playlist, Đồng Bộ Yêu Thích & Mã Hóa Lưu Trữ (v2.4.0)
+- **Vấn đề giải quyết**:
+  - **Khám Phá Playlist & Bộ Lọc Kết Hợp Sắp Xếp (Issue #80)**:
+    - Tìm kiếm đa năng phân định loại kết quả: `type=all`, `type=video`, `type=playlist`.
+    - Sắp xếp linh hoạt: Theo độ liên quan (`relevance`), Theo lượt xem (`views`), Theo ngày đăng (`date`).
+    - Nút bấm pill tương phản cao, thẻ Playlist hiển thị số lượng bài hát và nút 1-chạm tải toàn bộ hoặc duyệt chi tiết.
+  - **Quản Trị Phiên Hoạt Động & Kick-Out Khẩn Cấp (Issue #84)**:
+    - Theo dõi chi tiết các phiên đăng nhập (IP, User-Agent, thời gian kết nối, ngày hết hạn).
+    - Bộ công cụ thu hồi phiên theo nhóm: Ngắt toàn bộ tài khoản gia đình (`users`), Đăng xuất sạch khách vãng lai (`guests`), Ngắt các thiết bị khác trừ phiên hiện tại (`all_except_me`), hoặc Lệnh khẩn cấp đăng xuất toàn bộ hệ thống (`revoke-all`).
+    - Giao diện Bảng Quản Trị tích hợp Tab `⚡ Phiên & Thiết Bị`.
+  - **Tự Đổi Mật Khẩu & Admin Reset Mật Khẩu (Issue #81)**:
+    - Người dùng tự đổi mật khẩu qua `POST /api/auth/change-password` với xác thực mật khẩu cũ bằng `scrypt` an toàn, tự động hủy các phiên trên thiết bị cũ.
+    - Admin có quyền đặt lại mật khẩu cho từng tài khoản thành viên trong bảng Accounts kèm thu hồi phiên tức thì.
+  - **Lưu Trữ & Đồng Bộ Bài Yêu Thích 2 Chiều (Issue #81)**:
+    - Lưu danh sách yêu thích vào bảng `user_favorites` theo `user_id`.
+    - Tự động đồng bộ 2 chiều giữa `localStorage` và máy chủ khi đăng nhập, bảo tồn trải nghiệm Zero-Login của khách.
+  - **Mã Hóa Dữ Liệu Nhạy Cảm Tại Chỗ (AES-256-GCM Encryption at Rest - Issue #81)**:
+    - Mã hóa xác thực AES-256-GCM cho địa chỉ IP người dùng và khách vãng lai lưu trong cơ sở dữ liệu SQLite.
+    - Đảm bảo 0 byte plaintext IP rò rỉ trong file nhị phân `tuneflow.db`, tuân thủ tiêu chuẩn an toàn thông tin DLP.
+- **Bộ hồ sơ tài liệu**:
+  - **Issues**: #80, #81, #84
+  - **Pull Requests**: PR #83, PR #85, PR #86
+
+---
+
 ## 📋 TRẠNG THÁI TRIỂN KHAI VÀ THEO DÕI (TRACEABILITY MATRIX)
 
 | Mã Yêu Cầu | Hạng Mục Công Việc | Tài Liệu Quy Chiếu | Mã Kiểm Thử / Artifact |
@@ -191,3 +217,8 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 | **RM-14** | Dynamic CSS Variable Font Scaler on TV/Web | `docs/superpowers/plans` | `tests/font-scaler-and-sleep-timer.test.js` |
 | **RM-15** | Exponential 2x Sleep Timer & 30s Fade-Out | `docs/superpowers/plans` | `tests/font-scaler-and-sleep-timer.test.js` |
 | **RM-16** | SQLite RBAC, 3-Tier Auth & 30m Guest Limit | `docs/superpowers/plans` | `tests/auth-*.test.js` (5 suites) |
+| **RM-17** | Playlist Discovery, Type Filter & Sorting | PR #83, Issue #80 | `tests/search-playlist-sort.test.js` |
+| **RM-18** | Active Session Management & Kick-Out Group | PR #85, Issue #84 | `tests/admin-session-management.test.js` |
+| **RM-19** | Password Self-Service & Favorites Sync | PR #86, Issue #81 | `tests/security-passwords-favorites-encryption.test.js` |
+| **RM-20** | AES-256-GCM Data Encryption at Rest | PR #86, Issue #81 | `tests/security-passwords-favorites-encryption.test.js` |
+

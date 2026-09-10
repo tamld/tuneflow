@@ -1,6 +1,37 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-09-10
+
+### Đã Thêm (Added)
+- **Khám Phá Danh Sách Phát, Bộ Lọc & Sắp Xếp Nâng Cao (Playlist Discovery & Advanced Sorting - Issue #80)**:
+  - Bổ sung bộ lọc loại kết quả tìm kiếm đa năng (`type=all`, `type=video`, `type=playlist`) hỗ trợ bóc tách danh sách phát độc lập với video đơn lẻ ([Issue #80](https://github.com/tamld/tuneflow/issues/80)).
+  - Bổ sung 3 chế độ sắp xếp linh hoạt: Theo độ liên quan (`sort=relevance`), Theo lượt xem cao nhất (`sort=views`), và Theo ngày đăng mới nhất (`sort=date`).
+  - Giao diện người dùng: Tích hợp thanh nút lọc pill buttons chuẩn SilverMelody WCAG AAA, thẻ danh sách phát chuyên biệt với huy hiệu bài hát (`📂 Playlist (N bài)`), nút 1-chạm tải hàng loạt hoặc mở danh sách chi tiết.
+- **Quản Trị Phiên Đăng Nhập, Thu Hồi Quyền Theo Nhóm & Nuclear Kick-Out (Session Management - Issue #84)**:
+  - Quản lý trạng thái phiên kết nối bền vững trong SQLite (`sessions`), theo dõi IP, User-Agent, thời gian kết nối và hạn dùng ([Issue #84](https://github.com/tamld/tuneflow/issues/84)).
+  - API kiểm soát phiên: `GET /api/admin/sessions`, `POST /api/admin/sessions/revoke` (ngắt phiên đơn lẻ), `POST /api/admin/sessions/revoke-group` (kick-out theo nhóm: `guests`, `users`, `all_except_me`), và `POST /api/admin/sessions/revoke-all` (lệnh khẩn cấp nuclear purge).
+  - Bảng điều khiển Quản trị: Thêm Tab `⚡ Phiên & Thiết Bị` với thanh công cụ kick-out nhanh và bảng tra cứu danh sách thiết bị đang hoạt động.
+- **Tự Phục Vụ Đổi Mật Khẩu & Admin Reset Mật Khẩu (Password Self-Service - Issue #81)**:
+  - Cho phép người dùng tự đổi mật khẩu qua `POST /api/auth/change-password`, xác thực mật khẩu cũ bằng `scrypt`, tự động hủy các phiên trên thiết bị cũ để bảo vệ tài khoản ([Issue #81](https://github.com/tamld/tuneflow/issues/81)).
+  - Cho phép Quản trị viên đặt lại mật khẩu cho bất kỳ thành viên nào qua `POST /api/admin/users/:id/reset-password` kèm ngắt kết nối bắt buộc.
+  - Nút bấm và modal `🔑 Đổi MK` trực quan trên thanh tiêu đề và trong bảng Accounts.
+- **Lưu Trữ & Đồng Bộ Bài Hát Yêu Thích 2 Chiều (Server-side Favorites Sync - Issue #81)**:
+  - Bảng cơ sở dữ liệu `user_favorites` lưu trữ danh mục bài hát yêu thích theo từng tài khoản người dùng ([Issue #81](https://github.com/tamld/tuneflow/issues/81)).
+  - API `/api/user/favorites` (GET, POST, DELETE, POST /sync) tự động đồng bộ 2 chiều giữa `localStorage` và SQLite khi đăng nhập, duy trì trải nghiệm Zero-Login mượt mà cho khách vãng lai.
+- **Mã Hóa Dữ Liệu Nhạy Cảm Tại Chỗ (AES-256-GCM Encryption at Rest - Issue #81)**:
+  - Module mã hóa đối xứng có xác thực `src/auth/crypto_utils.js` bảo vệ toàn bộ IP người dùng và khách vãng lai trong SQLite `sessions` và `guest_quotas` ([Issue #81](https://github.com/tamld/tuneflow/issues/81)).
+  - Cơ chế băm HMAC cho vector khởi tạo IV bảo đảm khả năng lập chỉ mục truy vấn mà không làm rò rỉ bất kỳ byte IP dạng thô (plaintext) nào trong tệp nhị phân `.db`.
+
+### Kiểm Thử & Đảm Bảo Chất Lượng
+- Bổ sung 3 bộ kiểm thử tự động toàn diện:
+  - `tests/search-playlist-sort.test.js` (Issue #80)
+  - `tests/admin-session-management.test.js` (Issue #84)
+  - `tests/security-passwords-favorites-encryption.test.js` (Issue #81)
+- Nâng tổng số ca kiểm thử tự động từ 134 lên **198/198 bài test chạy xanh 100%** (72 test suites, 0 regressions).
+
+---
+
 ## [2.3.0] - 2026-09-09
 
 ### Đã Thêm (Added)

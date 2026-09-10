@@ -19,13 +19,15 @@
 ## ⚡ Điểm Nổi Bật Nhanh
 
 * 👴👵 **Giao diện "SilverMelody" Thân Thiện Bố Mẹ**: Chữ to rõ ràng, độ tương phản cao chống mỏi mắt (chuẩn WCAG AAA), nút bấm khổng lồ (≥56px) rê chuột không bị trượt, thông báo tiếng Việt ấm áp.
+* 📂 **Khám Phá Playlist & Sắp Xếp Thông Minh**: Tìm kiếm linh hoạt video và playlist, tải 1-chạm cả album, lọc theo loại (`all`, `video`, `playlist`), sắp xếp theo độ liên quan, lượt xem hoặc ngày đăng.
 * 🎧 **Nghe Thử Trực Tiếp Không Tốn Ổ Cứng (Zero-Disk)**: Bấm vào thẻ bài hát là nghe thử ngay với cơ chế tự nạp luồng trước (Speculative Prewarming), chắc chắn đúng bài mới tải.
 * 🎛️ **Bộ Chỉnh Âm Thanh Web Audio DSP & Khuếch Đại An Toàn**: Bộ lọc 3 dải âm (Giọng Trong Trẻo, Nhạc Vàng Bolero Ấm Áp) và khuếch đại 125%–150% kèm nén động lực chống rè loa người già.
 * 📺 **Chế Độ Điều Khiển TV (Android TV D-Pad)**: Hỗ trợ điều hướng bằng phím mũi tên hoặc Remote TV mượt mà trong phòng khách (10-Foot Leanback UI).
-* 🔐 **Hệ Thống Phân Quyền & Quản Trị SQLite**:
-  * **Admin (Quản trị viên)**: Quản lý tài khoản người dùng, mở khóa hạn ngạch cho khách, theo dõi trạng thái hệ thống và nâng cấp `yt-dlp` chỉ với 1 cú click.
-  * **Thành viên Gia Đình**: Nghe không giới hạn, lưu danh sách bài hát yêu thích, tải nhạc MP3/MP4 thoải mái.
+* 🔐 **Hệ Thống Phân Quyền & Quản Trị Phiên SQLite**:
+  * **Admin (Quản trị viên)**: Quản lý tài khoản người dùng, giám sát phiên kết nối & kick-out theo nhóm (`guests`, `users`, `all_except_me`), mở khóa hạn ngạch cho khách, theo dõi trạng thái hệ thống và nâng cấp `yt-dlp` chỉ với 1 cú click.
+  * **Thành viên Gia Đình**: Nghe không giới hạn, đồng bộ danh sách bài hát yêu thích 2 chiều, tự đổi mật khẩu, tải nhạc MP3/MP4 thoải mái.
   * **Khách Vãng Lai**: Hạn mức nghe thử 30 phút, tự động nghỉ làm mát sau khi hết giờ.
+* 🛡️ **Mã Hóa Dữ Liệu Nhạy Cảm Tại Chỗ (AES-256-GCM)**: Toàn bộ địa chỉ IP và token phiên được mã hóa an toàn trong SQLite (`tuneflow.db`), bảo đảm không rò rỉ dữ liệu thô.
 * 💾 **Tải Thẳng Về Máy Tính Bố Mẹ**: Máy chủ lo phần xử lý tải và nén MP3 320kbps, sau đó đẩy file trực tiếp vào thư mục `Downloads` trên máy tính.
 * 🛡️ **Bền Bỉ & Tự Động Quản Lý Homelab**: Tự động dọn dẹp giải phóng dung lượng ổ cứng (FIFO), hỗ trợ tải nối tiếp khi mất mạng (`.part` safe resume).
 
