@@ -224,9 +224,35 @@ async function getVideoMetadata(url) {
 /**
  * Tier-1 Fast zero-subprocess YouTube Innertube search API (Issue #65)
  */
-async function searchInnertube(query, limit = 10) {
+async function searchInnertube(query, limit = 10, options = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  let params = options.sp || null;
+  if (!params) {
+    if (options.type === 'playlist') {
+      params = 'EgIQAw%3D%3D';
+    } else if (options.sort === 'views') {
+      params = 'CAMSAhAB';
+    } else if (options.sort === 'date') {
+      params = 'CAI%3D';
+    }
+  }
+
+  const reqBody = {
+    context: {
+      client: {
+        clientName: 'WEB',
+        clientVersion: '2.20240101.00.00',
+        hl: 'vi',
+        gl: 'VN'
+      }
+    },
+    query
+  };
+  if (params) {
+    reqBody.params = params;
+  }
 
   try {
     const res = await fetch('https://www.youtube.com/youtubei/v1/search', {
@@ -235,17 +261,7 @@ async function searchInnertube(query, limit = 10) {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       },
-      body: JSON.stringify({
-        context: {
-          client: {
-            clientName: 'WEB',
-            clientVersion: '2.20240101.00.00',
-            hl: 'vi',
-            gl: 'VN'
-          }
-        },
-        query
-      }),
+      body: JSON.stringify(reqBody),
       signal: controller.signal
     });
 
@@ -260,24 +276,69 @@ async function searchInnertube(query, limit = 10) {
     for (const section of contents) {
       const items = section.itemSectionRenderer?.contents || [];
       for (const item of items) {
-        const vr = item.videoRenderer;
-        if (!vr || !vr.videoId) continue;
-        const title = vr.title?.runs?.map(r => r.text).join('') || vr.title?.simpleText || '';
-        const uploader = vr.ownerText?.runs?.map(r => r.text).join('') || vr.longBylineText?.runs?.map(r => r.text).join('') || 'Nghệ sĩ';
-        const duration_string = vr.lengthText?.simpleText || '00:00';
-        const thumbList = vr.thumbnail?.thumbnails || [];
-        const thumbnail = thumbList.length > 0 ? thumbList[thumbList.length - 1].url : 'assets/default-thumbnail.jpg';
+        if (item.videoRenderer) {
+          const vr = item.videoRenderer;
+          if (!vr.videoId) continue;
+          const title = vr.title?.runs?.map(r => r.text).join('') || vr.title?.simpleText || '';
+          const uploader = vr.ownerText?.runs?.map(r => r.text).join('') || vr.longBylineText?.runs?.map(r => r.text).join('') || 'Nghệ sĩ';
+          const duration_string = vr.lengthText?.simpleText || '00:00';
+          const thumbList = vr.thumbnail?.thumbnails || [];
+          const thumbnail = thumbList.length > 0 ? thumbList[thumbList.length - 1].url : 'assets/default-thumbnail.jpg';
 
-        results.push({
-          id: vr.videoId,
-          title,
-          uploader,
-          duration: parseDurationString(duration_string),
-          duration_string,
-          thumbnail,
-          url: `https://www.youtube.com/watch?v=${vr.videoId}`,
-          isPlaylist: false
-        });
+          results.push({
+            id: vr.videoId,
+            title,
+            uploader,
+            duration: parseDurationString(duration_string),
+            duration_string,
+            thumbnail,
+            url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+            isPlaylist: false
+          });
+        } else if (item.playlistRenderer) {
+          const pr = item.playlistRenderer;
+          if (!pr.playlistId) continue;
+          const title = pr.title?.simpleText || pr.title?.runs?.map(r => r.text).join('') || '';
+          const uploader = pr.shortBylineText?.runs?.map(r => r.text).join('') || 'Nghệ sĩ';
+          const thumbList = pr.thumbnails?.[0]?.thumbnails || [];
+          const thumbnail = thumbList.length > 0 ? thumbList[thumbList.length - 1].url : 'assets/default-thumbnail.jpg';
+          const videoCount = pr.videoCount || 0;
+
+          results.push({
+            id: pr.playlistId,
+            title,
+            uploader,
+            duration: 0,
+            duration_string: `${videoCount} bài hát`,
+            thumbnail,
+            url: `https://www.youtube.com/playlist?list=${pr.playlistId}`,
+            isPlaylist: true
+          });
+        } else if (item.lockupViewModel) {
+          const lm = item.lockupViewModel;
+          const isPl = lm.contentType === 'LOCKUP_CONTENT_TYPE_PLAYLIST';
+          const id = lm.contentId;
+          if (!id) continue;
+          const title = lm.metadata?.lockupMetadataViewModel?.title?.content || '';
+          const uploader = lm.metadata?.lockupMetadataViewModel?.metadata?.metadataRows?.[0]?.metadataParts?.[0]?.text?.content || 'Nghệ sĩ';
+          let thumbnail = 'assets/default-thumbnail.jpg';
+          const imageSources = lm.contentImage?.collectionThumbnailViewModel?.primaryThumbnail?.thumbnailViewModel?.image?.sources
+            || lm.contentImage?.thumbnailViewModel?.image?.sources || [];
+          if (imageSources.length > 0) {
+            thumbnail = imageSources[imageSources.length - 1].url;
+          }
+
+          results.push({
+            id,
+            title,
+            uploader,
+            duration: 0,
+            duration_string: isPl ? 'Tuyển tập' : '00:00',
+            thumbnail,
+            url: isPl ? `https://www.youtube.com/playlist?list=${id}` : `https://www.youtube.com/watch?v=${id}`,
+            isPlaylist: isPl
+          });
+        }
         if (results.length >= limit) break;
       }
       if (results.length >= limit) break;
@@ -295,9 +356,20 @@ async function searchWithYtDlp(query, options = {}) {
   const limit = options.limit || 10;
   const isPlaylist = options.type === 'playlist';
 
+  let sp = options.sp || null;
+  if (!sp) {
+    if (options.type === 'playlist') {
+      sp = 'EgIQAw%3D%3D';
+    } else if (options.sort === 'views') {
+      sp = 'CAMSAhAB';
+    } else if (options.sort === 'date') {
+      sp = 'CAI%3D';
+    }
+  }
+
   let targetUrl = '';
-  if (options.sp) {
-    targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=${encodeURIComponent(options.sp)}`;
+  if (sp) {
+    targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=${encodeURIComponent(sp)}`;
   } else {
     targetUrl = isPlaylist ? `ytsearch${limit}:playlist ${query}` : `ytsearch${limit}:${query}`;
   }
@@ -342,27 +414,16 @@ async function searchWithYtDlp(query, options = {}) {
  */
 async function searchYouTube(query, options = {}) {
   const limit = options.limit || 10;
-  const isPlaylist = options.type === 'playlist';
-  const cacheKey = `${query.trim().toLowerCase()}:${limit}:${options.sp || ''}:${isPlaylist}`;
+  const sort = options.sort || 'relevance';
+  const cacheKey = `${query.trim().toLowerCase()}:${limit}:${options.sp || ''}:${options.type || 'all'}:${sort}`;
   const cached = searchCache.get(cacheKey);
   if (cached) {
     return cached;
   }
 
-  // If sorting (sp) or playlist search requested, use yt-dlp directly
-  if (options.sp || isPlaylist) {
-    try {
-      const results = await searchWithYtDlp(query, options);
-      searchCache.set(cacheKey, results);
-      return results;
-    } catch (err) {
-      throw new Error(`Lỗi tìm kiếm bài hát: ${err.message}`);
-    }
-  }
-
   // Tier 1: Fast zero-subprocess Innertube search (<200ms)
   try {
-    const innertubeResults = await searchInnertube(query.trim(), limit);
+    const innertubeResults = await searchInnertube(query.trim(), limit, options);
     if (innertubeResults && innertubeResults.length > 0) {
       searchCache.set(cacheKey, innertubeResults);
       return innertubeResults;

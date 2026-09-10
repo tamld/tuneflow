@@ -65,23 +65,37 @@ router.get('/health', (req, res) => {
 
 // Search YouTube with sorting, playlist support, and rate limiting
 router.get('/search', searchRateLimiter, async (req, res) => {
-  const { q, sp, type, limit } = req.query;
+  const { q, sp, type, sort, limit } = req.query;
   if (!q || !q.trim()) {
     return res.status(400).json({ error: 'Vui lòng nhập từ khóa tìm kiếm' });
   }
 
+  const ALLOWED_TYPES = ['all', 'video', 'playlist'];
+  const ALLOWED_SORTS = ['relevance', 'views', 'date'];
+
+  const resolvedType = ALLOWED_TYPES.includes(type) ? type : 'all';
+  const resolvedSort = ALLOWED_SORTS.includes(sort) ? sort : 'relevance';
+
   try {
     const results = await searchYouTube(q.trim(), {
       sp,
-      type,
+      type: resolvedType,
+      sort: resolvedSort,
       limit: parseInt(limit || '10', 10)
     });
-    res.json({ success: true, count: results.length, results });
+    res.json({
+      ok: true,
+      success: true,
+      count: results.length,
+      type: resolvedType,
+      sort: resolvedSort,
+      results
+    });
 
     // Speculatively pre-warm audio stream for the top results in background (Issue #70)
     if (Array.isArray(results) && results.length > 0) {
       for (const item of results.slice(0, 2)) {
-        if (item && item.url) {
+        if (item && item.url && !item.isPlaylist) {
           getPreviewStreamUrl(item.url).catch(() => {});
         }
       }
