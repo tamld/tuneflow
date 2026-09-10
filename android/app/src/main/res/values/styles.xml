@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.TuneFlow" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">#121316</item>
+        <item name="android:statusBarColor">#121316</item>
+        <item name="android:navigationBarColor">#1e2029</item>
+    </style>
+</resources>
