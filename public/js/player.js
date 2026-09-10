@@ -61,6 +61,25 @@ class PreviewPlayer {
     this.visualizerCanvas = document.getElementById('player-visualizer');
     this.visualizerCtx = this.visualizerCanvas ? this.visualizerCanvas.getContext('2d') : null;
 
+    // iOS WebKit Environment Detection (Issue #88)
+    this.isIOS = typeof navigator !== 'undefined' && (
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    );
+
+    // Picture-in-Picture (PiP) State (Issue #88)
+    this.btnPip = document.getElementById('btn-player-pip');
+    this.pipVideo = document.getElementById('player-pip-video');
+    this.pipCanvas = document.createElement('canvas');
+    this.pipCanvas.width = 512;
+    this.pipCanvas.height = 512;
+    this.pipCtx = this.pipCanvas ? this.pipCanvas.getContext('2d') : null;
+    this.pipStream = null;
+    this.isPipActive = false;
+    this.pipThumbnailImg = null;
+    this.lastPipProgressRender = 0;
+    this.lastPositionSyncTime = 0;
+
     this.bindEvents();
   }
 
@@ -89,12 +108,67 @@ class PreviewPlayer {
       this.btnBoost.addEventListener('click', () => this.cycleBoost());
     }
 
+    if (this.btnPip) {
+      this.btnPip.addEventListener('click', () => this.togglePip());
+    }
+
+    if (this.pipVideo) {
+      this.pipVideo.addEventListener('enterpictureinpicture', () => {
+        this.isPipActive = true;
+        this.updatePipBtnState();
+      });
+      this.pipVideo.addEventListener('leavepictureinpicture', () => {
+        this.isPipActive = false;
+        this.updatePipBtnState();
+      });
+      this.pipVideo.addEventListener('webkitpresentationmodechanged', () => {
+        this.isPipActive = (this.pipVideo.webkitPresentationMode === 'picture-in-picture');
+        this.updatePipBtnState();
+      });
+    }
+
+    // Page Visibility & Lifecycle Guard (Issue #88)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          // Sync UI with audio state when returning from background
+          if (this.audio && !this.audio.paused && !this.isPlaying) {
+            this.isPlaying = true;
+            this.updatePlayPauseIcon();
+            this.updateCardState();
+            this.updateMediaSessionPlaybackState();
+          } else if (this.audio && this.audio.paused && this.isPlaying) {
+            this.isPlaying = false;
+            this.updatePlayPauseIcon();
+            this.updateCardState();
+            this.updateMediaSessionPlaybackState();
+          }
+          if (this.audioCtx && this.audioCtx.state === 'suspended' && this.isPlaying) {
+            this.audioCtx.resume().catch(() => {});
+          }
+        }
+      });
+    }
+
     this.audio.addEventListener('timeupdate', () => {
       if (!isNaN(this.audio.duration)) {
         const pct = (this.audio.currentTime / this.audio.duration) * 100;
         if (this.progressBar) this.progressBar.value = pct || 0;
         if (this.timeCurrent) this.timeCurrent.textContent = this.formatTime(this.audio.currentTime);
         if (this.timeTotal) this.timeTotal.textContent = this.formatTime(this.audio.duration);
+
+        // Throttle position state update for Lock Screen & Control Center
+        const now = Date.now();
+        if (now - this.lastPositionSyncTime > 1500) {
+          this.lastPositionSyncTime = now;
+          this.updateMediaSessionPositionState();
+        }
+
+        // Throttle PiP canvas rendering to 1s intervals during playback
+        if (this.isPipActive && now - this.lastPipProgressRender > 1000) {
+          this.lastPipProgressRender = now;
+          this.renderPipCanvas();
+        }
       }
     });
 
@@ -136,8 +210,15 @@ class PreviewPlayer {
 
   /**
    * Initialize Web Audio API node graph lazily on first audio interaction
+   * @param {boolean} force - Force initialization even on iOS (e.g. on explicit user EQ adjustment)
    */
-  initWebAudio() {
+  initWebAudio(force = false) {
+    if (this.isIOS && !force) {
+      // On iOS WebKit, routing HTML5 audio into AudioContext causes Apple to suspend playback
+      // as soon as the screen locks or app goes to background. Leave audio flowing direct to hardware.
+      return;
+    }
+
     if (this.audioCtx) {
       if (this.audioCtx.state === 'suspended') {
         this.audioCtx.resume();
@@ -224,7 +305,7 @@ class PreviewPlayer {
   }
 
   cycleEq() {
-    this.initWebAudio();
+    this.initWebAudio(true);
     this.eqIndex = (this.eqIndex + 1) % this.eqPresets.length;
     const presetKey = this.eqPresets[this.eqIndex];
     const info = this.eqLabels[presetKey];
@@ -242,7 +323,7 @@ class PreviewPlayer {
   }
 
   cycleBoost() {
-    this.initWebAudio();
+    this.initWebAudio(true);
     this.boostIndex = (this.boostIndex + 1) % this.boostLevels.length;
     const level = this.boostLevels[this.boostIndex];
     const pct = Math.round(level * 100);
@@ -329,18 +410,32 @@ class PreviewPlayer {
     this.highlightCard(track.id, false, true);
     this.updatePlayPauseIcon();
 
+    // Preload thumbnail for PiP canvas & MediaSession
+    if (track.thumbnail && typeof window !== 'undefined' && window.Image) {
+      const img = new window.Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        this.pipThumbnailImg = img;
+        if (this.isPipActive) this.renderPipCanvas();
+      };
+      img.src = track.thumbnail;
+    } else {
+      this.pipThumbnailImg = null;
+    }
+
     // Load stream from backend preview route (HTML5 audio auto-loads on src assignment)
     this.audio.src = `/api/preview/${track.id}`;
 
     this.audio.play().then(() => {
       this.isLoading = false;
       this.isPlaying = true;
-      this.initWebAudio();
+      this.initWebAudio(false);
       this.startVisualizer();
       if (this.trackStatus) this.trackStatus.textContent = '🟢 Đang nghe thử trực tiếp...';
       this.updatePlayPauseIcon();
       this.updateCardState();
       this.setupMediaSession(track);
+      if (this.isPipActive) this.renderPipCanvas();
     }).catch((err) => {
       this.isLoading = false;
       if (err && err.name === 'AbortError') {
@@ -351,6 +446,7 @@ class PreviewPlayer {
       if (this.trackStatus) this.trackStatus.textContent = 'Bấm nút Play để bắt đầu nghe thử';
       this.updatePlayPauseIcon();
       this.updateCardState();
+      this.updateMediaSessionPlaybackState();
     });
   }
 
@@ -366,7 +462,7 @@ class PreviewPlayer {
         this.audio.currentTime = 0;
       }
       this.audio.play().then(() => {
-        this.initWebAudio();
+        this.initWebAudio(false);
         this.startVisualizer();
       }).catch(() => {});
       this.isPlaying = true;
@@ -374,6 +470,8 @@ class PreviewPlayer {
     }
     this.updatePlayPauseIcon();
     this.updateCardState();
+    this.updateMediaSessionPlaybackState();
+    if (this.isPipActive) this.renderPipCanvas();
   }
 
   resetAllCards() {
@@ -588,17 +686,33 @@ class PreviewPlayer {
         artist: track.uploader || 'Bố Mẹ Hay Nghe',
         album: 'TuneFlow SilverMelody',
         artwork: track.thumbnail ? [
+          { src: track.thumbnail, sizes: '96x96', type: 'image/jpeg' },
+          { src: track.thumbnail, sizes: '128x128', type: 'image/jpeg' },
+          { src: track.thumbnail, sizes: '256x256', type: 'image/jpeg' },
           { src: track.thumbnail, sizes: '512x512', type: 'image/jpeg' }
         ] : []
       });
 
+      this.updateMediaSessionPlaybackState();
+      this.updateMediaSessionPositionState();
+
       navigator.mediaSession.setActionHandler('play', () => this.togglePlay());
       navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
-      navigator.mediaSession.setActionHandler('seekbackward', () => {
-        this.audio.currentTime = Math.max(0, this.audio.currentTime - 10);
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        const skip = (details && details.seekOffset) || 10;
+        this.audio.currentTime = Math.max(0, this.audio.currentTime - skip);
+        this.updateMediaSessionPositionState();
       });
-      navigator.mediaSession.setActionHandler('seekforward', () => {
-        this.audio.currentTime = Math.min(this.audio.duration, this.audio.currentTime + 10);
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        const skip = (details && details.seekOffset) || 10;
+        this.audio.currentTime = Math.min(this.audio.duration || 0, this.audio.currentTime + skip);
+        this.updateMediaSessionPositionState();
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details && details.seekTime !== undefined && !isNaN(details.seekTime)) {
+          this.audio.currentTime = details.seekTime;
+          this.updateMediaSessionPositionState();
+        }
       });
       navigator.mediaSession.setActionHandler('previoustrack', () => {
         if (typeof window.playPreviousTrack === 'function') window.playPreviousTrack();
@@ -606,7 +720,180 @@ class PreviewPlayer {
       navigator.mediaSession.setActionHandler('nexttrack', () => {
         if (typeof window.playNextTrack === 'function') window.playNextTrack();
       });
-    } catch (e) {}
+      navigator.mediaSession.setActionHandler('stop', () => {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.isPlaying = false;
+        this.updatePlayPauseIcon();
+        this.updateCardState();
+        this.updateMediaSessionPlaybackState();
+      });
+    } catch (e) {
+      console.warn('MediaSession setup failed:', e);
+    }
+  }
+
+  updateMediaSessionPlaybackState() {
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.playbackState = this.isPlaying ? 'playing' : 'paused';
+      } catch (e) {}
+    }
+  }
+
+  updateMediaSessionPositionState() {
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+      try {
+        if (!isNaN(this.audio.duration) && this.audio.duration > 0) {
+          navigator.mediaSession.setPositionState({
+            duration: this.audio.duration,
+            playbackRate: this.audio.playbackRate || 1.0,
+            position: Math.min(this.audio.currentTime, this.audio.duration)
+          });
+        }
+      } catch (e) {}
+    }
+  }
+
+  /* ==========================================================================
+     Picture-in-Picture (PiP) Floating Controller (Issue #88)
+     ========================================================================== */
+
+  renderPipCanvas() {
+    if (!this.pipCtx) return;
+    const ctx = this.pipCtx;
+    const w = 512;
+    const h = 512;
+
+    // Dark sleek gradient background
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#121316');
+    bgGrad.addColorStop(1, '#1e2029');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Accent gold border
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, w - 6, h - 6);
+
+    // Render Thumbnail or Musical Icon
+    if (this.pipThumbnailImg && this.pipThumbnailImg.complete && this.pipThumbnailImg.naturalWidth > 0) {
+      try {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(w / 2, 190, 110, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(this.pipThumbnailImg, w / 2 - 110, 80, 220, 220);
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.arc(w / 2, 190, 112, 0, Math.PI * 2);
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      } catch (e) {
+        this.renderPipFallbackIcon(ctx, w);
+      }
+    } else {
+      this.renderPipFallbackIcon(ctx, w);
+    }
+
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    const title = this.currentTrack ? this.currentTrack.title : 'TuneFlow';
+    const displayTitle = title.length > 28 ? title.slice(0, 26) + '...' : title;
+    ctx.fillText(displayTitle, w / 2, 350);
+
+    // Artist
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '600 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    const artist = this.currentTrack ? (this.currentTrack.uploader || 'Bố Mẹ Hay Nghe') : 'SilverMelody';
+    ctx.fillText(artist, w / 2, 390);
+
+    // Status
+    ctx.fillStyle = this.isPlaying ? '#10b981' : '#9ba1b0';
+    ctx.font = '500 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(this.isPlaying ? '▶ Đang phát' : '⏸ Đang tạm dừng', w / 2, 430);
+
+    // Progress Bar Line
+    if (this.audio && !isNaN(this.audio.duration) && this.audio.duration > 0) {
+      const pct = Math.min(1, this.audio.currentTime / this.audio.duration);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.fillRect(56, 460, 400, 8);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(56, 460, 400 * pct, 8);
+    }
+  }
+
+  renderPipFallbackIcon(ctx, w) {
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '100px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🎶', w / 2, 220);
+  }
+
+  async togglePip() {
+    if (!this.pipVideo) return;
+
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        this.isPipActive = false;
+        this.updatePipBtnState();
+        return;
+      }
+
+      const canPip = ('pictureInPictureEnabled' in document && document.pictureInPictureEnabled) ||
+        (this.pipVideo.webkitSupportsPresentationMode && this.pipVideo.webkitSupportsPresentationMode('picture-in-picture'));
+
+      if (!canPip) {
+        if (typeof window.showToast === 'function') {
+          window.showToast('ℹ️ Thiết bị hoặc trình duyệt chưa hỗ trợ PiP cửa sổ nổi.', 'info');
+        }
+        return;
+      }
+
+      this.renderPipCanvas();
+
+      if (!this.pipStream && this.pipCanvas && typeof this.pipCanvas.captureStream === 'function') {
+        this.pipStream = this.pipCanvas.captureStream(10);
+        this.pipVideo.srcObject = this.pipStream;
+      }
+
+      try {
+        await this.pipVideo.play();
+      } catch (e) {}
+
+      if (this.pipVideo.requestPictureInPicture) {
+        await this.pipVideo.requestPictureInPicture();
+      } else if (this.pipVideo.webkitSetPresentationMode) {
+        this.pipVideo.webkitSetPresentationMode('picture-in-picture');
+      }
+
+      this.isPipActive = true;
+      this.updatePipBtnState();
+      if (typeof window.showToast === 'function') {
+        window.showToast('📺 Đã bật chế độ cửa sổ nổi (PiP)!', 'success');
+      }
+    } catch (err) {
+      console.warn('Picture-in-Picture failed:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast('⚠️ Không thể bật PiP: ' + (err.message || 'Lỗi không xác định'), 'error');
+      }
+    }
+  }
+
+  updatePipBtnState() {
+    if (this.btnPip) {
+      this.btnPip.classList.toggle('pip-active', this.isPipActive);
+      this.btnPip.title = this.isPipActive
+        ? 'Chế độ cửa sổ nổi PiP: Đang BẬT (Bấm để tắt)'
+        : 'Chế độ cửa sổ nổi (Picture-in-Picture) / PiP Mode';
+    }
   }
 
   updatePlayPauseIcon() {
