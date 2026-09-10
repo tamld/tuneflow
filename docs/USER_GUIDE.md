@@ -9,14 +9,14 @@ Action-first manual for running, installing, and navigating TuneFlow across iOS,
 > **Estimated Time:** 1 minute.
 
 1. Open **Safari** on iOS and navigate to your TuneFlow URL (must use HTTPS).
-2. Tap the **Share** button (square with arrow pointing up).
-3. Scroll down and tap **Add to Home Screen** (`Thêm vào MH chính`).
-4. Tap **Add** (`Thêm`) in the top right corner.
-5. Launch TuneFlow from your Home Screen icon.
+2. Tap the **Share** button (square icon with an upward-pointing arrow).
+3. Scroll down and tap **Add to Home Screen**.
+4. Tap **Add** in the top-right corner.
+5. Launch TuneFlow from your Home Screen.
 
 **Background Playback & PiP Tips:**
-- **Lock Screen Playback:** Start audio and lock your device. Playback persists continuously.
-- **Floating Picture-in-Picture:** Tap the **PiP** (`📺`) button on the bottom player bar to float track artwork, song title, and animated visualizer.
+- **Lock Screen Playback:** Start audio playback and lock your device. Playback continues uninterrupted via native hardware media controls.
+- **Floating Picture-in-Picture:** Tap the **PiP** (`📺`) button on the bottom player bar to float track artwork, song title, and animated visualizer waveforms.
 
 ---
 
@@ -26,13 +26,13 @@ Action-first manual for running, installing, and navigating TuneFlow across iOS,
 
 ### Option A: Install Progressive Web App (PWA)
 1. Open **Google Chrome** on Android and navigate to your TuneFlow URL.
-2. Tap the **Install TuneFlow** banner at the top, or tap **⋮ menu** -> **Install app** (`Cài đặt ứng dụng`).
+2. Tap the **Install TuneFlow** banner at the top, or tap **⋮ menu** -> **Install app**.
 3. Tap **Install** to add TuneFlow to your app drawer.
 
 ### Option B: Download Official APK
 1. Open [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
 2. Download `tuneflow-mobile-v2.4.2.apk`.
-3. Open the downloaded file and tap **Install**.
+3. Open the downloaded APK file and tap **Install**.
 
 ---
 
@@ -82,7 +82,7 @@ docker compose up -d
 ```
 
 ### Step 3: Access web UI
-Open `http://<your-server-ip>:3000` and sign in with `admin` / your bootstrap password.
+Open `http://<your-server-ip>:3000` and sign in with `admin` and your bootstrap password.
 
 ---
 
@@ -90,7 +90,7 @@ Open `http://<your-server-ip>:3000` and sign in with `admin` / your bootstrap pa
 > **Goal:** Secure your instance and manage accounts.  
 > **Estimated Time:** 1 minute.
 
-1. Sign in with username `admin` and default password.
-2. Click **👑 Quản trị** (Admin) in the top header bar.
-3. Click **Đổi mật khẩu** (Change Password) to set a new personal password.
-4. Go to **Tài khoản** (Accounts) tab to invite family members or manage guest quotas.
+1. Sign in with username `admin` and the default password.
+2. Click **👑 Admin** in the top header bar.
+3. Click **Change Password** to set a new personal password.
+4. Go to **Accounts** tab to invite family members or manage guest quotas.

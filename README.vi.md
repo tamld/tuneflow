@@ -10,7 +10,7 @@
 [![Design: WCAG AAA](https://img.shields.io/badge/Design-SilverMelody%20WCAG%20AAA-orange.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-[English](README.md) · [Tiếng Việt](README.vi.md) · [Cẩm nang sử dụng](docs/USER_GUIDE.md) · [Lộ trình phát triển](docs/ROADMAP.md)
+[English](README.md) · [Tiếng Việt](README.vi.md) · [Cẩm nang sử dụng](docs/USER_GUIDE.vi.md) · [Lộ trình phát triển](docs/ROADMAP.md)
 
 </div>
 
@@ -177,7 +177,7 @@ Trỏ domain công khai của bạn vào `http://localhost:3000` trên bảng đ
 
 ## 📚 Tài Liệu & Đặc Tả Kỹ Thuật
 
-* 📖 **[Cẩm Nang Sử Dụng](docs/USER_GUIDE.md)**: Hướng dẫn cài đặt và sử dụng từng bước (chuẩn ADHD/hành động trước) cho iOS, Android, TV và Docker.
+* 📖 **[Cẩm Nang Sử Dụng](docs/USER_GUIDE.vi.md)**: Hướng dẫn cài đặt và sử dụng từng bước (chuẩn ADHD/hành động trước) cho iOS, Android, TV và Docker.
 * 🗺️ **[Lộ Trình Phát Triển](docs/ROADMAP.md)**: Lộ trình hoàn thiện các giai đoạn từ Phase 1 đến Phase 11.
 * 📜 **[Lịch Sử Phát Hành](CHANGELOG.md)**: Nhật ký cập nhật phiên bản, sửa lỗi và nâng cấp bảo mật.
 * 🏛️ **[Đặc Tả & Thiết Kế Kiến Trúc](docs/PRD.md)**: Toàn bộ tài liệu PRD, SRS, FSM và tuân thủ bản quyền.
