@@ -171,7 +171,7 @@ Point your public hostname to `http://localhost:3000` via Cloudflare Zero Trust 
 
 * **Username**: `admin`
 * **Password**: `admin` *(or value of `ADMIN_PASSWORD`)*
-* 💡 *Important: Open the Admin Control Panel (`👑 Quản trị`) after logging in to change your password and configure user accounts.*
+* 💡 *Important: Open the Admin Control Panel (`👑 Admin`) after logging in to change your password and configure user accounts.*
 
 ---
 
