@@ -122,6 +122,21 @@
           🔎 Tìm Kiếm
         </button>
       </div>
+      <!-- Search Filters: Type & Sort (Issue #80) -->
+      <div class="search-filters-row" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <div class="search-filter-group" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Nội dung:</span>
+          <button type="button" class="filter-chip active" data-search-type="all">Tất Cả</button>
+          <button type="button" class="filter-chip" data-search-type="video">🎵 Bài Hát</button>
+          <button type="button" class="filter-chip" data-search-type="playlist">📻 Tuyển Tập / Album</button>
+        </div>
+        <div class="search-sort-group" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Sắp xếp:</span>
+          <button type="button" class="filter-chip active" data-search-sort="relevance">⭐ Phù Hợp</button>
+          <button type="button" class="filter-chip" data-search-sort="views">👁️ Nhiều Lượt Nghe</button>
+          <button type="button" class="filter-chip" data-search-sort="date">🆕 Mới Nhất</button>
+        </div>
+      </div>
     </section>
 
     <!-- Playlist Batch Ingestion Panel -->

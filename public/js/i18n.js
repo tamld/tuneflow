@@ -44,7 +44,12 @@
       voice_search: '🎙️ Nói Để Tìm Bài',
       voice_listening: '🔴 Đang nghe Bố Mẹ nói...',
       voice_unsupported: 'Trình duyệt chưa hỗ trợ tìm bằng giọng nói',
-      install_app: '📲 Cài App'
+      install_app: '📲 Cài App',
+      filter_playlist: '📻 Tuyển Tập / Album',
+      sort_relevance: '⭐ Phù Hợp',
+      sort_views: '👁️ Nhiều Lượt Nghe',
+      sort_date: '🆕 Mới Nhất',
+      open_playlist: '📂 Mở Tuyển Tập'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -86,7 +91,12 @@
       voice_search: '🎙️ Voice Search',
       voice_listening: '🔴 Listening to Parents...',
       voice_unsupported: 'Voice search is not supported in this browser',
-      install_app: '📲 Install App'
+      install_app: '📲 Install App',
+      filter_playlist: '📻 Playlists / Albums',
+      sort_relevance: '⭐ Relevance',
+      sort_views: '👁️ Most Viewed',
+      sort_date: '🆕 Latest',
+      open_playlist: '📂 Open Playlist'
     }
   };
 

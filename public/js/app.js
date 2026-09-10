@@ -51,8 +51,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnPersonaFavs = document.getElementById('btn-persona-favorites');
 
   // Filter chips
-  const filterChips = document.querySelectorAll('.filter-chip');
+  const filterChips = document.querySelectorAll('.filter-chip:not([data-search-type]):not([data-search-sort])');
   let currentFilter = 'all';
+
+  // Search Filters State (Issue #80)
+  let currentSearchType = 'all';
+  let currentSearchSort = 'relevance';
+
+  const typeFilterChips = document.querySelectorAll('[data-search-type]');
+  typeFilterChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      typeFilterChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentSearchType = chip.getAttribute('data-search-type') || 'all';
+      if (searchInput.value.trim()) {
+        executeSearch(searchInput.value.trim());
+      }
+    });
+  });
+
+  const sortFilterChips = document.querySelectorAll('[data-search-sort]');
+  sortFilterChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      sortFilterChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentSearchSort = chip.getAttribute('data-search-sort') || 'relevance';
+      if (searchInput.value.trim()) {
+        executeSearch(searchInput.value.trim());
+      }
+    });
+  });
 
   // Playlist Batch Panel
   const playlistPanel = document.getElementById('playlist-panel');
@@ -390,7 +418,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchSignal = currentSearchAbortController.signal;
 
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(finalQuery)}&limit=12`, {
+      const searchUrl = `/api/search?q=${encodeURIComponent(finalQuery)}&limit=12&type=${encodeURIComponent(currentSearchType || 'all')}&sort=${encodeURIComponent(currentSearchSort || 'relevance')}`;
+      const res = await fetch(searchUrl, {
         signal: searchSignal
       });
       const data = await res.json();
@@ -565,6 +594,82 @@ document.addEventListener('DOMContentLoaded', () => {
     activeTrackList = songs;
 
     songs.forEach(song => {
+      const isPlaylist = Boolean(song.isPlaylist || (song.id && String(song.id).startsWith('PL')));
+      if (isPlaylist) {
+        const card = document.createElement('div');
+        card.className = 'song-card playlist-card';
+        card.id = `card-${escapeHtml(song.id)}`;
+
+        card.innerHTML = `
+          <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để mở danh sách phát này" aria-label="Mở danh sách phát: ${escapeHtml(song.title)}">
+            <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' fill=\\'%232e323e\\'><rect width=\\'100%\\' height=\\'100%\\'/></svg>'">
+            <div class="song-thumb-overlay" aria-hidden="true">
+              <span class="play-icon-overlay">📂</span>
+            </div>
+            <span class="song-duration" style="background: rgba(217, 119, 6, 0.9); font-weight: 700;">📁 ${escapeHtml(song.duration_string || 'Tuyển tập')}</span>
+          </div>
+          <div class="song-info">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <h3 class="song-title" role="button" tabindex="0" title="Bấm để mở tuyển tập này" aria-label="Mở tuyển tập: ${escapeHtml(song.title)}">${escapeHtml(song.title)}</h3>
+            </div>
+            <p class="song-uploader">🎙️ ${escapeHtml(song.uploader || 'Tuyển Tập')}</p>
+            <div style="margin-top: 6px; font-size: 13px; font-weight: 700; color: #f59e0b;">📻 Tuyển Tập / Album</div>
+          </div>
+          <div class="song-actions" style="display: flex;">
+            <button class="btn-preview btn-open-playlist" id="btn-playlist-${escapeHtml(song.id)}" style="flex: 1; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 700; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer;">
+              📂 Mở Tuyển Tập Nghe & Tải
+            </button>
+          </div>
+        `;
+
+        const openPlaylistHandler = (e) => {
+          if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+          const targetUrl = song.url || `https://www.youtube.com/playlist?list=${song.id}`;
+          handlePlaylistUrl(targetUrl);
+        };
+
+        const thumbWrapper = card.querySelector('.song-thumbnail-wrapper');
+        if (thumbWrapper) {
+          thumbWrapper.addEventListener('click', openPlaylistHandler);
+          thumbWrapper.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openPlaylistHandler(e);
+            }
+          });
+        }
+
+        const titleEl = card.querySelector('.song-title');
+        if (titleEl) {
+          titleEl.addEventListener('click', openPlaylistHandler);
+          titleEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openPlaylistHandler(e);
+            }
+          });
+        }
+
+        const btnPl = card.querySelector(`#btn-playlist-${song.id}`);
+        if (btnPl) {
+          btnPl.addEventListener('click', openPlaylistHandler);
+        }
+
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('title', `Bấm để mở danh sách phát: ${song.title}`);
+        card.addEventListener('click', openPlaylistHandler);
+        card.addEventListener('keydown', (e) => {
+          if (e.target === card && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            openPlaylistHandler(e);
+          }
+        });
+
+        resultsContainer.appendChild(card);
+        return;
+      }
+
       const isFav = favorites.some(f => f.id === song.id);
       const isCurrentlyPlaying = window.previewPlayer && window.previewPlayer.currentTrack && window.previewPlayer.currentTrack.id === song.id && window.previewPlayer.isPlaying;
       const card = document.createElement('div');
