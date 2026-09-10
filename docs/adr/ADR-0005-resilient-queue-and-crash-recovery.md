@@ -1,19 +1,22 @@
-﻿# ADR-0005: Thiết Kế Hàng Đợi Bền Vững & Chống Mất Dữ Liệu Khi Rớt Mạng (Resilient Queue)
+# ADR-0005: Resilient Queue Design and Network Disconnection Recovery
 
-## Bối Cảnh (Context)
-Môi trường mạng gia đình hoặc Wi-Fi có thể bị chập chờn, mất kết nối ngắn hoặc mất điện đột ngột. Nếu một bài hát dài 2 tiếng (ví dụ: Tuyển tập Nhạc Vàng 50 bài) đang tải đến 90% mà bị đứt mạng và hệ thống xóa sạch dữ liệu dở dang thì sẽ gây ức chế cực lớn cho người dùng và lãng phí băng thông.
+## Status
+Accepted
 
-## Quyết Định (Decision)
-1. **Phân vùng tệp lưu trữ**:
-   - Tách bạch hoàn toàn giữa thư mục tạm `downloads/temp/` và thư mục tệp hoàn chỉnh `downloads/`.
-2. **Bảo tồn tệp tải tạm dở dang (`*.part`, `*.ytdl`)**:
-   - `yt-dlp` khi tải sẽ ghi dữ liệu vào tệp tạm dạng `downloads/temp/<id>.part`.
-   - Các hàm dọn dẹp hàng đợi hoặc khởi động lại server **tuyệt đối không được phép xóa tệp `.part`**.
-   - Khi tác vụ tải được thử lại (Retry) hoặc người dùng bấm tải lại, `yt-dlp` sẽ tự động nhận diện tệp `.part` và tiếp tục tải từ byte bị đứt đoạn thay vì tải lại từ đầu (HTTP Range Resume).
-3. **Cơ chế giới hạn tải đồng thời (Concurrency Throttling)**:
-   - Cố định `MAX_CONCURRENT_DOWNLOADS = 2`.
-   - Ngăn chặn tình trạng nhiều bài hát được xếp hàng làm quá tải CPU và IOPS của ổ cứng máy chủ.
+## Context
+Home networking and residential Wi-Fi environments can be unstable, subject to brief outages or sudden power cuts. When downloading a 2-hour long compilation (e.g., a 50-track anthology), losing progress at 90% and purging incomplete data causes immense frustration for elderly users and wastes network bandwidth.
 
-## Hậu Quả (Consequences)
-- **Tích cực**: Hệ thống có khả năng phục hồi 100% sau sự cố mạng. Tiết kiệm băng thông tối đa.
-- **Tiêu cực**: Các tệp tạm dở dang có thể chiếm dụng dung lượng đĩa nếu tác vụ bị hủy vĩnh viễn. Cần bổ sung cơ chế quét dọn tệp tạm mồ côi (Orphan Cleanup TTL) cho các tệp có thời gian tạo quá 24 giờ.
+## Decision
+1. **Storage Isolation**:
+   - Strictly decouple the temporary work directory `downloads/temp/` from the completed output directory `downloads/`.
+2. **Preservation of Partial Files (`*.part`, `*.ytdl`)**:
+   - `yt-dlp` writes in-progress data to temporary files matching `downloads/temp/<id>.part`.
+   - Queue cleanup functions, cancellation routines, and server restarts **must never delete `.part` files**.
+   - When a download task is retried or re-initiated, `yt-dlp` automatically detects the existing `.part` file and resumes from the interrupted byte offset (HTTP Range Resume) instead of restarting from zero.
+3. **Concurrency Throttling**:
+   - Enforce a fixed cap `MAX_CONCURRENT_DOWNLOADS = 2`.
+   - Prevent unbounded concurrent downloads from overwhelming host CPU cycles and disk IOPS.
+
+## Consequences
+- **Positive**: The system achieves 100% network disconnection survivability. Bandwidth consumption is strictly minimized.
+- **Negative**: Incomplete partial files can consume disk storage if tasks are permanently abandoned. Mitigated by an Orphan Cleanup TTL background job sweeping temporary files older than 24 hours.

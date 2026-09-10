@@ -1,35 +1,35 @@
-# Tiêu Chuẩn Hoàn Thành (Definition of Done - DoD)
-## Dự Án: TuneFlow
+# Definition of Done (DoD)
+## Project: TuneFlow
 
-Một tính năng, một bản vá hoặc một phiên bản chỉ được coi là **HOÀN THÀNH (DONE)** khi và chỉ khi thỏa mãn đầy đủ các điều kiện tiên quyết sau:
+A feature, fix, or release is considered **DONE** if and only if all following prerequisite criteria are satisfied:
 
 ---
 
-## 1. Tiêu Chuẩn Mã Nguồn & Kiến Trúc (Code & Architecture)
-- [ ] Mã nguồn được viết theo chuẩn Clean Code, không có biến thừa hoặc hàm không sử dụng.
-- [ ] Mọi lời gọi lệnh CLI bên ngoài (`yt-dlp`, `ffmpeg`) phải sử dụng mảng tham số an toàn với cờ `--` phân cách URL để chống Argument Injection.
-- [ ] Tài nguyên tiến trình con (`child_process`) phải được giải phóng và dọn dẹp sạch sẽ khi hủy tác vụ (`SIGTERM`).
-- [ ] Không chứa mã token, mật khẩu, đường dẫn tuyệt đối nhạy cảm trong repository.
+## 1. Code Quality & Architectural Integrity
+- [ ] Code strictly follows Clean Code principles with zero orphaned variables or dead helper methods.
+- [ ] External CLI commands (`yt-dlp`, `ffmpeg`) use isolated argument arrays with explicit `--` parameter separators to prevent argument injection.
+- [ ] Child processes are safely managed and terminated on cancellation (`SIGTERM` / `SIGKILL`).
+- [ ] Zero secrets, API keys, private tokens, or hardcoded passwords exist in git history or files.
 
-## 2. Tiêu Chuẩn Kiểm Thử Tự Động (Automated Testing)
-- [ ] **Bộ kiểm thử đơn vị (Unit Tests)**: 100% ca kiểm thử format, state machine và helper functions chạy đạt.
-- [ ] **Bộ kiểm thử tích hợp (API Tests)**: 100% endpoints `/api/health`, `/api/search`, `/api/preview/:id`, `/api/queue/add`, `/api/queue/list` trả về đúng mã trạng thái HTTP và định dạng JSON.
-- [ ] **Bộ kiểm thử toàn trình & Khả năng tiếp cận (E2E & A11y Tests)**:
-  - Kiểm thử Puppeteer trên Chrome headless xác nhận luồng: Tìm kiếm ➔ Nghe thử ➔ Tải về.
-  - Chiều cao các nút bấm tương tác đo đạc thực tế trên DOM phải đạt $\ge 50\text{px}$.
-  - Tương phản màu sắc giữa văn bản và nền phải đạt chuẩn WCAG 2.2 AAA ($\ge 7:1$).
-- [ ] Không có bất kỳ ca kiểm thử nào bị lỗi (0 failed, 0 skipped unannounced).
+## 2. Automated Testing Gate
+- [ ] **Unit Tests**: 100% of formatting, state machine, and helper tests pass.
+- [ ] **Integration & Security Tests**: All REST endpoints (`/api/health`, `/api/search`, `/api/stream/pipe/:id`, `/api/queue/*`, `/api/auth/*`) return valid HTTP status codes and adhere to JSON schemas.
+- [ ] **Security Fuzzing**: Path traversal, SSRF IP validation, and SQL/SQLite injection test suites execute with zero failures.
+- [ ] **Test Coverage**: 218/218 tests pass with 0 failures and 0 unannounced skips.
 
-## 3. Tiêu Chuẩn Trải Nghiệm & Ngôn Ngữ (UX & Language)
-- [ ] Toàn bộ văn bản hiển thị cho người dùng phải là 100% tiếng Việt tự nhiên, ấm áp, lịch sự.
-- [ ] Không hiển thị bất kỳ mã lỗi kỹ thuật thuần túy nào (`Error 500`, `SIGSEGV`, `stack trace`) ra ngoài giao diện người dùng.
+## 3. Accessibility & Multi-Platform Standards
+- [ ] SilverMelody UI targets meet or exceed $\ge 56\text{px}$ touch boundaries.
+- [ ] Text contrast conforms to WCAG 2.2 AAA ($\ge 7:1$ contrast ratio).
+- [ ] Android TV Leanback D-Pad navigation verified with spatial navigation engine (`tv-leanback.js`).
+- [ ] iOS 18 WebKit Standalone mode verified for background audio and Picture-in-Picture.
 
-## 4. Tiêu Chuẩn Đóng Gói & CI/CD (Packaging & CI/CD)
-- [ ] Dockerfile biên dịch thành công hình ảnh Alpine Linux với dung lượng $\le 120\text{ MB}$.
-- [ ] Container chạy dưới người dùng không đặc quyền (`USER node`).
-- [ ] Pipeline GitHub Actions (`ci.yml`, `release.yml`) chạy xanh 100% trên cả kiến trúc `amd64` và `arm64`.
+## 4. Container & Remote Packaging
+- [ ] Docker multi-arch image (`linux/amd64`, `linux/arm64`) builds under 120MB on Alpine Linux.
+- [ ] Container operates under non-privileged user (`USER node`).
+- [ ] Android APKs (Mobile and TV Leanback) are signed and verified with SHA-256 manifests.
+- [ ] GitHub Actions release pipeline runs cleanly with sequential job dependencies.
 
-## 5. Tiêu Chuẩn Bằng Chứng Thực Tế (Evidence Before Assertions)
-- [ ] Có nhật ký kiểm thử thực tế với exit code 0.
-- [ ] Có tệp âm thanh MP3 thực tế được chuyển đổi thành công ra thư mục `downloads/` với dung lượng và bit-rate chuẩn 320kbps.
-- [ ] Có ảnh chụp màn hình xác thực giao diện lưu trong thư mục artifacts.
+## 5. Documentation & Language Boundary
+- [ ] All architectural, engineering, and specification documentation is maintained in 100% English.
+- [ ] Dual bilingual separation maintained between `README.md` (EN) and `README.vi.md` (VI).
+- [ ] No mixed languages within any single technical document.

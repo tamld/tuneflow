@@ -198,7 +198,7 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Hỗ trợ bấm trực tiếp vào ảnh bìa (thumbnail) hoặc tiêu đề bài hát để phát nhạc ngay lập tức với hiệu ứng viền vàng nổi bật ([Issue #26](https://github.com/tamld/tuneflow/issues/26)).
   - Hệ thống đa ngôn ngữ Tiếng Việt & Tiếng Anh (i18n) với các bộ sưu tập nhạc bản địa hóa dành riêng cho Bố và Mẹ ([Issue #19](https://github.com/tamld/tuneflow/issues/19)).
 - **Mở rộng Kiến trúc Di động & Android TV (Mobile & TV Ecosystem)**:
-  - Bản ghi Quyết định Kiến trúc [ADR-0012](file:///docs/adr/ADR-0012-android-mobile-and-tv-leanback-architecture.md) và Đặc tả [SPEC-0007](file:///docs/spec/SPEC-0007-android-tv-and-mobile-client.md) cho Android Phone & Android TV D-Pad remote navigation ([Issue #17](https://github.com/tamld/tuneflow/issues/17)).
+  - Bản ghi Quyết định Kiến trúc [ADR-0012](docs/adr/ADR-0012-android-mobile-and-tv-leanback-architecture.md) và Đặc tả [SPEC-0007](docs/spec/SPEC-0007-android-tv-and-mobile-client.md) cho Android Phone & Android TV D-Pad remote navigation ([Issue #17](https://github.com/tamld/tuneflow/issues/17)).
 - **Tự động hóa CI/CD & Cổng Kiểm Thử Chất Lượng (Quality Gates & CI/CD)**:
   - Tích hợp chuẩn linter ESLint 10, đo lường độ bao phủ kiểm thử (`npm run test:coverage`) và dynamic port trong Puppeteer E2E test ([Issue #15](https://github.com/tamld/tuneflow/issues/15)).
   - Bổ sung kiểm thử smoke test tự động build container và kiểm tra healthcheck trong GitHub Actions CI ([Issue #14](https://github.com/tamld/tuneflow/issues/14)).

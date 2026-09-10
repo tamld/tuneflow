@@ -1,26 +1,29 @@
-﻿# ADR-0004: Cơ Chế Tự Động Chuyển Giao Tệp Về Trình Duyệt Khách (Content-Disposition Attachment)
+# ADR-0004: Client Delivery via HTTP Content-Disposition Attachment
 
-## Bối Cảnh (Context)
-Các giải pháp self-hosted Homelab thông thường lưu tệp sau khi tải về ổ đĩa của server (ví dụ: thư mục `/srv/music/` trên server node).
-Rào cản lớn nhất: Bố Mẹ đang ngồi máy tính cá nhân trong phòng khách và không có kỹ năng truy cập SMB/NFS share hay dùng WinSCP/SSH để lấy tệp về máy tính của mình.
+## Status
+Accepted
 
-## Quyết Định (Decision)
-Tích hợp quy trình chuyển giao tự động khép kín giữa Server-Sent Events (SSE) và HTTP Download:
-1. Server sau khi hoàn thành chuyển mã FFmpeg sẽ lưu tệp trong `/app/downloads/` và phát sóng sự kiện SSE `{ status: 'completed', id: '...' }`.
-2. Trình duyệt client khi nhận được sự kiện này sẽ tự động khởi tạo một thẻ HTML `<a>` ẩn:
+## Context
+Standard self-hosted homelab solutions typically save downloaded media to the server host disk (e.g., `/srv/music/` on a server node).
+The biggest operational barrier: Elderly parents sit at their personal computers in the living room without the technical skills to mount SMB/NFS network shares or use WinSCP/SSH to retrieve files onto their personal workstations.
+
+## Decision
+Integrate an automated closed-loop delivery pipeline connecting Server-Sent Events (SSE) with HTTP Download:
+1. Upon completing FFmpeg transcoding, the server stores the file in `/app/downloads/` and emits an SSE event `{ status: 'completed', id: '...' }`.
+2. Upon receiving this event, the client browser automatically creates an invisible HTML `<a>` element:
    ```javascript
    const link = document.createElement('a');
    link.href = `/api/download/${song.id}/file`;
    link.download = `${song.title}.mp3`;
    link.click();
    ```
-3. Endpoint `/api/download/:id/file` trên server gắn cờ tiêu đề:
+3. The server endpoint `/api/download/:id/file` attaches download headers:
    ```http
    Content-Type: audio/mpeg
-   Content-Disposition: attachment; filename="[Tên bài hát].mp3"
+   Content-Disposition: attachment; filename="[Song Title].mp3"
    ```
-4. Trình duyệt của Bố Mẹ nhận diện luồng binary và tự động kích hoạt tiến trình tải về thư mục `Downloads` của máy tính cá nhân.
+4. The client browser detects the binary stream and triggers a native download directly into the client machine's local `Downloads` folder.
 
-## Hậu Quả (Consequences)
-- **Tích cực**: Bố Mẹ chỉ cần bấm "Tải Về", sau khi nhạc chuyển đổi xong là tệp tự động rơi vào máy tính cá nhân. Xóa bỏ hoàn toàn khoảng cách giữa Server nội bộ và Client.
-- **Tiêu cực**: Trình duyệt có thể hỏi quyền "Allow multiple downloads" nếu tải cả danh sách phát nhiều bài cùng lúc. Cần cơ chế đóng gói tệp ZIP nếu người dùng tải toàn bộ playlist (được lên kế hoạch trong v1.1).
+## Consequences
+- **Positive**: Elderly users simply click "Download". Once transcoding completes, the file lands directly in their local PC storage. Completely bridges the gap between internal server and client device.
+- **Negative**: Browsers may prompt for "Allow multiple downloads" permission when downloading large batches. Mitigated by playlist ZIP packaging (introduced in v1.1.0).

@@ -22,9 +22,9 @@ stateDiagram-v2
     Terminating --> [*]: clean exit code 0
 ```
 
-## Các Bước Chuyển Trạng Thái:
-1. **Starting ➔ CheckingDeps**: Khởi động Node process, kiểm tra biến môi trường và quyền ghi thư mục `downloads/`.
-2. **CheckingDeps ➔ Healthy**: Xác nhận lệnh `ffmpeg -version` và `yt-dlp --version` thực thi thành công. Mở cổng 3000.
-3. **Healthy ➔ Degraded**: Bộ nhớ vượt ngưỡng hoặc tiến trình con bị treo quá thời gian timeout (600s).
-4. **Degraded ➔ SelfClean**: Tự động giải phóng tiến trình con và dọn sạch tệp rác `.part`.
-5. **Terminating ➔ Exit**: Nhận tín hiệu `SIGTERM` từ Docker, đóng toàn bộ kết nối và thoát sạch sẽ.
+## State Transitions
+1. **Starting ➔ CheckingDeps**: Spawns Node.js process, validates environment variables, and verifies write permissions on `downloads/`.
+2. **CheckingDeps ➔ Healthy**: Confirms `ffmpeg -version` and `yt-dlp --version` execution success. Binds port 3000.
+3. **Healthy ➔ Degraded**: Memory utilization exceeds threshold or a child process hangs past timeout (600s).
+4. **Degraded ➔ SelfClean**: Automatically terminates dangling child processes and sweeps orphaned `.part` files.
+5. **Terminating ➔ Exit**: Traps `SIGTERM` / `SIGINT` from Docker host, gracefully flushes active connections, and exits with code 0.

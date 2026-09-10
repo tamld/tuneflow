@@ -1,18 +1,18 @@
-﻿# PRD — Phase 2: Container Engine, Multi-Arch Packaging & GHCR Delivery
+# PRD — Phase 2: Container Engine, Multi-Arch Packaging & GHCR Delivery
 
-## 1. Mục Tiêu Sản Phẩm (Goal)
-Đóng gói TuneFlow thành Docker Container tiêu chuẩn, tự động hóa quy trình build và phân phối qua GitHub Actions tới GitHub Container Registry (`ghcr.io/tamld/tuneflow`), đảm bảo người dùng có thể kéo hình ảnh về và chạy ngay trên máy chủ gia đình chỉ với một lệnh `docker compose up -d`.
+## 1. Product Goal
+Package TuneFlow into a production-grade Docker container, automate multi-architecture build and distribution workflows via GitHub Actions to GitHub Container Registry (`ghcr.io/tamld/tuneflow`), and ensure immediate homelab deployment with a single `docker compose up -d` command.
 
-## 2. Đối Tượng Người Dùng (Target Audience)
-- **Quản trị viên hạ tầng (Sysadmin/DevOps)**: Cần hình ảnh container chuẩn hóa, bảo mật không đặc quyền (`USER node`), giới hạn bộ nhớ dưới 256MB, tự phục hồi khi gặp lỗi.
-- **Người dùng gia đình (Bố Mẹ)**: Truy cập dịch vụ ổn định 24/7 qua tên miền nội bộ `tuneflow.local`.
+## 2. Target Audience
+- **Infrastructure Administrators (Sysadmin/DevOps)**: Require standardized container images, non-root execution (`USER node`), memory caps under 256MB, and auto-restart policies.
+- **Family Users (Parents)**: Require 24/7 stable local network access via `tuneflow.local`.
 
-## 3. Các Tính Năng Trọng Tâm (Key Features)
-- **Multi-Stage Alpine Image**: Tối ưu hóa kích thước image $< 120\text{MB}$, cài đặt sẵn `ffmpeg` và `python3`.
-- **Automated GHCR Pipeline**: Khi tạo tag Git mới (`v*.*.*`), GitHub Actions tự động build multi-arch (`amd64`, `arm64`) và push lên `ghcr.io/tamld/tuneflow`.
-- **Production Container Compose**: Cung cấp tệp `docker-compose.prod.yml` định nghĩa sẵn tài nguyên giới hạn và nhãn Traefik.
-- **Healthcheck Endpoint**: Container tự kiểm tra trạng thái tiến trình con và sẵn sàng phục vụ qua `/api/health`.
+## 3. Key Features
+- **Multi-Stage Alpine Image**: Final image size $< 120\text{ MB}$, bundled with `ffmpeg` and `python3`.
+- **Automated GHCR Pipeline**: Pushes to Git tags (`v*.*.*`) trigger multi-arch builds (`amd64`, `arm64`) published to `ghcr.io/tamld/tuneflow`.
+- **Production Compose Specification**: `docker-compose.prod.yml` with hard resource limits and Traefik reverse proxy integration.
+- **Healthcheck Endpoint**: `/api/health` validates child process runtimes and daemon readiness.
 
-## 4. Ranh Giới Phạm Vi (Scope & Non-Goals)
-- *Trong phạm vi*: Build container, multi-arch CI/CD, publish GHCR, cấu hình Traefik + AdGuard.
-- *Ngoài phạm vi*: Xây dựng cluster Kubernetes (đã thống nhất Container Host chỉ dùng LXC/Docker đơn giản).
+## 4. Scope & Non-Goals
+- **In-Scope**: Container packaging, multi-arch CI/CD, GHCR distribution, Traefik and AdGuard Home configuration.
+- **Non-Goals**: Kubernetes cluster orchestration (unnecessary overhead for domestic homelab environments).

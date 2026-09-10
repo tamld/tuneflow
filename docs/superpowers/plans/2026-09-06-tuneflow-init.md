@@ -1,14 +1,14 @@
-﻿# TuneFlow Implementation Plan
+# TuneFlow Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build TuneFlow — an elegant, elderly-friendly YouTube to MP3/MP4 music downloader with an in-app audio preview player, client-side direct delivery, and an ultra-lightweight Docker container optimized for máy chủ gia đình (Self-Hosted).
+**Goal:** Build TuneFlow — an elegant, elderly-friendly YouTube to MP3/MP4 music downloader with an in-app audio preview player, client-side direct delivery, and an ultra-lightweight Docker container optimized for domestic homelab (Self-Hosted).
 
 **Architecture:** Node.js 22 LTS with Fastify/Express backend managing child process execution (`yt-dlp` and `ffmpeg`) via a bounded concurrency state machine. Frontend is an accessible, high-contrast, large-touch-target Vanilla SPA featuring an embedded no-ad YouTube preview player and automated SSE stream piping. Packaged via multi-stage Alpine Docker container (<120MB) integrated with Traefik reverse proxy labels.
 
 **Tech Stack:** Node.js 22, Express/Fastify, yt-dlp, FFmpeg, Server-Sent Events (SSE), Vanilla HTML5/CSS3/ES6, Docker (Alpine), GitHub Actions.
 
-**Spec:** [docs/spec/01-tuneflow-core-spec.md](file:///C:/Users/Administrator/github/tuneflow/docs/spec/01-tuneflow-core-spec.md)
+**Spec:** [docs/spec/01-tuneflow-core-spec.md](../../spec/01-tuneflow-core-spec.md)
 
 ## Global Constraints
 
@@ -82,7 +82,7 @@
 
 - [x] **Step 1: Design HTML5 semantic layout with high-contrast, large-button layout**
 - [x] **Step 2: Implement no-ad embedded Audio Preview Player**
-- [x] **Step 3: Implement Search & 1-Click "Tải về máy" button with automatic browser download**
+- [x] **Step 3: Implement Search & 1-Click "Download to PC" button with automatic browser download**
 - [x] **Step 4: Implement Batch selection & Playlist preview list**
 - [x] **Step 5: Test UI responsiveness and accessibility with Puppeteer**
 

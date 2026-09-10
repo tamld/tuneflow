@@ -1,18 +1,18 @@
 # Phase 3 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
 ## 1. Definition of Ready (DoR)
-- [x] Đã có ADR-0008 xác lập kiến trúc flat-playlist và băm SHA-256.
-- [x] Đã có SRS và FSM quy định rõ ràng luồng chuyển trạng thái và bounded pool concurrency.
-- [x] Thiết kế UI danh sách chọn bài hát tuân thủ kích thước tương tác tối thiểu $\ge 48\text{px}$.
+- [x] ADR-0008 approved, defining flat-playlist extraction and SHA-256 hashing.
+- [x] SRS and FSM specifications finalized for queue state transitions and bounded concurrency pool.
+- [x] UI tracklist selection designed with minimum touch target dimensions $\ge 48\text{px}$.
 
 ## 2. Definition of Done (DoD)
-- [ ] Endpoint `/api/playlist/parse` bóc tách được playlist thực tế dưới 3 giây.
-- [ ] Endpoint `/api/queue/batch-add` tiếp nhận mảng bài hát và duy trì tối đa 2 tiến trình chạy đồng thời.
-- [ ] 100% tệp MP3 hoàn thành đều có mã băm SHA-256 lưu trong trường `checksum`.
-- [ ] Thử nghiệm ngắt kết nối mạng giả lập xác nhận tệp `.part` được nối tiếp tải (resumed) thành công.
-- [ ] Bộ kiểm thử `tests/playlist.test.js` và `tests/checksum.test.js` chạy đạt 100% xanh.
+- [x] Endpoint `/api/playlist/parse` parses live playlists in under 3 seconds.
+- [x] Endpoint `/api/queue/batch-add` accepts track arrays and maintains maximum 2 concurrent workers.
+- [x] 100% of completed MP3 files have computed SHA-256 hashes recorded in `checksum`.
+- [x] Simulated network interruption tests confirm `.part` files resume successfully.
+- [x] Test suite `tests/playlist.test.js` and `tests/checksum.test.js` pass 100%.
 
 ## 3. Acceptance Criteria (AC)
-- **AC-301**: Gửi link playlist 10 bài vào `/api/playlist/parse` trả về đúng 10 đối tượng JSON có đủ tiêu đề và thumbnail.
-- **AC-302**: Khi gửi batch 10 bài vào hàng đợi, tại mọi thời điểm lệnh `ps aux | grep -E 'yt-dlp|ffmpeg'` không bao giờ vượt quá 2 tiến trình.
-- **AC-303**: Tải tệp hoàn tất bằng `curl -i /api/download/:id/file` trả về header `x-tuneflow-checksum` khớp chính xác với `sha256sum <file>`.
+- **AC-301**: Sending a 10-track playlist URL to `/api/playlist/parse` returns 10 JSON track objects with titles and thumbnails.
+- **AC-302**: When submitting a batch of 10 tracks, active `yt-dlp` and `ffmpeg` processes never exceed 2 concurrently.
+- **AC-303**: Completed download via `curl -i /api/download/:id/file` delivers header `x-tuneflow-checksum` matching local `sha256sum <file>`.

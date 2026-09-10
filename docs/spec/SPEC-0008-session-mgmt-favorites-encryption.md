@@ -10,29 +10,29 @@
 
 ---
 
-## 1. Mục Tiêu & Bối Cảnh (Context & Goals)
+## 1. Context & Goals
 
-Phiên bản TuneFlow v2.4.0 giải quyết trọn vẹn 3 khía cạnh cốt lõi về bảo mật, trải nghiệm tìm kiếm nội dung và quản trị phiên:
-1. **Khám Phá & Sắp Xếp Danh Sách Phát (Issue #80)**: Cho phép người dùng và người lớn tuổi tìm kiếm cả bài hát lẻ lẫn album/playlist hoàn chỉnh, hỗ trợ lọc theo loại (`all`, `video`, `playlist`) và sắp xếp theo độ liên quan, lượt xem hoặc ngày phát hành.
-2. **Quản Trị Phiên Đăng Nhập & Kick-Out Khẩn Cấp (Issue #84)**: Bảng điều khiển Quản trị giám sát mọi thiết bị đang truy cập vào hệ thống homelab, cung cấp công cụ thu hồi phiên đơn lẻ hoặc kick-out hàng loạt theo nhóm (`guests`, `users`, `all_except_me`, `revoke-all`).
-3. **Bảo Mật Tài Khoản & Đồng Bộ Yêu Thích Hai Chiều (Issue #81)**: Tự phục vụ đổi mật khẩu (kèm ngắt kết nối các thiết bị khác), Admin reset mật khẩu thành viên, lưu trữ danh mục bài hát yêu thích lên máy chủ SQLite gắn theo tài khoản, và bảo vệ thông tin nhạy cảm (IP client) bằng chuẩn mã hóa đối xứng xác thực AES-256-GCM.
+TuneFlow v2.4.0 addresses three core architectural facets across security, content discovery, and session governance:
+1. **Playlist Discovery & Sorting (Issue #80)**: Enables users and elderly parents to search for individual tracks as well as complete albums/playlists, supporting filtering by type (`all`, `video`, `playlist`) and sorting by relevance, view count, or release date.
+2. **Session Governance & Emergency Kick-Out (Issue #84)**: Admin dashboard monitors all connected devices accessing the homelab instance, providing granular session revocation or bulk kick-outs by group (`guests`, `users`, `all_except_me`, `revoke-all`).
+3. **Account Security & Bi-directional Favorites Sync (Issue #81)**: Self-service password modification (with automatic revocation of other active sessions), Admin-mediated credential resets, account-bound SQLite favorites synchronization, and at-rest client IP protection via authenticated symmetric AES-256-GCM encryption.
 
 ---
 
-## 2. Đặc Tả Chức Năng (Functional Specifications)
+## 2. Functional Specifications
 
-### 2.1 Khám Phá Danh Sách Phát & Bộ Lọc Kết Quả (Issue #80)
+### 2.1 Playlist Discovery & Search Filters (Issue #80)
 - **API Endpoint**: `GET /api/search?q=<query>&type=<all|video|playlist>&sort=<relevance|views|date>`
-- **Hành vi**:
-  - `type=playlist`: Truy vấn yt-dlp với cờ `--flat-playlist`, trích xuất `id`, `title`, `uploader`, `thumbnail`, `trackCount`.
-  - `type=video`: Tìm kiếm các video đơn lẻ.
-  - `type=all`: Kết hợp cả video và playlist.
-  - `sort`: Tự động sắp xếp mảng kết quả theo `view_count` (lượt xem giảm dần) hoặc `upload_date` (ngày đăng mới nhất).
-  - Tự động fallback về giá trị mặc định (`type=all`, `sort=relevance`) nếu tham số đầu vào không hợp lệ.
-- **Giao diện**: Thanh nút lọc pill buttons chuẩn WCAG AAA, thẻ playlist chuyên biệt hiển thị badge số lượng bài hát và nút bấm 1-chạm tải cả danh sách hoặc xem chi tiết.
+- **Behavior**:
+  - `type=playlist`: Queries yt-dlp with `--flat-playlist`, extracting `id`, `title`, `uploader`, `thumbnail`, and `trackCount`.
+  - `type=video`: Restricts results to standalone media items.
+  - `type=all`: Merges both standalone videos and playlists.
+  - `sort`: Automatically sorts the result array by `view_count` (descending) or `upload_date` (newest first).
+  - Fallback: Defaults gracefully to `type=all` and `sort=relevance` if invalid query parameters are supplied.
+- **Interface**: WCAG 2.2 AAA pill buttons, specialized playlist cards displaying track count badges, and 1-tap buttons for batch ingestion or detailed inspection.
 
-### 2.2 Quản Trị Phiên Kết Nối & Kick-Out (Issue #84)
-- **Cấu trúc dữ liệu**:
+### 2.2 Session Governance & Emergency Revocation (Issue #84)
+- **Data Schema**:
   ```sql
   CREATE TABLE IF NOT EXISTS sessions (
     token TEXT PRIMARY KEY,
@@ -45,27 +45,27 @@ Phiên bản TuneFlow v2.4.0 giải quyết trọn vẹn 3 khía cạnh cốt l�
   );
   ```
 - **API Endpoints**:
-  - `GET /api/admin/sessions`: Trả về danh sách các phiên đang hoạt động kèm metrics tổng số và phân bố vai trò.
-  - `POST /api/admin/sessions/revoke`: Ngắt một phiên cụ thể bằng `token`.
-  - `POST /api/admin/sessions/revoke-group`: Hủy phiên theo nhóm:
-    - `guests`: Xóa toàn bộ khách vãng lai và đặt lại cooldown.
-    - `users`: Ngắt tất cả phiên của tài khoản Gia Đình.
-    - `all_except_me`: Ngắt toàn bộ phiên khác và khách, bảo tồn duy nhất phiên của Admin đang gọi API.
-  - `POST /api/admin/sessions/revoke-all`: Lệnh khẩn cấp đăng xuất toàn bộ hệ thống.
+  - `GET /api/admin/sessions`: Returns active sessions with total count and role distribution metrics.
+  - `POST /api/admin/sessions/revoke`: Revokes a specific session by `token`.
+  - `POST /api/admin/sessions/revoke-group`: Bulk revocation by operational target:
+    - `guests`: Clears all guest sessions and resets cooldown timers.
+    - `users`: Terminates all sessions belonging to Family (`user`) accounts.
+    - `all_except_me`: Terminates all other user and guest sessions while preserving the caller's active admin session.
+  - `POST /api/admin/sessions/revoke-all`: Emergency purge of all active sessions across the database.
 
-### 2.3 Tự Đổi Mật Khẩu & Admin Reset Mật Khẩu (Issue #81)
-- **Người dùng tự đổi mật khẩu**:
+### 2.3 Self-Service Password Change & Admin Reset (Issue #81)
+- **Self-Service Modification**:
   - `POST /api/auth/change-password`
-  - Yêu cầu `oldPassword` và `newPassword` (tối thiểu 4 ký tự).
-  - Xác thực mật khẩu cũ bằng `scrypt` với muối ngẫu nhiên.
-  - Khi đổi thành công: Tự động xóa tất cả các phiên khác của người dùng này (`deleteSessionsByUser(userId, currentToken)`), giữ lại phiên hiện tại để không làm gián đoạn trải nghiệm người dùng.
-- **Admin đặt lại mật khẩu**:
+  - Requires `oldPassword` and `newPassword` (minimum 4 characters).
+  - Validates prior password using `scrypt` with cryptographically random salt.
+  - Upon success: Automatically purges all other sessions for this user (`deleteSessionsByUser(userId, currentToken)`), preserving current session continuity.
+- **Admin Password Reset**:
   - `POST /api/admin/users/:id/reset-password`
-  - Chỉ cho phép vai trò `admin`.
-  - Hủy ngay lập tức toàn bộ phiên của tài khoản bị reset (`deleteSessionsByUser(userId)`), buộc thiết bị đó phải đăng nhập lại bằng mật khẩu mới.
+  - Restricted strictly to `admin` role.
+  - Immediately terminates all active sessions of the target user (`deleteSessionsByUser(userId)`), requiring re-authentication with new credentials.
 
-### 2.4 Đồng Bộ Danh Sách Yêu Thích 2 Chiều (Issue #81)
-- **Bảng dữ liệu**:
+### 2.4 Bi-directional Favorites Synchronization (Issue #81)
+- **Data Schema**:
   ```sql
   CREATE TABLE IF NOT EXISTS user_favorites (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,32 +82,32 @@ Phiên bản TuneFlow v2.4.0 giải quyết trọn vẹn 3 khía cạnh cốt l�
   );
   ```
 - **API Endpoints**:
-  - `GET /api/user/favorites`: Đọc danh sách bài hát yêu thích của tài khoản đang đăng nhập.
-  - `POST /api/user/favorites`: Thêm bài hát vào danh sách yêu thích.
-  - `DELETE /api/user/favorites/:id`: Xóa bài hát khỏi danh sách yêu thích.
-  - `POST /api/user/favorites/sync`: Gửi mảng bài hát từ `localStorage` lên máy chủ, máy chủ hợp nhất và trả về danh sách tổng hợp đầy đủ.
+  - `GET /api/user/favorites`: Retrieves server-side favorites for the authenticated user.
+  - `POST /api/user/favorites`: Adds a single track to account favorites.
+  - `DELETE /api/user/favorites/:id`: Removes a track from favorites.
+  - `POST /api/user/favorites/sync`: Ingests an array of favorites from client `localStorage`, merges server and client records, and returns the unified list.
 
-### 2.5 Mã Hóa Dữ Liệu Nhạy Cảm Tại Chỗ (AES-256-GCM)
-- **Thuật toán**: Chuẩn mã hóa đối xứng có xác thực **AES-256-GCM** (Galois/Counter Mode).
-- **Khóa dẫn xuất**: Sinh từ chuỗi bí mật hệ thống qua `crypto.scryptSync(secret, salt, 32)`.
-- **Cơ chế chống rò rỉ**:
-  - Đối với bảng `sessions`: Mỗi dòng dùng IV ngẫu nhiên 12-byte cryptographically secure (`crypto.randomBytes(12)`).
-  - Đối với bảng `guest_quotas`: Sử dụng IV xác định dẫn xuất từ HMAC-SHA256 (`HMAC(masterKey, plaintextIp)[:12]`) cho phép tìm kiếm chính xác `WHERE client_ip = ?` theo chỉ mục mà không làm lộ dữ liệu gốc.
-- **Kiểm định thực tế**: Quét toàn bộ tệp nhị phân `.db` bằng regex IPv4/IPv6, xác nhận **0 byte IP plaintext** xuất hiện trên đĩa.
+### 2.5 At-Rest Sensitive Data Encryption (AES-256-GCM)
+- **Algorithm**: Authenticated symmetric encryption using **AES-256-GCM** (Galois/Counter Mode).
+- **Key Derivation**: Generated from master secret via `crypto.scryptSync(secret, salt, 32)`.
+- **Leakage Prevention**:
+  - `sessions` table: Each record uses a unique 12-byte cryptographically random IV (`crypto.randomBytes(12)`).
+  - `guest_quotas` table: Uses deterministic IV derived via HMAC-SHA256 (`HMAC(masterKey, plaintextIp)[:12]`) to facilitate indexed exact matching `WHERE client_ip = ?` without plaintext leakage.
+- **Verification**: Binary hex dump inspection of `.db` storage confirms **0 bytes of plaintext IPv4/IPv6** on physical disk.
 
 ---
 
-## 3. Tiêu Chí Nghiệm Thu (Acceptance Criteria - AC)
+## 3. Acceptance Criteria (AC)
 
-| Mã AC | Tiêu Chí Kiểm Tra | Kết Quả Thực Tế |
+| AC Code | Verification Criterion | Verification Result |
 | :--- | :--- | :--- |
-| **AC-01** | `GET /api/search` với `type=playlist` trả về các playlist có số lượng bài | PASS (`tests/search-playlist-sort.test.js`) |
-| **AC-02** | `GET /api/search` với `sort=views` sắp xếp giảm dần theo lượt xem | PASS (`tests/search-playlist-sort.test.js`) |
-| **AC-03** | `POST /api/admin/sessions/revoke-group` nhóm `all_except_me` giữ phiên gọi và ngắt phiên khác | PASS (`tests/admin-session-management.test.js`) |
-| **AC-04** | `POST /api/admin/sessions/revoke-all` thu hồi sạch mọi phiên trong database | PASS (`tests/admin-session-management.test.js`) |
-| **AC-05** | `POST /api/auth/change-password` từ chối mật khẩu cũ sai với mã 400 | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
-| **AC-06** | `POST /api/auth/change-password` thành công ngắt các phiên khác của chính user | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
-| **AC-07** | `POST /api/admin/users/:id/reset-password` chặn người dùng thường (403) và ngắt phiên user | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
-| **AC-08** | `POST /api/user/favorites/sync` đồng bộ 2 chiều và trả về danh sách hợp nhất | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
-| **AC-09** | Quét nhị phân raw binary của SQLite `.db` chứa 0 IP plaintext | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
-| **AC-10** | Toàn bộ 198 ca kiểm thử tự động trên 72 test suites chạy xanh 100% | PASS (`exit code 0`, 0 regressions) |
+| **AC-01** | `GET /api/search` with `type=playlist` returns playlist objects with track counts | PASS (`tests/search-playlist-sort.test.js`) |
+| **AC-02** | `GET /api/search` with `sort=views` sorts results by view count descending | PASS (`tests/search-playlist-sort.test.js`) |
+| **AC-03** | `POST /api/admin/sessions/revoke-group` for `all_except_me` preserves caller session | PASS (`tests/admin-session-management.test.js`) |
+| **AC-04** | `POST /api/admin/sessions/revoke-all` flushes all session records | PASS (`tests/admin-session-management.test.js`) |
+| **AC-05** | `POST /api/auth/change-password` rejects incorrect prior password with HTTP 400 | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
+| **AC-06** | `POST /api/auth/change-password` terminates other concurrent sessions of the user | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
+| **AC-07** | `POST /api/admin/users/:id/reset-password` blocks non-admin callers (HTTP 403) | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
+| **AC-08** | `POST /api/user/favorites/sync` performs bi-directional merge and returns unified list | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
+| **AC-09** | Raw binary scan of SQLite `.db` yields 0 plaintext IP addresses | PASS (`tests/security-passwords-favorites-encryption.test.js`) |
+| **AC-10** | Comprehensive test suite passes with 0 regressions | PASS (`exit code 0`, 0 regressions) |

@@ -1,73 +1,82 @@
-# Tài Liệu Yêu Cầu Sản Phẩm (Product Requirements Document - PRD)
-## Dự Án: TuneFlow — Trình Chuyển Đổi & Nghe Nhạc YouTube Thân Thiện Dành Cho Người Cao Tuổi
+# Product Requirements Document (PRD)
+## Project: TuneFlow — Elderly-Friendly YouTube Music Streamer & Downloader
 
-> **Mã dự án**: `TUNEFLOW-PRD-01`  
-> **Phiên bản**: `1.0.0`  
-> **Chủ quản sản phẩm (Product Owner)**: TamLD (`tamld/tuneflow`)  
-> **Đối tượng thụ hưởng chính**: Bố Mẹ (Người lớn tuổi) & Quản trị viên Homelab  
-> **Trạng thái**: PHÊ DUYỆT (APPROVED)  
-
----
-
-## 1. Tầm Nhìn Sản Phẩm (Product Vision)
-
-Người lớn tuổi trong gia đình có nhu cầu rất lớn về việc nghe và lưu trữ các dòng nhạc xưa (Nhạc Vàng 1975, Tân Cổ Giao Duyên, Nhạc Trịnh, Ca Cổ Miền Tây, Nhạc Thiền). Tuy nhiên, môi trường YouTube hiện đại chứa đầy rào cản:
-1. Video bị chèn quảng cáo liên tục gây gián đoạn cảm xúc và dễ bấm nhầm vào đường link độc hại.
-2. Các trang web "tải nhạc YouTube miễn phí" tràn ngập pop-up lừa đảo, nút bấm giả mạo, virus, hoặc tải về tệp chất lượng kém, rè tiếng.
-3. Các giải pháp Self-Hosted hiện nay thường lưu tệp trên ổ cứng của server nội bộ (Homelab), khiến người già không biết cách lấy tệp về máy tính cá nhân nếu không có người hỗ trợ kỹ thuật.
-
-**TuneFlow** ra đời với sứ mệnh xóa bỏ toàn bộ các rào cản trên: Một cổng thông tin âm nhạc tự lưu trữ (Self-Hosted), giao diện tối giản chuẩn công thái học **SilverMelody (WCAG 2.2 AAA)**, cho phép nghe thử tức thì trong 1 giây, chọn bài ưng ý và **tự động chuyển tệp MP3 chất lượng cao 320kbps vào máy tính cá nhân đang sử dụng**.
+> **Document ID**: `TUNEFLOW-PRD-02`  
+> **Version**: `2.4.2`  
+> **Product Owner**: Tam Le (`tamld/tuneflow`)  
+> **Target Audience**: Elderly Family Members & Homelab Administrators  
+> **Status**: APPROVED (Active SSoT)  
 
 ---
 
-## 2. Chân Dung Người Dùng (User Personas)
+## 1. Product Vision
 
-### Persona 1: Bố Mẹ (Người dùng cốt lõi)
-- **Độ tuổi**: 60 - 75 tuổi.
-- **Thói quen**: Nghe nhạc buổi sáng khi uống trà hoặc buổi tối trước khi đi ngủ. Thích chép nhạc vào USB để nghe trên loa kéo hoặc trên ô tô.
-- **Đặc điểm thể chất**: Thị lực suy giảm (khó đọc chữ nhỏ, dễ lóa mắt), thao tác tay kém chính xác (dễ click trượt nút bấm nhỏ), trí nhớ công nghệ hạn chế (ngại các bước cài đặt phức tạp).
-- **Kỳ vọng**: 
-  - Mở web lên là thấy ngay các thể loại quen thuộc.
-  - Bấm nút là nghe được ngay để biết đúng ca khúc mình thích chưa.
-  - Bấm tải là nhạc tự chạy vào máy tính mà không hỏi các câu hỏi kỹ thuật khó hiểu.
+Elderly family members often seek nostalgic music (golden oldies, traditional folk, bolero, meditation chants). However, the modern YouTube web ecosystem is fraught with barriers:
+1. **Intrusive Advertisements:** Frequent ad interruptions disrupt listening and expose seniors to phishing or malicious pop-ups.
+2. **Deceptive Download Portals:** Public "free YouTube to MP3" websites are infested with fake download buttons, malware, and degraded audio quality.
+3. **Storage Inaccessibility:** Traditional homelab self-hosted downloaders save media to internal server directories, requiring manual sysadmin intervention to transfer files to the user's computer.
 
-### Persona 2: Người Quản Trị Hệ Thống (Sysadmin / Self-Hoster)
-- **Đặc điểm**: Kỹ sư phần mềm / DevOps, sở hữu máy chủ tự host hoặc VPS riêng.
-- **Kỳ vọng**:
-  - Ứng dụng đóng gói dạng container siêu nhẹ ($\le 120\text{ MB}$), tiêu tốn ít RAM ($\le 150\text{ MB}$ khi chạy, $\le 50\text{ MB}$ khi nghỉ).
-  - Tương thích tốt với Reverse Proxy và tên miền nội bộ.
-  - Khả năng chống crash: Mạng rớt hay khởi động lại container không làm hỏng dữ liệu dở dang.
+**TuneFlow** resolves all these barriers: A self-hosted, ad-free music portal engineered with **SilverMelody (WCAG 2.2 AAA)** ergonomics. It enables instant in-app audio preview (<1.5s latency), playlist batch queueing, dynamic Web Audio DSP equalization, and **direct HTTP client delivery of high-bitrate 320kbps MP3/MP4 files straight into the user's browser `Downloads` folder**.
 
 ---
 
-## 3. Danh Sách Câu Chuyện Người Dùng (User Stories)
+## 2. User Personas
 
-| ID | Câu chuyện người dùng (User Story) | Mức độ ưu tiên | Mục tiêu đạt được |
+### Persona 1: Elderly Parents (Primary End Users)
+- **Age**: 60–75 years.
+- **Listening Habits**: Morning tea or evening relaxation; transferring songs to USB drives for car or speaker playback.
+- **Physical Characteristics**: Reduced visual acuity (needs large text, high contrast), declining motor precision (needs large click targets $\ge 56\text{px}$), tech anxiety.
+- **Key Expectations**:
+  - Immediate 1-touch discovery chips for familiar genres.
+  - Instant in-app preview before committing to a download.
+  - Transparent file delivery directly into their local device `Downloads` folder.
+
+### Persona 2: Family Member (Registered User)
+- **Listening Habits**: Curating personal favorites, listening across desktop, mobile PWA, and living room TV.
+- **Key Expectations**:
+  - Persistent server-side favorites synchronized across devices.
+  - Self-service password management without requiring sysadmin help.
+  - Continuous background audio on smartphones when screen is locked.
+
+### Persona 3: Homelab Sysadmin / Self-Hoster
+- **Characteristics**: DevOps engineer or homelab hobbyist hosting services on local hardware or VPS.
+- **Key Expectations**:
+  - Ultra-lightweight multi-arch container image (<120MB Alpine Linux).
+  - Proxy-agnostic deployment (Traefik, Nginx, Caddy, Cloudflare Tunnel).
+  - Robust crash recovery, storage quota enforcement (FIFO pruning), and AES-256-GCM encryption at rest.
+
+---
+
+## 3. User Stories Matrix
+
+| ID | User Story | Priority | Target Capability |
 | :--- | :--- | :--- | :--- |
-| **US-01** | Là một người lớn tuổi, tôi muốn bấm chọn thể loại nhạc yêu thích chỉ với 1 chạm để không phải gõ bàn phím tìm kiếm phức tạp. | P0 (Must Have) | 5 nút Quick Discovery Chips hiển thị to rõ trên trang chủ. |
-| **US-02** | Là một người lớn tuổi, tôi muốn nghe thử bài hát trực tiếp trên trang web trước khi quyết định tải để không tải nhầm bản phối dở hoặc nhầm ca sĩ. | P0 (Must Have) | Trình phát nhạc cố định dưới đáy (Sticky Bottom Player), kích hoạt trong < 1.5 giây. |
-| **US-03** | Là một người lớn tuổi, tôi muốn khi bấm "Tải Về", bài hát tự động xuất hiện trong máy tính của tôi mà tôi không cần phải tìm kiếm trên server. | P0 (Must Have) | Cơ chế HTTP `Content-Disposition: attachment` tự động stream file về thư mục Downloads của client. |
-| **US-04** | Là một người lớn tuổi, tôi muốn các nút bấm phải thật to, chữ to rõ và màn hình êm dịu không chói mắt để tôi dễ bấm và không mỏi mắt. | P0 (Must Have) | Chuẩn SilverMelody: Chiều cao nút $\ge 50\text{px}$, tương phản WCAG 2.2 AAA, tông màu hổ phách/tối ấm. |
-| **US-05** | Là một người lớn tuổi, tôi muốn tải một lúc nhiều bài hoặc cả danh sách phát (Playlist) để tiết kiệm thời gian. | P1 (Should Have) | Trích xuất playlist YouTube và tự động xếp hàng tải tuần tự. |
-| **US-06** | Là quản trị viên hệ thống, tôi muốn hệ thống giới hạn số lượt tải đồng thời để không làm nghẽn CPU và băng thông của máy chủ. | P0 (Must Have) | Hàng đợi tải bất đồng bộ khống chế `MAX_CONCURRENT_DOWNLOADS = 2`. |
-| **US-07** | Là quản trị viên hệ thống, tôi muốn các tệp tải dở dang (`.part`) không bị xóa sạch khi mạng rớt để tiết kiệm băng thông và tự phục hồi. | P1 (Should Have) | Cơ chế Resilient Queue & Crash Recovery giữ nguyên tệp tạm. |
-| **US-08** | Là quản trị viên, tôi muốn hình ảnh container phải nhỏ hơn 120MB để dễ dàng sao lưu và khởi động nhanh trên máy chủ. | P1 (Should Have) | Multi-stage build Alpine Linux với standalone `yt-dlp` và `node:22-alpine`. |
+| **US-01** | As an elderly parent, I want 1-touch genre chips so I don't have to type complex search queries. | P0 (Must Have) | Large discovery chips (Bolero, Pre-1975, Instrumental, Meditation). |
+| **US-02** | As an elderly parent, I want to preview songs inside the app in real time so I only download the exact version I like. | P0 (Must Have) | Zero-disk stream pipe (`/api/stream/pipe/:id`) with byte-range seeking. |
+| **US-03** | As an elderly parent, I want downloaded songs to appear directly on my computer without searching the server. | P0 (Must Have) | Direct client download via HTTP `Content-Disposition: attachment`. |
+| **US-04** | As an elderly parent, I want large text and soothing colors that don't hurt my eyes. | P0 (Must Have) | SilverMelody design system: $\ge 56\text{px}$ touch targets, WCAG 2.2 AAA contrast ($\ge 7:1$). |
+| **US-05** | As an elderly parent, I want to enhance vocal clarity or bass warmth for nostalgic tracks. | P1 (Should Have) | Web Audio DSP Equalizer (Vocal Clarity, Warm Bolero, Flat) & Volume Boost. |
+| **US-06** | As a mobile user, I want playback to continue when I lock my iPhone or switch apps. | P0 (Must Have) | iOS Web Audio bypass to native HTML5 `<audio>` + MediaSession integration. |
+| **US-07** | As a mobile user, I want floating Picture-in-Picture while using other apps. | P1 (Should Have) | Dynamic Canvas 512x512 stream PiP (`canvas.captureStream(10)`). |
+| **US-08** | As a living room viewer, I want to navigate TuneFlow using my Android TV remote. | P1 (Should Have) | 10-foot Leanback mode with spatial D-Pad navigation (`tv-leanback.js`). |
+| **US-09** | As a sysadmin, I want guest previews capped at 30 minutes to prevent resource exhaustion. | P0 (Must Have) | SQLite guest cooldown limiter with sliding window tracking. |
+| **US-10** | As an admin, I want to view active sessions and revoke compromised logins. | P0 (Must Have) | Admin session manager with group kick-out (`guests`, `users`, `all_except_me`). |
+| **US-11** | As a security officer, I want client IPs and session tokens encrypted at rest. | P0 (Must Have) | AES-256-GCM authenticated encryption in `tuneflow.db`. |
+| **US-12** | As a sysadmin, I want disk space automatically capped to prevent full-disk server crashes. | P0 (Must Have) | Automated FIFO quota pruner (`STORAGE_MAX_MB`). |
 
 ---
 
-## 4. Yêu Cầu Phi Chức Năng (Non-Functional Requirements)
+## 4. Non-Functional Requirements (NFR)
 
-1. **Hiệu năng (Performance)**:
-   - Thời gian phản hồi tìm kiếm: $\le 3\text{ giây}$ qua `yt-dlp`.
-   - Độ trễ bắt đầu phát nghe thử: $\le 1.5\text{ giây}$.
-   - Tốc độ transcode MP3 320kbps: Xử lý bài hát 5 phút trong thời gian $\le 6\text{ giây}$.
-2. **Khả năng tiếp cận (Accessibility - A11y)**:
-   - Đạt chuẩn **WCAG 2.2 Level AAA** về độ tương phản màu sắc ($\ge 7:1$ cho văn bản thường, thực tế đạt $> 12:1$).
-   - Vùng chạm tương tác tối thiểu $\ge 48\text{px} \times 48\text{px}$ (thực tế nút tìm kiếm đạt $56\text{px}$).
-   - Không chứa bất kỳ hiệu ứng chớp tắt gây động kinh hoặc khó chịu thị giác.
-3. **Bảo mật & An toàn (Security & Safety)**:
-   - Chống tiêm lệnh shell (Argument Injection): Toàn bộ lời gọi hệ thống tới `yt-dlp` và `ffmpeg` bắt buộc sử dụng mảng tham số an toàn kèm cờ `--` phân cách URL.
-   - Container chạy dưới tài khoản không đặc quyền (`USER node`), không có quyền root trên máy chủ vật lý.
-4. **Độ tin cậy (Reliability)**:
-   - Cơ chế tự phục hồi sau sự cố mạng với tối đa 3 lần thử lại (Retry Backoff).
-   - Tiến độ tải và trạng thái hệ thống được đồng bộ thời gian thực qua Server-Sent Events (SSE).
+1. **Performance**:
+   - Audio preview startup latency: $\le 1.5\text{s}$ over broadband.
+   - Search response latency: $\le 2.0\text{s}$ via cached metadata.
+   - Container idle memory footprint: $\le 50\text{MB}$ RAM; active peak: $\le 150\text{MB}$ RAM.
+2. **Security & Privacy**:
+   - Zero plaintext storage of client IP addresses or session tokens.
+   - SSRF protection: Strict domain whitelisting (official YouTube domains only).
+   - Rate limiting: Sliding-window throttle on API endpoints.
+3. **Multi-Platform Compatibility**:
+   - Web: Chrome $\ge 110$, Edge $\ge 110$, Firefox $\ge 115$, Safari $\ge 16.4$.
+   - Mobile: iOS 16.4+ (WebKit Standalone PWA), Android 10+ (PWA & Native APK).
+   - TV: Android TV / Google TV (API 26+) with D-Pad remote control.

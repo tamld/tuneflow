@@ -25,9 +25,9 @@ stateDiagram-v2
     Delivered --> [*]
 ```
 
-## Giải Thích Trạng Thái:
-1. **Discovered ➔ Selected**: Danh sách bài hát được hiển thị cho người dùng chọn lọc.
-2. **Queued ➔ Downloading**: Chỉ chuyển sang tải khi số lượng slot đang chạy $< 2$.
-3. **Transcoding ➔ VerifyingChecksum**: FFmpeg trích xuất âm thanh MP3, sau đó NodeJS stream tệp qua thuật toán `crypto.createHash('sha256')`.
-4. **VerifyingChecksum ➔ Completed**: Tệp đạt chất lượng 320kbps, mã băm hợp lệ, sẵn sàng bàn giao cho người dùng.
-5. **Retrying**: Tự động khôi phục tải từ tệp tạm `.part` khi rớt mạng tối đa 3 lần.
+## State Explanations
+1. **Discovered ➔ Selected**: Tracklist parsed and presented for user review and multi-selection.
+2. **Queued ➔ Downloading**: Transitions to active download when running execution slots $< 2$.
+3. **Transcoding ➔ VerifyingChecksum**: FFmpeg extracts MP3 audio, followed by streaming SHA-256 hash calculation via `crypto.createHash('sha256')`.
+4. **VerifyingChecksum ➔ Completed**: Audio matches 320kbps fidelity, checksum verified, ready for client delivery.
+5. **Retrying**: Resumes downloads up to 3 times from `.part` offsets upon transient network drops.

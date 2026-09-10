@@ -13,7 +13,7 @@ TuneFlow is an elderly-friendly, self-hosted YouTube audio player and downloader
 1. **Server Abuse & Resource Starvation**: Unrestricted scraping or automated queue spamming triggers heavy yt-dlp processes that saturate CPU, memory, and bandwidth.
 2. **Access Control Needs**:
    - **Admin (Tier 1)**: System administrators managing users, viewing diagnostic metrics, executing maintenance/updates, and resetting guest quotas.
-   - **User (Tier 2)**: Family members (Bố, Mẹ, Con cháu) with unmetered music streaming, personal playback, and queue downloads.
+   - **User (Tier 2)**: Family members (Parents, Relatives) with unmetered music streaming, personal playback, and queue downloads.
    - **Guest (Tier 3)**: Internet visitors allowed a **30-minute cumulative listening quota** (1800 seconds). Once 30 minutes are consumed, the audio stream immediately terminates, entering a **60-minute cooldown**. Heavy download actions (`/api/queue/add`) are strictly restricted.
 
 ---
@@ -163,7 +163,7 @@ TuneFlow is an elderly-friendly, self-hosted YouTube audio player and downloader
 - **Deliverables**:
   - `public/js/auth.js`: Handles token storage, login modal, guest heartbeat ticker (every 15s when audio is actively playing), and UI status badge.
   - `public/index.html` & `public/css/silver-melody.css`:
-    - Topbar auth indicator (`👑 Quản trị`, `👤 Gia Đình`, `⏱️ Khách (Còn 30:00)`).
+    - Topbar auth indicator (`👑 Admin`, `👤 Family`, `⏱️ Guest (30:00 left)`).
     - Accessible Login Modal.
     - 30-min Guest Expiration Alert modal with login CTA.
 
