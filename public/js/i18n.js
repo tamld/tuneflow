@@ -43,7 +43,8 @@
       ambient_mode: '🖼️ Toàn Màn Hình Tĩnh Dưỡng',
       voice_search: '🎙️ Nói Để Tìm Bài',
       voice_listening: '🔴 Đang nghe Bố Mẹ nói...',
-      voice_unsupported: 'Trình duyệt chưa hỗ trợ tìm bằng giọng nói'
+      voice_unsupported: 'Trình duyệt chưa hỗ trợ tìm bằng giọng nói',
+      install_app: '📲 Cài App'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -84,7 +85,8 @@
       ambient_mode: '🖼️ Ambient Leanback Mode',
       voice_search: '🎙️ Voice Search',
       voice_listening: '🔴 Listening to Parents...',
-      voice_unsupported: 'Voice search is not supported in this browser'
+      voice_unsupported: 'Voice search is not supported in this browser',
+      install_app: '📲 Install App'
     }
   };
 

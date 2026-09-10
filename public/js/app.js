@@ -1038,6 +1038,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 4500);
   }
 
+  // 14. PWA In-App Install Prompt Handler (Phase 1)
+  let deferredInstallPrompt = null;
+  const btnInstallPwa = document.getElementById('btn-install-pwa');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (btnInstallPwa) {
+      btnInstallPwa.style.display = 'inline-flex';
+    }
+  });
+
+  if (btnInstallPwa) {
+    btnInstallPwa.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('🎉 Đang cài đặt TuneFlow lên thiết bị của Bố Mẹ!', 'info');
+      }
+      deferredInstallPrompt = null;
+      btnInstallPwa.style.display = 'none';
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    if (btnInstallPwa) {
+      btnInstallPwa.style.display = 'none';
+    }
+    showToast('✨ Đã cài đặt TuneFlow thành công!', 'info');
+  });
+
   window.showToast = showToast;
   window.renderResults = renderResults;
   window.renderPlaylistBatch = renderPlaylistBatch;
