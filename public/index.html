@@ -55,6 +55,10 @@
           <span id="auth-status-icon">⏱️</span>
           <span id="auth-status-text">Khách: 30:00</span>
         </button>
+        <!-- User Change Password Trigger (Issue #81) -->
+        <button id="btn-change-password-trigger" class="font-scale-btn" style="display: none; min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Đổi mật khẩu tài khoản">
+          🔑 Đổi MK
+        </button>
         <!-- Persistent Queue Trigger (Issue #9) -->
         <button id="btn-floating-queue" class="floating-queue-btn" title="Mở danh sách các bài hát đang tải">
           📥 Hàng Đợi (<span id="queue-badge-count">0</span>)
@@ -300,6 +304,37 @@
           <div style="display: flex; gap: 10px; justify-content: flex-end;">
             <button type="button" id="btn-cancel-auth" class="secondary-btn" style="padding: 8px 16px; border-radius: 8px;">Hủy</button>
             <button type="submit" id="btn-submit-auth" class="primary-btn" style="padding: 8px 20px; border-radius: 8px;">Đăng Nhập</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal (Issue #81) -->
+  <div id="modal-auth-change-password" class="modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="change-password-title">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2 id="change-password-title" style="margin: 0; font-size: 20px;">🔑 Đổi Mật Khẩu</h2>
+        <button id="btn-close-change-password-modal" class="btn-close" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 0;">
+        <form id="form-auth-change-password">
+          <div style="margin-bottom: 14px;">
+            <label for="input-change-old-password" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px;">Mật khẩu hiện tại:</label>
+            <input type="password" id="input-change-old-password" required placeholder="Nhập mật khẩu hiện tại..." style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; box-sizing: border-box; background: var(--surface-card); color: var(--text-primary);">
+          </div>
+          <div style="margin-bottom: 14px;">
+            <label for="input-change-new-password" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px;">Mật khẩu mới (tối thiểu 4 ký tự):</label>
+            <input type="password" id="input-change-new-password" required minlength="4" placeholder="Nhập mật khẩu mới..." style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; box-sizing: border-box; background: var(--surface-card); color: var(--text-primary);">
+          </div>
+          <div style="margin-bottom: 18px;">
+            <label for="input-change-confirm-password" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px;">Xác nhận mật khẩu mới:</label>
+            <input type="password" id="input-change-confirm-password" required minlength="4" placeholder="Nhập lại mật khẩu mới..." style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; box-sizing: border-box; background: var(--surface-card); color: var(--text-primary);">
+          </div>
+          <div id="change-password-msg" style="display: none; font-size: 13px; margin-bottom: 12px; padding: 8px; border-radius: 6px;"></div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" id="btn-cancel-change-password" class="secondary-btn" style="padding: 8px 16px; border-radius: 8px;">Hủy</button>
+            <button type="submit" id="btn-submit-change-password" class="primary-btn" style="padding: 8px 20px; border-radius: 8px;">Lưu Mật Khẩu</button>
           </div>
         </form>
       </div>

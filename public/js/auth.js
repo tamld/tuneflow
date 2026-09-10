@@ -80,6 +80,17 @@ class TuneFlowAuth {
     this.cooldownTimerText = document.getElementById('cooldown-timer-text');
     this.btnGuestOpenLogin = document.getElementById('btn-guest-open-login');
     this.btnGuestCloseCooldown = document.getElementById('btn-guest-close-cooldown');
+
+    // Change Password Elements (Issue #81)
+    this.btnChangePasswordTrigger = document.getElementById('btn-change-password-trigger');
+    this.modalChangePassword = document.getElementById('modal-auth-change-password');
+    this.formChangePassword = document.getElementById('form-auth-change-password');
+    this.inputOldPassword = document.getElementById('input-change-old-password');
+    this.inputNewPassword = document.getElementById('input-change-new-password');
+    this.inputConfirmPassword = document.getElementById('input-change-confirm-password');
+    this.changePasswordMsg = document.getElementById('change-password-msg');
+    this.btnCloseChangePassword = document.getElementById('btn-close-change-password-modal');
+    this.btnCancelChangePassword = document.getElementById('btn-cancel-change-password');
   }
 
   bindEvents() {
@@ -133,6 +144,27 @@ class TuneFlowAuth {
         this.closeCooldownModal();
       });
     }
+
+    if (this.btnChangePasswordTrigger) {
+      this.btnChangePasswordTrigger.addEventListener('click', () => {
+        this.openChangePasswordModal();
+      });
+    }
+
+    if (this.btnCloseChangePassword) {
+      this.btnCloseChangePassword.addEventListener('click', () => this.closeChangePasswordModal());
+    }
+
+    if (this.btnCancelChangePassword) {
+      this.btnCancelChangePassword.addEventListener('click', () => this.closeChangePasswordModal());
+    }
+
+    if (this.formChangePassword) {
+      this.formChangePassword.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleChangePassword();
+      });
+    }
   }
 
   async fetchMe() {
@@ -153,6 +185,11 @@ class TuneFlowAuth {
       }
 
       this.checkRouteAndOpen();
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
+        window.dispatchEvent(new window.CustomEvent('tuneflow:auth_change', {
+          detail: { authenticated: Boolean(this.user), user: this.user, role: this.role }
+        }));
+      }
     } catch (e) {
       console.warn('Lỗi khi kiểm tra phiên đăng nhập:', e);
     }
@@ -181,11 +218,17 @@ class TuneFlowAuth {
       this.authStatusText.textContent = `Gia Đình (${this.user.username})`;
       this.btnAuthStatus.title = `Tài khoản Gia Đình: ${this.user.username} (Bấm để đăng xuất)`;
     }
+    if (this.btnChangePasswordTrigger) {
+      this.btnChangePasswordTrigger.style.display = 'inline-flex';
+    }
     this.updateAdminTriggerBtn();
   }
 
   updateBadgeGuest() {
     if (!this.authStatusIcon || !this.authStatusText) return;
+    if (this.btnChangePasswordTrigger) {
+      this.btnChangePasswordTrigger.style.display = 'none';
+    }
     this.authStatusIcon.textContent = '⏱️';
 
     if (!this.guest) {
@@ -265,6 +308,72 @@ class TuneFlowAuth {
     }
   }
 
+  openChangePasswordModal() {
+    if (!this.modalChangePassword) return;
+    this.modalChangePassword.style.display = 'flex';
+    if (this.inputOldPassword) this.inputOldPassword.value = '';
+    if (this.inputNewPassword) this.inputNewPassword.value = '';
+    if (this.inputConfirmPassword) this.inputConfirmPassword.value = '';
+    if (this.changePasswordMsg) this.changePasswordMsg.style.display = 'none';
+    if (this.inputOldPassword) this.inputOldPassword.focus();
+  }
+
+  closeChangePasswordModal() {
+    if (!this.modalChangePassword) return;
+    this.modalChangePassword.style.display = 'none';
+  }
+
+  showChangePasswordMsg(text, isError) {
+    if (!this.changePasswordMsg) return;
+    this.changePasswordMsg.textContent = text;
+    this.changePasswordMsg.style.display = 'block';
+    this.changePasswordMsg.style.color = isError ? '#e53e3e' : '#48bb78';
+    this.changePasswordMsg.style.background = isError ? 'rgba(229, 62, 62, 0.1)' : 'rgba(72, 187, 120, 0.1)';
+  }
+
+  async handleChangePassword() {
+    const oldPassword = this.inputOldPassword ? this.inputOldPassword.value.trim() : '';
+    const newPassword = this.inputNewPassword ? this.inputNewPassword.value.trim() : '';
+    const confirmPassword = this.inputConfirmPassword ? this.inputConfirmPassword.value.trim() : '';
+
+    if (!oldPassword || !newPassword) {
+      this.showChangePasswordMsg('Vui lòng nhập đầy đủ thông tin', true);
+      return;
+    }
+
+    if (newPassword.length < 4) {
+      this.showChangePasswordMsg('Mật khẩu mới phải có ít nhất 4 ký tự', true);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      this.showChangePasswordMsg('Xác nhận mật khẩu mới không khớp', true);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPassword, newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        this.showChangePasswordMsg(data.message || 'Không thể đổi mật khẩu', true);
+        return;
+      }
+      this.showChangePasswordMsg('🎉 Đổi mật khẩu thành công!', false);
+      if (typeof window.showToast === 'function') {
+        window.showToast('🎉 Đổi mật khẩu thành công', 'success');
+      }
+      setTimeout(() => {
+        this.closeChangePasswordModal();
+      }, 1000);
+    } catch (err) {
+      this.showChangePasswordMsg(`Lỗi kết nối: ${err.message}`, true);
+    }
+  }
+
   async handleLogin() {
     const username = this.inputUsername.value.trim();
     const password = this.inputPassword.value;
@@ -298,6 +407,12 @@ class TuneFlowAuth {
         if (window.adminPanel) {
           window.adminPanel.open();
         }
+      }
+
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
+        window.dispatchEvent(new window.CustomEvent('tuneflow:auth_change', {
+          detail: { authenticated: true, user: this.user, role: this.role }
+        }));
       }
 
       if (typeof window.showToast === 'function') {

@@ -1,3 +1,5 @@
+const { encryptField, decryptField } = require('../../auth/crypto_utils');
+
 class SessionRepo {
   constructor(db) {
     this.db = db;
@@ -28,13 +30,16 @@ class SessionRepo {
     `);
     this.deleteRoleStmt = db.prepare('DELETE FROM sessions WHERE role = ?');
     this.deleteRoleExcludingStmt = db.prepare('DELETE FROM sessions WHERE role = ? AND token != ?');
+    this.deleteUserSessionsStmt = db.prepare('DELETE FROM sessions WHERE user_id = ?');
+    this.deleteUserSessionsExcludingStmt = db.prepare('DELETE FROM sessions WHERE user_id = ? AND token != ?');
     this.deleteAllStmt = db.prepare('DELETE FROM sessions');
     this.deleteAllExcludingStmt = db.prepare('DELETE FROM sessions WHERE token != ?');
   }
 
   createSession({ token, userId, role, expiresAt, clientIp = null, userAgent = null }) {
     const createdAt = new Date().toISOString();
-    this.insertStmt.run(token, userId, role, expiresAt, createdAt, clientIp, userAgent);
+    const storedIp = clientIp ? encryptField(clientIp) : null;
+    this.insertStmt.run(token, userId, role, expiresAt, createdAt, storedIp, userAgent);
     return {
       token,
       userId,
@@ -47,7 +52,11 @@ class SessionRepo {
   getSession(token) {
     const now = Date.now();
     const row = this.getStmt.get(token, now);
-    return row || null;
+    if (!row) return null;
+    return {
+      ...row,
+      client_ip: decryptField(row.client_ip)
+    };
   }
 
   deleteSession(token) {
@@ -63,7 +72,11 @@ class SessionRepo {
 
   listActiveSessions() {
     const now = Date.now();
-    return this.listActiveStmt.all(now);
+    const rows = this.listActiveStmt.all(now);
+    return rows.map(r => ({
+      ...r,
+      client_ip: decryptField(r.client_ip)
+    }));
   }
 
   countActiveSessions() {
@@ -78,6 +91,15 @@ class SessionRepo {
       return result.changes;
     }
     const result = this.deleteRoleStmt.run(role);
+    return result.changes;
+  }
+
+  deleteSessionsByUser(userId, excludeToken = null) {
+    if (excludeToken) {
+      const result = this.deleteUserSessionsExcludingStmt.run(userId, excludeToken);
+      return result.changes;
+    }
+    const result = this.deleteUserSessionsStmt.run(userId);
     return result.changes;
   }
 
