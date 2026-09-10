@@ -1,6 +1,43 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.4.2] - 2026-09-10
+
+### Đã Thêm (Added)
+- **Bộ Điều Khiển Cửa Sổ Nổi Picture-in-Picture (PiP Floating Controller - Issue #88)**:
+  - Tích hợp tính năng Picture-in-Picture chuẩn HTML5/WebKit thông qua luồng Canvas thời gian thực 512x512 (`canvas.captureStream(10)`) nối vào thẻ video ngầm có cờ `playsinline` ([Issue #88](https://github.com/tamld/tuneflow/issues/88)).
+  - Hiển thị trực quan bìa đĩa bài hát, tiêu đề, tên ca sĩ và thanh tiến trình trong cửa sổ nổi thu nhỏ khi chuyển ứng dụng trên iPhone và máy tính.
+  - Nút bấm `📺 PiP` chuyên dụng trên thanh phát nhạc với trạng thái kích hoạt nổi bật.
+- **Vòng Đời Phát Hành 3 Giai Đoạn Chuẩn Hóa Trên GitHub Remote (Issue #90)**:
+  - Hợp nhất quy trình phát hành thành pipeline duy nhất tại `.github/workflows/release.yml`:
+    1. **Stage 1**: Đóng gói multi-arch container image (`linux/amd64`, `linux/arm64`) đẩy lên GitHub Container Registry (`ghcr.io/tamld/tuneflow`).
+    2. **Stage 2**: Biên dịch, đóng gói và ký số file cài đặt Android APK độc lập cho cả thiết bị Di động (`tuneflow-mobile.apk`) và Android TV Leanback (`tuneflow-tv.apk`) kèm mã băm chống giả mạo SHA-256.
+    3. **Stage 3**: Tự động xuất bản GitHub Release đính kèm đầy đủ tài nguyên APK và nhật ký thay đổi.
+  - Loại bỏ hoàn toàn nợ kỹ thuật pseudo-APK (file zip đổi tên) và triệt tiêu xung đột race condition giữa hai workflow độc lập.
+- **Mã Nguồn Khung Android Native & Android TV Leanback Wrapper (Issue #90)**:
+  - Bổ sung thư mục `android/` với cấu trúc Gradle tiêu chuẩn, khai báo hai biến thể sản phẩm `mobile` và `tv`.
+  - Khai báo cờ `android.software.leanback` và `android.hardware.touchscreen` tùy chọn theo đúng chuẩn SPEC-0007 và ADR-0012.
+
+### Đã Sửa (Fixed)
+- **Khắc Phục Vỡ Giao Diện PWA Trên iPhone & Vùng An Toàn Màn Hình (Issue #87)**:
+  - Thêm `viewport-fit=cover` vào thẻ `<meta name="viewport">` ([Issue #87](https://github.com/tamld/tuneflow/issues/87)).
+  - Áp dụng đầy đủ `env(safe-area-inset-*)` để tránh xung đột với Dynamic Island, Tai thỏ và thanh gạt Home của iPhone.
+  - Tái cấu trúc thanh tác vụ Header thành dải cuộn ngang mượt mà (Horizontal Action Chips Bar), chấm dứt tình trạng gãy dòng thành 5 hàng lộn xộn trên màn hình hẹp.
+  - Tái thiết kế thanh phát nhạc dưới cùng (Bottom Player) thành dạng lưới 2 tầng đáp ứng tiêu chuẩn tiếp cận người cao tuổi WCAG 2.2 AAA (nút bấm $\ge 44\text{px}$).
+  - Căn chỉnh chính xác các nút tìm kiếm giọng nói `🎙️` và xóa `✕` vào giữa ô tìm kiếm (`top: 28px`).
+- **Khắc Phục Lỗi Tắt Nhạc Nền Trên iOS WebKit (Issue #88)**:
+  - Tự động phát hiện thiết bị iOS và chuyển sang chế độ phát trực tiếp phần cứng (Direct Audio Bypass), ngăn chặn việc Apple cưỡng chế treo Web Audio `AudioContext` khi tắt màn hình ([Issue #88](https://github.com/tamld/tuneflow/issues/88)).
+  - Đồng bộ toàn diện `navigator.mediaSession.playbackState`, `setPositionState` và các phím điều khiển từ màn hình khóa, trung tâm điều khiển và tai nghe Bluetooth.
+
+### Kiểm Thử & Đảm Bảo Chất Lượng
+- Bổ sung 3 bộ kiểm thử tự động:
+  - `tests/ios-pwa-responsive.test.js` (Issue #87)
+  - `tests/ios-background-audio-pip.test.js` (Issue #88)
+  - `tests/ci-cd-unified-pipeline.test.js` (Issue #90)
+- Nâng tổng số ca kiểm thử tự động lên **218/218 bài test chạy xanh 100%** (75 test suites, 0 lỗi linter ESLint).
+
+---
+
 ## [2.4.0] - 2026-09-10
 
 ### Đã Thêm (Added)

@@ -23,6 +23,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 │ Phase 8  │ PWA Ngoại Tuyến, Giọng Nói & Ghép Nối LAN│ v2.2.0      │ ✅ Completed       │
 │ Phase 9  │ SQLite RBAC, Phân Quyền & Hẹn Giờ 2x     │ v2.3.0      │ ✅ Completed       │
 │ Phase 10 │ Quản Trị Phiên, Yêu Thích & Mã Hóa At-Rest│ v2.4.0   │ ✅ Completed       │
+│ Phase 11 │ Mobile PWA, iOS PiP & Unified CI/CD      │ v2.4.2      │ ✅ Completed       │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
@@ -197,6 +198,28 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 
 ---
 
+### CHẶNG 11: PWA iPhone Standalone, iOS PiP & Unified CI/CD 3-Tier Lifecycle (v2.4.2)
+- **Vấn đề giải quyết**:
+  - **Trải Nghiệm PWA iPhone & Vùng An Toàn Màn Hình (Issue #87)**:
+    - Bổ sung `viewport-fit=cover` và thiết lập hệ thống padding `env(safe-area-inset-*)` bảo vệ giao diện trước notch, Dynamic Island và thanh gạt Home của iOS.
+    - Chuyển đổi thanh hành động Header thành dạng dải cuộn ngang mượt mà (Horizontal Action Chips Bar).
+    - Tái cấu trúc thanh phát nhạc dính đáy (Bottom Player) thành dạng lưới 2 tầng đáp ứng tiêu chuẩn WCAG 2.2 AAA (nút bấm $\ge 44\text{px}$).
+  - **Phát Nhạc Dưới Nền Trên iOS WebKit & Bộ Điều Khiển PiP (Issue #88)**:
+    - Phát hiện tự động thiết bị iOS, chuyển sang cơ chế Direct Audio Bypass nhằm vô hiệu hóa việc WebKit tự động ngắt `AudioContext` khi tắt màn hình hoặc chuyển ứng dụng.
+    - Đồng bộ hóa toàn diện `navigator.mediaSession` (metadata, trạng thái phát, thanh tiến trình) và xử lý sự kiện `visibilitychange`.
+    - Tích hợp cửa sổ nổi Picture-in-Picture (PiP) thông qua luồng Canvas 512x512 thời gian thực (`canvas.captureStream(10)`) nối vào thẻ video ngầm có cờ `playsinline`.
+  - **Chuẩn Hóa Vòng Đời Phát Hành 3 Giai Đoạn Trên GitHub Remote (Issue #90)**:
+    - Hợp nhất quy trình CI/CD vào `.github/workflows/release.yml`, đảm bảo tải nặng dồn hoàn toàn lên runner GitHub Actions:
+      1. **Stage 1: Container Image**: Build multi-arch (`linux/amd64`, `linux/arm64`) và push lên `ghcr.io/tamld/tuneflow`.
+      2. **Stage 2: Android APK**: Biên dịch và ký số APK thực thụ cho Di động (`tuneflow-mobile.apk`) và Android TV (`tuneflow-tv.apk`) kèm mã băm SHA-256 chống giả mạo.
+      3. **Stage 3: GitHub Release**: Tạo bản phát hành chính thức đính kèm đầy đủ tài nguyên APK và ghi chú tự động.
+    - Loại bỏ hoàn toàn nợ kỹ thuật pseudo-APK và triệt tiêu xung đột race condition giữa hai workflow độc lập.
+- **Bộ hồ sơ tài liệu**:
+  - **Issues**: #87, #88, #90
+  - **Pull Requests**: PR #89, PR #91
+
+---
+
 ## 📋 TRẠNG THÁI TRIỂN KHAI VÀ THEO DÕI (TRACEABILITY MATRIX)
 
 | Mã Yêu Cầu | Hạng Mục Công Việc | Tài Liệu Quy Chiếu | Mã Kiểm Thử / Artifact |
@@ -221,4 +244,7 @@ Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ h
 | **RM-18** | Active Session Management & Kick-Out Group | PR #85, Issue #84 | `tests/admin-session-management.test.js` |
 | **RM-19** | Password Self-Service & Favorites Sync | PR #86, Issue #81 | `tests/security-passwords-favorites-encryption.test.js` |
 | **RM-20** | AES-256-GCM Data Encryption at Rest | PR #86, Issue #81 | `tests/security-passwords-favorites-encryption.test.js` |
+| **RM-21** | iOS PWA Mobile Responsive & Safe Area Insets | PR #89, Issue #87 | `tests/ios-pwa-responsive.test.js` |
+| **RM-22** | iOS Background Audio Bypass & Canvas PiP | PR #89, Issue #88 | `tests/ios-background-audio-pip.test.js` |
+| **RM-23** | Unified 3-Stage Remote CI/CD Release Pipeline | PR #91, Issue #90 | `tests/ci-cd-unified-pipeline.test.js` |
 
