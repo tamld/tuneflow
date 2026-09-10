@@ -38,7 +38,7 @@ router.use(authenticate);
 
 // Mount Auth & Admin sub-routers
 router.use('/auth', createAuthRouter({ authService }));
-router.use('/admin', createAdminRouter({ userRepo, guestRepo }));
+router.use('/admin', createAdminRouter({ userRepo, guestRepo, sessionRepo }));
 
 // Rate Limiters to protect homelab resources against DoS / Container OOMKill
 const searchRateLimiter = createRateLimiter({
