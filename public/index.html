@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>TuneFlow - Nghe Thử & Tải Nhạc Cho Bố Mẹ</title>
   <link rel="stylesheet" href="/css/silver-melody.css">
   <link rel="manifest" href="/manifest.webmanifest">
@@ -200,8 +200,12 @@
         <button id="btn-ambient-toggle" class="player-ctrl-btn" title="Toàn màn hình tĩnh dưỡng / Ambient Leanback Mode" aria-label="Toàn màn hình tĩnh dưỡng">
           🖼️
         </button>
+        <button id="btn-player-pip" class="player-ctrl-btn" title="Chế độ cửa sổ nổi (Picture-in-Picture) / PiP Mode" aria-label="Cửa sổ nổi PiP">
+          📺
+        </button>
       </div>
     </div>
+    <video id="player-pip-video" playsinline muted style="position: fixed; bottom: -9999px; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;" aria-hidden="true"></video>
   </div>
 
   <!-- Accessible Guidance Modal (Issue #10) -->
