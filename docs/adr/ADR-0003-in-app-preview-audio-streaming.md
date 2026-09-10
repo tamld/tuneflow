@@ -1,18 +1,19 @@
-# ADR-0003: Cơ Chế Phát Nghe Thử Trực Tiếp (Direct Audio Stream Redirect vs Server Proxy)
+# ADR-0003: In-App Preview Audio Streaming Architecture
 
-## Bối Cảnh (Context)
-Người lớn tuổi muốn nghe thử bài hát để xác nhận đúng ca khúc và ca sĩ trước khi tải. Nếu server tải toàn bộ video về server rồi mới cho nghe thử:
-1. Sẽ mất từ 30 giây đến 2 phút chờ đợi tải xuống.
-2. Làm lãng phí băng thông và chiếm dụng hàng đợi CPU của Homelab server cho một bài hát mà người dùng có thể bấm nghe 5 giây rồi tắt.
+## Context
+Elderly users need to preview songs to verify track quality and performers before downloading. If the server was required to download the entire media file before playback:
+1. Users would experience 30–120 seconds of latency before hearing any audio.
+2. Homelab server storage and CPU queues would be exhausted for songs that might be discarded after 5 seconds of listening.
 
-## Quyết Định (Decision)
-Triển khai endpoint `/api/preview/:id` sử dụng tính năng trích xuất luồng trực tiếp của `yt-dlp`:
-1. Chạy `yt-dlp -g -f ba/b --js-runtimes node:node` để lấy URL luồng âm thanh gốc từ CDN Google Video (`googlevideo.com`).
-2. Server phản hồi HTTP `302 Found` chuyển hướng trực tiếp trình duyệt đến URL này.
-3. Đối tượng HTML5 `Audio()` của trình duyệt trực tiếp streaming các dải byte âm thanh về máy để phát.
+## Decision
+Implement endpoint `/api/preview/:id` leveraging direct audio stream resolution:
+1. Invoke `yt-dlp` to resolve the direct audio stream URL from CDN endpoints.
+2. Return an HTTP redirect (`302 Found`) or pipe the byte stream directly to the client browser.
+3. The client's HTML5 `<audio>` element streams the audio chunks in real time.
 
-## Hậu Quả (Consequences)
-- **Tích cực**:
-  - Âm thanh phát lên sau chưa đầy **1.5 giây**.
-  - Server Homelab hoàn toàn không phải tốn dung lượng đĩa và CPU để chuyển mã trong bước nghe thử.
-- **Tiêu cực**: URL của Google Video có gắn kèm thời hạn token hết hạn (`expire=...`) và IP hash, chỉ có giá trị phát trong phiên hiện tại.
+## Consequences
+- **Positive**:
+  - Audio playback starts in less than **1.5 seconds**.
+  - Zero disk storage and near-zero server CPU transcode overhead during preview sessions.
+- **Negative / Constraints**:
+  - Direct CDN URLs carry expiration tokens (`expire=...`) bound to the requesting IP, valid strictly for the active session.

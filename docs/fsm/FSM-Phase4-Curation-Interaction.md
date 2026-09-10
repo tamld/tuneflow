@@ -3,24 +3,24 @@
 ```mermaid
 stateDiagram-v2
     [*] --> DefaultFeed: User visits homepage
-    DefaultFeed --> ViewingMom: Click "🌸 Mẹ Hay Nghe"
-    DefaultFeed --> ViewingDad: Click "☕ Bố Hay Nghe"
-    DefaultFeed --> ViewingFavorites: Click "❤️ Bài Đã Thích"
+    DefaultFeed --> ViewingMom: Click "🌸 Mother's Feed"
+    DefaultFeed --> ViewingDad: Click "☕ Father's Feed"
+    DefaultFeed --> ViewingFavorites: Click "❤️ Saved Favorites"
     
     state ViewingMom {
-        [*] --> MeditationTracks: auto load "Nhạc thiền ngủ ngon"
-        MeditationTracks --> SpaTracks: select "Nhạc spa thư giãn"
-        MeditationTracks --> FolkTracks: select "Dân ca quê hương"
+        [*] --> MeditationTracks: auto load "Deep Sleep Meditation"
+        MeditationTracks --> SpaTracks: select "Spa & Relaxation"
+        MeditationTracks --> FolkTracks: select "Countryside Folk"
     }
     
     state ViewingDad {
-        [*] --> BoleroTracks: auto load "Nhạc vàng bolero"
-        BoleroTracks --> PreWarTracks: select "Nhạc tiền chiến"
-        BoleroTracks --> CaiLuongTracks: select "Cải lương vọng cổ"
+        [*] --> BoleroTracks: auto load "Golden Era Bolero"
+        BoleroTracks --> PreWarTracks: select "Pre-War Classics"
+        BoleroTracks --> CaiLuongTracks: select "Traditional Opera"
     }
     
-    ViewingMom --> FilterInstrumental: Toggle "Không lời"
-    ViewingDad --> FilterInstrumental: Toggle "Không lời"
+    ViewingMom --> FilterInstrumental: Toggle "Instrumental"
+    ViewingDad --> FilterInstrumental: Toggle "Instrumental"
     
     state AudioPreviewOrDownload {
         FilterInstrumental --> Previewing: 1-click listen

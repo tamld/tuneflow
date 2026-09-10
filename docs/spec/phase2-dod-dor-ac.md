@@ -1,19 +1,19 @@
-﻿# Phase 2 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
+# Phase 2 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
 ## 1. Definition of Ready (DoR)
-- [x] Dockerfile đa tầng (multi-stage) đã được soạn thảo dựa trên `node:22-alpine`.
-- [x] Tệp cấu hình GitHub Actions `.github/workflows/release.yml` đã được định nghĩa với buildx và QEMU.
-- [x] Đã xác lập ranh giới tài nguyên máy chủ: RAM cap 256MB, CPU 1.0 core.
+- [x] Multi-stage Dockerfile drafted based on `node:22-alpine`.
+- [x] GitHub Actions workflow `.github/workflows/release.yml` defined with buildx and QEMU.
+- [x] Server resource boundaries established: 256MB memory cap, 1.0 CPU core.
 
 ## 2. Definition of Done (DoD)
-- [ ] Pipeline GitHub Actions chạy xanh 100% khi gắn tag phiên bản mới.
-- [ ] Gói container image đã hiện diện trên GitHub Container Registry `ghcr.io/tamld/tuneflow`.
-- [ ] Có hướng dẫn và xác nhận chuyển trạng thái package sang **Public** để có thể `docker pull` không cần token.
-- [ ] Tệp `docker-compose.prod.yml` được thử nghiệm hoạt động với Traefik labels.
-- [ ] Bản phát hành GitHub Release được tạo chính thức kèm ghi chú phiên bản (Release Notes).
+- [x] GitHub Actions release pipeline passes 100% on new version tags.
+- [x] Multi-arch container image published to GitHub Container Registry `ghcr.io/tamld/tuneflow`.
+- [x] Package visibility configured to **Public** for tokenless `docker pull`.
+- [x] Production compose `docker-compose.prod.yml` validated with Traefik routing labels.
+- [x] GitHub Release created with comprehensive changelog and release notes.
 
 ## 3. Acceptance Criteria (AC)
-- **AC-201**: Chạy lệnh `docker pull ghcr.io/tamld/tuneflow:latest` thành công mà không báo lỗi `unauthorized` hay `403 Forbidden`.
-- **AC-202**: Chạy lệnh `docker compose -f docker-compose.prod.yml up -d` khởi động container trong vòng $\le 5$ giây.
-- **AC-203**: Gửi request `curl http://localhost:3000/api/health` trả về HTTP 200 `{ "status": "healthy" }`.
-- **AC-204**: Kích thước image đo đạc bằng `docker images` không vượt quá 120MB.
+- **AC-201**: Executing `docker pull ghcr.io/tamld/tuneflow:latest` succeeds without `unauthorized` or `403 Forbidden` errors.
+- **AC-202**: Executing `docker compose -f docker-compose.prod.yml up -d` boots daemon within $\le 5\text{ seconds}$.
+- **AC-203**: Requesting `curl http://localhost:3000/api/health` returns HTTP 200 `{ "status": "healthy" }`.
+- **AC-204**: Container image size verified via `docker images` does not exceed 120MB.

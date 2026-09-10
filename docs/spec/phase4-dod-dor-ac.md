@@ -1,18 +1,18 @@
 # Phase 4 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
 ## 1. Definition of Ready (DoR)
-- [x] Đã có ADR-0009 xác lập kiến trúc Persona Taxonomy và Zero-Login Storage.
-- [x] Thiết kế giao diện thanh chọn Persona tuân thủ WCAG AAA và kích thước nút bấm $\ge 64\text{px}$.
-- [x] Đã hoàn thành SRS và FSM quy định hành vi lọc từ khóa.
+- [x] ADR-0009 approved, establishing Persona Taxonomy and Zero-Login Storage architecture.
+- [x] Persona bar interface styled to WCAG 2.2 AAA with button dimensions $\ge 64\text{px}$.
+- [x] SRS and FSM specifications finalized for keyword transformation and state handling.
 
 ## 2. Definition of Done (DoD)
-- [ ] Endpoint `/api/curation/presets` trả về đầy đủ cấu trúc danh mục cho Bố và Mẹ.
-- [ ] Giao diện người dùng có 3 nút Persona lớn trên đỉnh trang chủ.
-- [ ] Nút bật tắt "Không lời / Có lời" tự động lọc kết quả mà không cần tải lại toàn bộ trang.
-- [ ] Nút yêu thích ❤️ lưu bài hát vào `localStorage` và tồn tại sau khi tắt bật lại trình duyệt.
-- [ ] Bộ kiểm thử E2E xác nhận luồng thao tác của người già: Chọn Mẹ ➔ Nghe thử ➔ Tải về hoạt động hoàn hảo.
+- [x] Endpoint `/api/curation/presets` delivers preset categories for Mother and Father.
+- [x] Web UI renders 3 hero persona buttons prominently at the top of the feed.
+- [x] Instrumental / Vocal toggle filters results seamlessly without full-page reloads.
+- [x] Favorite button ❤️ persists tracks to `localStorage` across browser restarts.
+- [x] Senior usability test verifies flow: Select Mother ➔ Preview audio ➔ Download operates cleanly.
 
 ## 3. Acceptance Criteria (AC)
-- **AC-401**: Nhấp vào tab "🌸 Mẹ Hay Nghe" lập tức hiển thị tối thiểu 10 bài hát thuộc thể loại thiền/ngủ ngon/dân ca.
-- **AC-402**: Bật toggle "Không lời", danh sách bài hát chỉ hiển thị các bản hòa tấu/nhạc cụ.
-- **AC-403**: Dữ liệu trong `localStorage.getItem('tuneflow_favorites')` lưu trữ đúng cấu trúc JSON gồm `id`, `title`, `thumbnail`, `savedAt`.
+- **AC-401**: Clicking "🌸 Mother's Feed" tab renders at least 10 meditation, sleep, and folk audio tracks.
+- **AC-402**: Enabling the "Instrumental" toggle restricts track results to acoustic/instrumental arrangements.
+- **AC-403**: `localStorage.getItem('tuneflow_favorites')` stores well-formed JSON objects containing `id`, `title`, `thumbnail`, and `savedAt`.

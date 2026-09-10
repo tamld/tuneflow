@@ -1,65 +1,65 @@
 # ADR-0013: Topic Branching, PR Issue-Clustering, and Git Audit Hygiene Standard
 
-## Trạng thái
-Đã chấp thuận (Accepted)
+## Status
+Accepted
 
-## Bối cảnh
-Trong các phiên bản đầu tiên (`v1.0.0` đến `v1.3.0`), dự án TuneFlow đôi khi áp dụng phương thức commit trực tiếp lên nhánh `master` (Trunk-based cowboy committing) để phát hành nhanh. Mặc dù các tính năng và bài test đều được hoàn thiện và các GitHub Issues được đóng qua CLI, phương thức này bộc lộ những rủi ro kỹ thuật lớn:
-1. **Mất dấu vết kiểm toán (Audit Trail Breakdown)**: Thiếu sự liên kết trực tiếp hai chiều giữa Pull Request, mã diff chi tiết và trạng thái issue trên giao diện GitHub.
-2. **Commit nguyên khối (Monolithic Commits)**: Một commit đơn lẻ gom 10–15 issues trải dài từ Bảo mật OWASP, Tối ưu bộ nhớ, UX người cao tuổi đến CI/CD khiến việc code review và kiểm thử độc lập trở nên bất khả thi.
-3. **Rủi ro hồi quy (Regression Risk)**: Khi một tính năng nhỏ phát sinh lỗi, việc hoàn tác (git revert) hoặc tìm kiếm lỗi bằng nhị phân (git bisect) sẽ làm ảnh hưởng dây chuyền đến các tính năng khác nằm chung trong commit đó.
+## Context
+During initial development cycles (`v1.0.0` to `v1.3.0`), direct commits were occasionally pushed to `master` (trunk-based cowboy commits) to accelerate releases. While tests passed and issues were closed via CLI, this introduced notable engineering risks:
+1. **Audit Trail Breakdown**: Loss of bidirectional traceability between Pull Requests, code diffs, and issue tracking on GitHub.
+2. **Monolithic Commits**: A single commit bundling 10–15 unrelated issues across Security, Memory Optimization, UI Accessibility, and CI/CD made independent review and verification impossible.
+3. **Regression Risk**: When an issue emerged, `git revert` or `git bisect` would unintentionally roll back unrelated features bundled into the same commit.
 
 ---
 
-## Quyết định Kiến Trúc
+## Architectural Decisions
 
-### 1. Cấm Tuyệt Đối Commit & Push Trực Tiếp Lên `master` (Trunk Protection)
-- Từ phiên bản `v1.4.0` trở đi, toàn bộ lập trình viên con người và Autonomous AI Agents (Claude, Codex, Antigravity) **BẮT BUỘC KHÔNG ĐƯỢC PHÉP** commit hoặc push trực tiếp lên nhánh `master`.
-- Mọi công việc đều phải bắt đầu trên một nhánh chủ đề (Topic Branch) độc lập.
+### 1. Absolute Prohibition of Direct Commits to `master` (Trunk Protection)
+- From `v1.4.0` onward, all human developers and Autonomous AI Agents (Claude, Codex, Antigravity) **MUST NOT** commit or push directly to `master`.
+- All engineering activities must originate on dedicated, isolated topic branches.
 
-### 2. Quy Chuẩn Đặt Tên Nhánh (Topic Branch Taxonomy)
-Mỗi nhánh làm việc phải tuân theo cú pháp: `<loại>/<mô-tả-ngắn>`
-- `feat/`: Tính năng giao diện mới, endpoint API mới (VD: `feat/android-tv-leanback-dpad`).
-- `fix/`: Sửa lỗi, vá lỗ hổng bảo mật (VD: `fix/stream-proxy-range-headers`).
-- `perf/`: Tối ưu hiệu năng, giảm tải CPU/RAM/Disk (VD: `perf/direct-pipe-ffmpeg`).
-- `chore/`: CI/CD, linter, test runner, cấu hình container (VD: `chore/ci-release-preflight-gate`).
-- `docs/`: Tài liệu kỹ thuật, ADR, OpenSpec, PRD/SRS (VD: `docs/adr-git-pr-hygiene`).
+### 2. Topic Branch Taxonomy
+Every branch follows the standardized naming schema: `<type>/<short-description>`
+- `feat/`: New UI capabilities, new API endpoints (e.g., `feat/android-tv-leanback-dpad`).
+- `fix/`: Bug fixes, security patches (e.g., `fix/stream-proxy-range-headers`).
+- `perf/`: Performance optimizations, resource reduction (e.g., `perf/direct-pipe-ffmpeg`).
+- `chore/`: CI/CD, linters, test harnesses, container builds (e.g., `chore/ci-release-preflight-gate`).
+- `docs/` or `refactor/`: Technical documentation, ADRs, PRD/SRS updates (e.g., `docs/adr-git-pr-hygiene`).
 
-### 3. Quy Tắc Gom Nhóm Issues Theo Epic (PR Issue-Clustering)
-Khi giải quyết nhiều issue cùng lúc, agent hoặc developer **PHẢI gom nhóm các issues cùng lĩnh vực chức năng (Functional Domain) vào một PR riêng biệt**, tuyệt đối không tạo PR "nồi lẩu thập cẩm" (Kitchen-Sink PR):
+### 3. PR Issue-Clustering Rule
+When resolving multiple related issues, developers and agents **MUST cluster issues by functional domain into dedicated PRs**, strictly avoiding kitchen-sink pull requests:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                               QUY CHUẨN GOM NHÓM PULL REQUESTS                        │
+│                               PULL REQUEST CLUSTERING STANDARD                         │
 ├─────────────────────┬──────────────────────────┬───────────────────────────────────────┤
-│ Phân loại PR        │ Tiêu chí Gom Nhóm        │ Mẫu Tiêu Đề PR & Cú Pháp Đóng Issue   │
+│ PR Classification   │ Clustering Criteria      │ Title Format & Closing Syntax         │
 ├─────────────────────┼──────────────────────────┼───────────────────────────────────────┤
-│ **PR Bảo Mật & Lõi**│ OWASP, SSRF, XSS, Buffer,│ `fix(security-core): harden engine`   │
-│                     │ I/O Pipe, Quota đĩa      │ `Closes #4, Closes #5, Closes #6`     │
+│ Security & Core     │ OWASP, SSRF, XSS, Buffer,│ `fix(security-core): harden engine`   │
+│                     │ I/O Pipe, Disk Quota     │ `Closes #4, Closes #5, Closes #6`     │
 ├─────────────────────┼──────────────────────────┼───────────────────────────────────────┤
-│ **PR Giao Diện UX** │ Giao diện Bố Mẹ, Drawer, │ `feat(ux): enhance SilverMelody a11y` │
-│                     │ Modal, Cỡ chữ, i18n      │ `Closes #9, Closes #10, Closes #12`   │
+│ UI / UX             │ Elderly UI, Drawer,      │ `feat(ux): enhance SilverMelody a11y` │
+│                     │ Modals, Font Size, i18n  │ `Closes #9, Closes #10, Closes #12`   │
 ├─────────────────────┼──────────────────────────┼───────────────────────────────────────┤
-│ **PR CI/CD & Nền Tảng**│ GitHub Actions, Build APK,│ `chore(ci-arch): add automated gates` │
+│ CI/CD & Platform    │ GitHub Actions, Build APK│ `chore(ci-arch): add automated gates` │
 │                     │ Docker Smoke, Test gates │ `Closes #13, Closes #14, Closes #18`  │
 └─────────────────────┴──────────────────────────┴───────────────────────────────────────┘
 ```
 
-### 4. Quy Trình 5 Bước Mở PR & Nghiệm Thu (The 5-Step PR Ritual)
-1. **Khởi tạo nhánh**: `git checkout -b <type>/<topic>`.
-2. **Commit nguyên tử**: Commit có thông điệp Conventional Commit rõ ràng.
-3. **Vượt qua cổng chất lượng**: Chạy `npm run lint && npm test` đạt 100% xanh cục bộ trước khi push.
-4. **Mở Pull Request**: Dùng lệnh `gh pr create` với phần thân (body) ghi rõ tóm tắt, bằng chứng test và từ khóa `Closes #X, Closes #Y`.
-5. **Merge & Flatten History**: Thực hiện merge qua PR trên GitHub, đảm bảo GitHub tự động đóng các issues và cập nhật timeline minh bạch.
+### 4. The 5-Step PR Ritual
+1. **Branch Creation**: `git checkout -b <type>/<topic>`.
+2. **Atomic Commits**: Structured commits with Conventional Commit messages.
+3. **Quality Gates**: Local verification running `npm run lint && npm test` passing 100% before push.
+4. **Pull Request Creation**: Opened via `gh pr create` with test evidence and explicit `Closes #X, Closes #Y` links.
+5. **Merge & History Flattening**: Squash-and-merge on GitHub to close linked issues and maintain clean repository history.
 
 ---
 
-## Hệ quả
+## Consequences
 
-### Tích cực
-1. **Lịch sử Git sạch đẹp & có cấu trúc**: Dễ dàng truy vết tại sao một dòng code lại thay đổi và thuộc PR nào.
-2. **An toàn tối đa**: Tránh nguy cơ vô tình làm hỏng bản dựng `master` đang chạy trong môi trường production.
-3. **Phù hợp với tiêu chuẩn doanh nghiệp**: Chuẩn hóa quy trình làm việc giữa AI Agent và lập trình viên con người.
+### Positive
+1. **Clean, Traceable Git History**: Complete visibility into why changes were made and which PR introduced them.
+2. **Maximum Safety**: Eliminates accidental regressions on the production `master` branch.
+3. **Industry Alignment**: Standardizes collaboration protocols between AI agents and human engineers.
 
-### Bất tiện được chấp nhận
-- Tăng thêm thao tác tạo nhánh và mở PR so với việc commit thẳng. Bù lại, sự an toàn và tính minh bạch của dự án tăng gấp nhiều lần.
+### Trade-Offs
+- Requires branching and PR opening overhead compared to direct pushes, justified by safety and audit integrity.

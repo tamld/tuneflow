@@ -1,72 +1,68 @@
-# Tiêu Chí Nghiệm Thu Chi Tiết (Acceptance Criteria - AC)
-## Dự Án: TuneFlow
+# Detailed Acceptance Criteria (AC)
+## Project: TuneFlow
 
-Mỗi tính năng được chuẩn hóa với các kịch bản nghiệm thu cụ thể theo định dạng BDD (Given - When - Then):
-
----
-
-### AC-01: Tìm Kiếm & Nút Gợi Ý Nhạc 1-Chạm (US-01)
-- **Kịch bản Happy Path**:
-  - *Given*: Người dùng đang ở trang chủ TuneFlow.
-  - *When*: Người dùng bấm vào nút gợi ý "Nhạc Vàng 1975".
-  - *Then*: Ô tìm kiếm được điền từ khóa, giao diện hiển thị trạng thái *"Dạ, máy đang tìm kiếm các bài hát hay cho Bố Mẹ..."* và render danh sách từ 10 - 12 bài hát kèm ảnh đại diện lớn, tên ca sĩ và thời lượng sau $\le 3\text{ giây}$.
-- **Kịch bản Edge Case (Ký tự tiếng Việt có dấu & Ký tự đặc biệt)**:
-  - *Given*: Người dùng nhập từ khóa có dấu `"Trịnh Công Sơn #1 (Tuyển Chọn)"`.
-  - *When*: Người dùng bấm nút "Tìm Bài Hát".
-  - *Then*: Hệ thống mã hóa URL an toàn, `yt-dlp` tìm kiếm chính xác và trả về danh sách bài hát mà không xảy ra lỗi mã hóa ký tự.
-- **Kịch bản Worst Case (Từ khóa rỗng hoặc chỉ có khoảng trắng)**:
-  - *Given*: Ô tìm kiếm để trống.
-  - *When*: Người dùng bấm nút "Tìm Bài Hát".
-  - *Then*: Hệ thống không gửi request thừa, hiển thị thông báo nhẹ nhàng: *"Dạ, Bố Mẹ vui lòng nhập tên bài hát hoặc chọn một thể loại ở trên nhé!"*.
+Every feature is standardized with concrete behavioral scenarios in BDD format (Given - When - Then):
 
 ---
 
-### AC-02: Trình Nghe Thử Trực Tiếp (In-App Preview Player - US-02)
-- **Kịch bản Happy Path**:
-  - *Given*: Danh sách kết quả tìm kiếm đang hiển thị.
-  - *When*: Người dùng bấm nút "▶️ Nghe Thử Trước" ở một bài hát.
-  - *Then*: Thanh phát nhạc cố định màu hổ phách dưới đáy màn hình bật lên, thẻ bài hát được viền sáng màu vàng, âm thanh bắt đầu vang lên trong vòng $\le 1.5\text{ giây}$.
-- **Kịch bản Edge Case (Chuyển bài liên tục)**:
-  - *Given*: Một bài hát đang phát nghe thử.
-  - *When*: Người dùng liên tục bấm "Nghe Thử Trước" ở một bài hát khác.
-  - *Then*: Bài cũ lập tức dừng lại, audio buffer cũ bị hủy bỏ, bài mới phát lên mà không xảy ra hiện tượng chồng chéo 2 luồng âm thanh.
-- **Kịch bản Worst Case (Video bị giới hạn bản quyền hoặc không lấy được stream)**:
-  - *Given*: Video YouTube có thiết lập bản quyền cấm trích xuất stream trực tiếp.
-  - *When*: Người dùng bấm nghe thử.
-  - *Then*: Hệ thống không làm đơ giao diện, chuyển trạng thái trình phát thành *"Dạ bài này đang bị giới hạn, Bố Mẹ thử chọn bài khác nhé!"*.
+### AC-01: YouTube Search & 1-Touch Genre Discovery (US-01)
+- **Happy Path Scenario**:
+  - *Given*: The user is on the TuneFlow home screen.
+  - *When*: The user clicks the "Bolero" discovery chip.
+  - *Then*: The search input is populated, loading state indicates active retrieval, and a list of 10–12 cards renders with album art, artist, and duration in $\le 3\text{ seconds}$.
+- **Edge Case Scenario (Vietnamese Accents & Special Characters)**:
+  - *Given*: The user inputs a query with accents and punctuation: `"Trịnh Công Sơn #1 (Tuyển Chọn)"`.
+  - *When*: The user clicks "Search".
+  - *Then*: The URL query is safely encoded, `yt-dlp` extracts results correctly, and no malformed character errors occur.
+- **Worst Case Scenario (Empty or Whitespace Query)**:
+  - *Given*: The search input is empty.
+  - *When*: The user clicks "Search".
+  - *Then*: No redundant network request is fired; a gentle prompt advises the user to enter a title or pick a category.
 
 ---
 
-### AC-03: Hàng Đợi Tải & Kiểm Soát Tải Đồng Thời (US-06)
-- **Kịch bản Happy Path**:
-  - *Given*: Hàng đợi đang trống (`activeCount = 0`).
-  - *When*: Người dùng bấm "⬇️ Tải Về Máy (MP3)".
-  - *Then*: Bài hát được thêm vào hàng đợi với trạng thái `queued`, sau đó chuyển ngay sang `downloading` trong vòng 100ms.
-- **Kịch bản Edge Case (Xếp hàng vượt mức tối đa 2 tác vụ)**:
-  - *Given*: Có 2 tác vụ đang trong trạng thái `downloading` / `converting`.
-  - *When*: Người dùng bấm tải thêm bài thứ 3 và thứ 4.
-  - *Then*: Bài thứ 3 và thứ 4 giữ nguyên trạng thái `queued`. Khi một trong hai bài đầu hoàn thành, bài tiếp theo tự động kích hoạt chuyển sang `downloading`.
-- **Kịch bản Worst Case (Người dùng bấm Hủy tải giữa chừng)**:
-  - *Given*: Bài hát đang tải được 50%.
-  - *When*: Người dùng bấm nút "Hủy".
-  - *Then*: Server gửi tín hiệu `SIGTERM` hủy tiến trình `yt-dlp`, giải phóng slot tải ngay lập tức, tệp dở dang `.part` được giữ nguyên để có thể tải tiếp sau này.
+### AC-02: Zero-Disk In-App Streaming Preview (US-02)
+- **Happy Path Scenario**:
+  - *Given*: Search results are displayed.
+  - *When*: The user clicks "▶ Preview" on a track card.
+  - *Then*: The sticky bottom player opens, the active card is highlighted with a gold border, and audio playback starts in $\le 1.5\text{ seconds}$.
+- **Edge Case Scenario (Rapid Track Switching)**:
+  - *Given*: A track is actively streaming.
+  - *When*: The user clicks "Preview" on a different track in rapid succession.
+  - *Then*: The prior audio stream terminates immediately, previous buffers are released, and the new track plays without overlapping audio.
+- **Worst Case Scenario (Restricted Video)**:
+  - *Given*: A YouTube video is region-restricted or copyright-blocked.
+  - *When*: The user clicks preview.
+  - *Then*: The player displays an informative notification indicating the track is unavailable and suggests picking another song.
 
 ---
 
-### AC-04: Mã Hóa Âm Thanh Chuẩn Phòng Thu (US-03, US-04)
-- **Kịch bản Happy Path**:
-  - *Given*: Luồng âm thanh tải về hoàn tất trong thư mục tạm.
-  - *When*: FFmpeg thực hiện transcode.
-  - *Then*: Tệp đích sinh ra trong `downloads/` có đuôi `.mp3`, tốc độ bit đạt $320\text{ kbps}$, nhúng đầy đủ thẻ ID3 `title` và `artist`.
-- **Kịch bản Edge Case (Tên bài hát chứa ký tự cấm của hệ điều hành)**:
-  - *Given*: Tên video YouTube chứa các ký tự `\ / : * ? " < > |`.
-  - *When*: Hệ thống đặt tên tệp MP3.
-  - *Then*: Hàm `sanitizeTitle()` tự động làm sạch các ký tự cấm, chuyển thành dấu gạch ngang hoặc khoảng trắng, tệp được tạo hợp lệ trên cả Windows, Linux và macOS.
+### AC-03: Web Audio DSP Equalizer & Volume Boost (US-05)
+- **Happy Path Scenario**:
+  - *Given*: Audio is playing.
+  - *When*: The user toggles the DSP preset to "Vocal Clarity".
+  - *Then*: The mid-frequency band boosts by +3dB while low-end frequencies roll off, enhancing vocal articulation.
+- **Edge Case Scenario (Volume Boost at 150%)**:
+  - *Given*: An elderly user enables "150% Volume Boost" on quiet recordings.
+  - *When*: A loud musical passage occurs.
+  - *Then*: The Web Audio `DynamicsCompressorNode` compresses peaks dynamically, preventing acoustic distortion and clipping.
 
 ---
 
-### AC-05: Tự Động Chuyển Giao Tệp Về Máy Cá Nhân (US-03)
-- **Kịch bản Happy Path**:
-  - *Given*: Trình duyệt client đang mở và kết nối SSE.
-  - *When*: Server thông báo sự kiện bài hát đã `completed`.
-  - *Then*: Trình duyệt tự động kích hoạt tải tệp `/api/download/:id/file`, tệp MP3 xuất hiện trong thư mục `Downloads` của máy tính Bố Mẹ mà không cần bất kỳ thao tác thủ công nào.
+### AC-04: iOS PWA Background Audio & Picture-in-Picture (US-06, US-07)
+- **Happy Path Scenario**:
+  - *Given*: TuneFlow is running as an installed PWA on iOS 18 (Safari Standalone mode).
+  - *When*: Audio is streaming and the user locks the iPhone screen.
+  - *Then*: Playback continues uninterrupted via native hardware media services, and lock screen media controls update in real time.
+- **PiP Scenario**:
+  - *Given*: A song is actively playing.
+  - *When*: The user taps the PiP (`📺`) button.
+  - *Then*: A floating Picture-in-Picture window renders the active track artwork, title, and animated visualizer waveform.
+
+---
+
+### AC-05: Android TV D-Pad Spatial Navigation (US-08)
+- **Happy Path Scenario**:
+  - *Given*: TuneFlow is open on Android TV in Leanback mode.
+  - *When*: The user presses `Arrow Down` or `Arrow Right` on the TV remote.
+  - *Then*: Focus smoothly transitions to adjacent elements with a high-contrast focus ring, and pressing `OK` immediately plays the selected song.

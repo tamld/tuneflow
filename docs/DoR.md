@@ -1,28 +1,21 @@
-# Tiêu Chuẩn Sẵn Sàng (Definition of Ready - DoR)
-## Dự Án: TuneFlow
+# Definition of Ready (DoR)
+## Project: TuneFlow
 
-Một yêu cầu (User Story / Issue / Feature Ticket) chỉ được coi là **SẴN SÀNG ĐỂ THỰC THI (READY FOR DEV)** khi và chỉ khi thỏa mãn đầy đủ các tiêu chuẩn sau:
+A work item, user story, or engineering task is considered **READY** for active implementation only when all following criteria are satisfied:
 
 ---
 
-## 1. Tính Rõ Ràng Về Nghiệp Vụ (Business Clarity)
-- [ ] User Story được diễn đạt theo cấu trúc chuẩn: *"Là một [đối tượng], tôi muốn [hành động], để [giá trị nhận được]"*.
-- [ ] Xác định rõ đối tượng hưởng lợi (Bố Mẹ hay Quản trị viên Homelab).
-- [ ] Có phạm vi rõ ràng (In-Scope) và liệt kê rõ những gì không làm (Out-of-Scope).
+## 1. Specification Clarity & Scope Definition
+- [ ] User story contains explicit value proposition, business rationale, and target user persona.
+- [ ] Functional scope is bounded with clear in-scope and out-of-scope boundaries to prevent scope creep.
+- [ ] Acceptance criteria are documented in BDD format (Given - When - Then) covering Happy Path, Edge Cases, and Worst Cases.
 
-## 2. Tiêu Chí Nghiệm Thu Minh Bạch (Acceptance Criteria - AC)
-- [ ] Có ít nhất 3 kịch bản kiểm thử theo mẫu Given - When - Then:
-  - 1 kịch bản đường thuận (Happy Path).
-  - 1 kịch bản biên giới hạn (Edge Case).
-  - 1 kịch bản xử lý lỗi hoặc sự cố bất thường (Worst/Failure Case).
-- [ ] Xác định rõ định dạng dữ liệu đầu vào và kết quả đầu ra kỳ vọng.
+## 2. Architectural Alignment
+- [ ] Dependencies on external runtimes (`yt-dlp`, `ffmpeg`, Node.js, SQLite) are evaluated for security and resource overhead.
+- [ ] UI requirements align with the SilverMelody WCAG 2.2 AAA design system ($\ge 56\text{px}$ targets, high contrast).
+- [ ] Multi-platform impacts (Web, iOS PWA, Android TV, Docker) are reviewed to prevent platform regressions.
 
-## 3. Tính Khả Thi Về Kỹ Thuật (Technical Feasibility)
-- [ ] Đã xác định công cụ thực thi (Node.js API, `yt-dlp`, `FFmpeg` hay Frontend CSS/JS).
-- [ ] Không vi phạm các bất biến kỹ thuật đã quy định trong OpenSpec DELTA-01.
-- [ ] Đã đánh giá vùng ảnh hưởng (Blast Radius): Không gây phá vỡ luồng tải và phát nhạc hiện có.
-
-## 4. Chuẩn Thiết Kế Giao Diện (UI / UX Readiness)
-- [ ] Đã xác định vị trí phần tử trên giao diện SilverMelody.
-- [ ] Nút bấm tuân thủ kích thước tối thiểu $\ge 50\text{px}$.
-- [ ] Thông điệp thông báo tiếng Việt đã được biên soạn sẵn, ấm áp và không dùng thuật ngữ IT.
+## 3. Testability & Verification Strategy
+- [ ] Test approach is defined prior to writing implementation code (TDD / Test-First).
+- [ ] Mocking strategies for YouTube network calls or external child processes are established.
+- [ ] Verification steps are clearly stated with concrete terminal execution commands.

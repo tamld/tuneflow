@@ -1,27 +1,27 @@
 # ADR-0007: Multi-Arch Containerization, GHCR Publishing, and Zero-Trust Container Deployment
 
-## Trạng thái
-Đã chấp thuận (Accepted)
+## Status
+Accepted
 
-## Bối cảnh
-TuneFlow cần được đóng gói tiêu chuẩn để có thể triển khai 24/7 trên bất kỳ máy chủ cá nhân nào (Docker, Podman, LXC, Kubernetes) với mức tiêu thụ tài nguyên tối thiểu. Đồng thời, hình ảnh container phải được đóng gói đa kiến trúc (`linux/amd64` và `linux/arm64`), tự động kiểm thử và đẩy lên GitHub Container Registry (`ghcr.io/tamld/tuneflow`).
+## Context
+TuneFlow requires standardized containerization to run 24/7 on homelab hosts (Docker, Podman, LXC, Kubernetes) with minimal resource consumption. The container image must support multi-architecture builds (`linux/amd64` and `linux/arm64`), automated CI testing, and publishing to GitHub Container Registry (`ghcr.io/tamld/tuneflow`).
 
-## Quyết định Kiến Trúc
-1. **Nền tảng hình ảnh (Base Image)**: Sử dụng `node:22-alpine` với multi-stage build:
-   - Cài đặt trực tiếp `ffmpeg`, `python3`, `ca-certificates`.
-   - Giới hạn dung lượng toàn bộ image sau khi build $\le 120\text{MB}$.
-2. **Quyền hạn bảo mật**: Chạy dưới người dùng không đặc quyền (`USER node`, UID 1000) nhằm ngăn chặn container breakout.
-3. **Phân phối qua GHCR**:
-   - Sử dụng GitHub Actions buildx để tạo multi-arch image (`linux/amd64`, `linux/arm64`).
-   - Gắn tag theo chuẩn Semantic Versioning (`vX.Y.Z`, `latest`).
-4. **Định tuyến & Reverse Proxy**:
-   - Cung cấp nhãn mẫu Reverse Proxy (`Host(\`tuneflow.local\`)`).
-   - Cấu hình cgroups giới hạn cứng tài nguyên: `limits.memory: 256M`, `reservations.memory: 40M`, `cpus: '1.0'`.
+## Architectural Decisions
+1. **Base Image**: Multi-stage build based on `node:22-alpine`:
+   - Packages `ffmpeg`, `python3`, and `ca-certificates`.
+   - Final container image size strictly capped at $\le 120\text{ MB}$.
+2. **Security & Non-Root Execution**: Runs under an unprivileged user (`USER node`, UID 1000) to prevent container breakout vulnerabilities.
+3. **Distribution via GHCR**:
+   - Automated multi-arch build via GitHub Actions buildx (`linux/amd64`, `linux/arm64`).
+   - Semantic Versioning tags (`vX.Y.Z`, `latest`).
+4. **Routing & Reverse Proxy**:
+   - Standardized reverse proxy labels provided (`Host(`tuneflow.local`)`).
+   - Hard cgroups resource boundaries: `limits.memory: 256M`, `reservations.memory: 40M`, `cpus: '1.0'`.
 
-## Hệ quả
-- **Tích cực**:
-  - Tiêu thụ RAM thực tế < 50MB khi nhàn rỗi.
-  - Tự động hóa 100% việc tạo image khi gắn tag Git.
-  - Tương thích tốt cả Docker và Podman rootless.
-- **Tiêu cực / Rủi ro**:
-  - Mặc định GitHub Packages tạo visibility Private, cần thao tác thiết lập Public trên giao diện GitHub web để máy chủ bên ngoài có thể pull mà không cần token cá nhân.
+## Consequences
+- **Positive**:
+  - Idle memory consumption $< 50\text{ MB}$.
+  - 100% automated release pipeline triggered on Git tags.
+  - Full compatibility with both Docker and rootless Podman environments.
+- **Negative / Operational Considerations**:
+  - GitHub Packages defaults to private visibility, requiring a one-time manual toggle to public for tokenless pulls.

@@ -1,32 +1,32 @@
 # SRS — Phase 4: Software Requirements Specification (Persona Curation)
 
-## 1. Yêu Cầu Chức Năng (Functional Requirements)
+## 1. Functional Requirements
 - **FR-401 (Persona Presets Endpoint)**:
   - Endpoint: `GET /api/curation/presets`
-  - Output: Cấu trúc danh mục định sẵn:
+  - Output: Structured category presets:
     ```json
     {
       "mom": {
-        "title": "Mẹ Hay Nghe",
+        "title": "Mother's Feed",
         "icon": "🌸",
-        "queries": ["nhạc thiền ngủ ngon", "niệm phật êm dịu", "nhạc không lời thư giãn spa", "dân ca quê hương"]
+        "queries": ["meditation for sleep", "mindfulness chanting", "spa relaxation instrumental", "countryside folk"]
       },
       "dad": {
-        "title": "Bố Hay Nghe",
+        "title": "Father's Feed",
         "icon": "☕",
-        "queries": ["nhạc vàng bolero chọn lọc", "nhạc tiền chiến bất hủ", "cải lương hồ quảng", "vọng cổ"]
+        "queries": ["golden era bolero", "classic pre-war ballads", "traditional folk opera", "acoustic guitar"]
       }
     }
     ```
 - **FR-402 (Vocal Filter Query Transformer)**:
-  - Cho phép client truyền tham số `filter=instrumental` hoặc `filter=vocal`.
-  - Backend tự động thêm từ khóa ngữ cảnh vào yt-dlp search query:
-    - `filter=instrumental` ➔ `query + " không lời hòa tấu"`
-    - `filter=vocal` ➔ `query + " ca sĩ hát có lời"`
-- **FR-403 (Client Local Favorites Sync)**:
-  - Client lưu danh sách bài hát yêu thích trong `localStorage.getItem('tuneflow_favorites')`.
-  - Hỗ trợ xuất / nhập nhanh danh sách yêu thích qua mã QR để chuyển sang điện thoại khác của bố mẹ.
+  - Accepts `filter=instrumental` or `filter=vocal` parameters.
+  - Backend appends contextual search terms to yt-dlp queries:
+    - `filter=instrumental` ➔ `query + " instrumental acoustic"`
+    - `filter=vocal` ➔ `query + " vocal lyric"`
+- **FR-403 (Client Local Favorites Persistence)**:
+  - Persists favorites list in browser storage under key `tuneflow_favorites`.
+  - Supports quick export / import across family devices via QR code.
 
-## 2. Yêu Cầu Phi Chức Năng (Non-Functional Requirements)
-- **NFR-401 (Tương tác)**: Chuyển đổi danh mục Persona hiển thị kết quả ngay lập tức trong vòng $\le 500\text{ms}$ thông qua caching kết quả tìm kiếm.
-- **NFR-402 (Khả năng tiếp cận)**: Kích thước biểu tượng $\ge 32\text{px}$, kích thước chữ hiển thị tên danh mục $\ge 18\text{px}$ với font chữ sans-serif dễ đọc.
+## 2. Non-Functional Requirements
+- **NFR-401 (Interaction Latency)**: Persona category switching renders results in $\le 500\text{ms}$ through client-side query caching.
+- **NFR-402 (Accessibility Standards)**: Icon dimensions $\ge 32\text{px}$, typography $\ge 18\text{px}$ with high-legibility sans-serif fonts conforming to WCAG 2.2 AAA.

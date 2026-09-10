@@ -1,18 +1,18 @@
-﻿# PRD — Phase 3: Playlist Batch Parsing, Multi-Select & Checksum Verification
+# PRD — Phase 3: Playlist Batch Parsing, Multi-Select & Checksum Verification
 
-## 1. Mục Tiêu Sản Phẩm (Goal)
-Cung cấp khả năng tải toàn bộ danh sách phát (Playlist) hoặc chọn lọc hàng loạt bài hát theo ý thích của bố mẹ, hiển thị danh sách bài trực quan, xếp hàng tải thông minh có giới hạn tải song song để không làm nghẽn Container Host, và tự động kiểm tra tính toàn vẹn Checksum SHA-256 của từng bài hát.
+## 1. Product Goal
+Provide batch downloading capabilities for entire playlists or selective subsets of tracks tailored for elderly family members, featuring clear visual track listings, intelligent bounded concurrency queuing to prevent host resource starvation, and automated SHA-256 integrity verification for every delivered track.
 
-## 2. Trải Nghiệm Người Dùng (UX Flow)
-1. **Dán link**: Bố mẹ hoặc con cái dán đường dẫn YouTube Playlist vào ô tìm kiếm.
-2. **Hiển thị danh sách phát**: Ứng dụng tự động bóc tách và liệt kê các bài hát kèm ảnh thu nhỏ, thời lượng, và ô đánh dấu chọn (checkbox).
-3. **Lựa chọn**:
-   - Nút to: **"Tải tất cả danh sách (X bài)"**
-   - Hoặc tích chọn các bài ưng ý ➔ Bấm **"Tải các bài đã chọn (Y bài)"**.
-4. **Theo dõi tiến độ**: Bảng trạng thái hiển thị từng bài: *Đang chờ ➔ Đang tải ➔ Đang ghép nhạc ➔ Đã xong (Tự động tải về máy)*.
+## 2. User Experience Flow
+1. **Paste Link**: Family members paste a YouTube playlist URL into the unified search bar.
+2. **Review Tracklist**: The application parses metadata instantly, displaying song titles, thumbnails, durations, and selection checkboxes.
+3. **Action Selection**:
+   - Primary action: **"Download Entire Playlist (X tracks)"**
+   - Granular selection: Check specific tracks ➔ Click **"Download Selected (Y tracks)"**.
+4. **Monitor Progress**: Real-time progress table displays sequential states: *Queued ➔ Downloading ➔ Transcoding ➔ Completed (Auto-delivered to local device)*.
 
-## 3. Các Tính Năng Cốt Lõi
-- **Bóc tách Playlist siêu tốc**: Dùng chế độ flat-playlist không tải video để hiển thị danh sách trong $< 2$ giây.
-- **Hàng đợi Bounded Queue**: Giới hạn tối đa 2 bài tải đồng thời (`MAX_CONCURRENT_DOWNLOADS = 2`).
-- **Resumable Download**: Hỗ trợ tiếp tục tải tệp dở dang khi kết nối bị chập chờn.
-- **Checksum SHA-256**: Tự động tính hash của tệp MP3 sau khi mux, chống bàn giao file lỗi cho người dùng.
+## 3. Core Features
+- **High-Speed Playlist Parsing**: Uses flat-playlist mode without downloading media chunks, rendering tracklists in $< 2$ seconds.
+- **Bounded Concurrency Queue**: Enforces a strict limit of 2 parallel downloads (`MAX_CONCURRENT_DOWNLOADS = 2`).
+- **Resumable Transfers**: Preserves in-progress `.part` temporary files across transient connection outages.
+- **SHA-256 Checksum Validation**: Automatically computes cryptographic hashes following FFmpeg muxing to eliminate corrupted media delivery.

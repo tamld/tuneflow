@@ -1,250 +1,162 @@
-# TuneFlow Master Engineering Roadmap (v1.0.0 → v2.0.0)
+# TuneFlow Master Engineering Roadmap (v1.0.0 → v2.4.2)
 
-> **Mục tiêu tối thượng**: Xây dựng giải pháp nghe thử và tải nhạc YouTube chất lượng cao (320kbps MP3 / MP4), tối ưu riêng cho **người lớn tuổi (bố mẹ)** với giao diện một chạm siêu dễ, đóng gói container nhẹ nhàng, chạy êm ái 24/7 trên **máy chủ gia đình (Self-Hosted / Podman / Docker)**; đồng thời vạch rõ lộ trình mở rộng **Browser Extension**, kiến trúc **Client-Side Compute**, và chiến lược **Thương mại hóa / Pháp lý bản quyền**.
+> **Core Objective**: Build an elegant, elderly-friendly YouTube to audio (320kbps MP3 / MP4) streamer and downloader tailored for **elderly family members** with 1-touch discovery, packaged into lightweight multi-arch containers running 24/7 on **homelab servers (Docker / Podman / Compose)**; with a clear engineering trajectory for **Mobile PWA**, **Android TV D-Pad Leanback**, **Client-Side DSP**, and **Automated 3-Stage CI/CD**.
 
 ---
 
-## 🗺️ TỔNG QUAN CÁC CHẶNG ROADMAP (PHASE BREAKDOWN)
+## 🗺️ Roadmap Phase Breakdown
 
-Mỗi chặng đều được thiết kế độc lập, có đầy đủ bộ hồ sơ kiểm định chất lượng:
-**`PRD` (Yêu cầu sản phẩm) ➔ `SRS` (Đặc tả phần mềm) ➔ `FSM` (Máy trạng thái hữu hạn) ➔ `ADR` (Quyết định kiến trúc) ➔ `DoR` (Tiêu chuẩn sẵn sàng) ➔ `DoD` (Tiêu chuẩn hoàn thành) ➔ `AC` (Tiêu chí nghiệm thu kiểm thử)**.
+Each phase is designed independently with a complete quality assurance dossier:  
+**`PRD` (Product Requirements) ➔ `SRS` (Software Specs) ➔ `FSM` (State Machines) ➔ `ADR` (Architecture Decisions) ➔ `DoR` (Definition of Ready) ➔ `DoD` (Definition of Done) ➔ `AC` (Acceptance Criteria)**.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │                                 TUNEFLOW ROADMAP MATRIX                                │
 ├──────────┼──────────────────────────────────────────┼─────────────┼────────────────────┤
-│ Phase 1  │ Core Engine & Giao Diện Người Lớn Tuổi   │ v1.0.0      │ ✅ Completed (SSoT)│
+│ Phase 1  │ Core Engine & Elderly UI Baseline        │ v1.0.0      │ ✅ Completed (SSoT)│
 │ Phase 2  │ Container Engine, Multi-Arch & GHCR CI/CD│ v1.1.1      │ ✅ Completed       │
-│ Phase 3  │ Tải Playlist, Batch Selection & Checksum │ v1.2.0      │ ✅ Completed       │
-│ Phase 4  │ Phân Loại Bố & Mẹ, Curation & Zero-Login │ v1.3.0      │ ✅ Completed       │
-│ Phase 5  │ Hybrid Client-Server Compute & Web Stream│ v1.4.0      │ ✅ Completed       │
-│ Phase 6  │ Browser Extension MV3 & Pháp Lý Bản Quyền│ v2.0.0      │ ✅ Completed       │
-│ Phase 7  │ Android TV D-Pad Leanback & Mobile Client│ v2.1.0      │ ✅ Completed       │
-│ Phase 8  │ PWA Ngoại Tuyến, Giọng Nói & Ghép Nối LAN│ v2.2.0      │ ✅ Completed       │
-│ Phase 9  │ SQLite RBAC, Phân Quyền & Hẹn Giờ 2x     │ v2.3.0      │ ✅ Completed       │
-│ Phase 10 │ Quản Trị Phiên, Yêu Thích & Mã Hóa At-Rest│ v2.4.0   │ ✅ Completed       │
+│ Phase 3  │ Playlist Downloads, Batch Queue & SHA-256│ v1.2.0      │ ✅ Completed       │
+│ Phase 4  │ Elderly Persona Curation & Zero-Login    │ v1.3.0      │ ✅ Completed       │
+│ Phase 5  │ Hybrid Client-Server Compute & Streaming │ v1.4.0      │ ✅ Completed       │
+│ Phase 6  │ Browser Extension MV3 & Legal Compliance │ v2.0.0      │ ✅ Completed       │
+│ Phase 7  │ Android TV D-Pad Leanback & Mobile Audio │ v2.1.0      │ ✅ Completed       │
+│ Phase 8  │ Offline PWA Shell, Voice Search & LAN QR │ v2.2.0      │ ✅ Completed       │
+│ Phase 9  │ SQLite RBAC, Domain Policy & Cooldown    │ v2.3.0      │ ✅ Completed       │
+│ Phase 10 │ Active Sessions, Favorites & Encrypted DB│ v2.4.0      │ ✅ Completed       │
 │ Phase 11 │ Mobile PWA, iOS PiP & Unified CI/CD      │ v2.4.2      │ ✅ Completed       │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
 ---
 
-## 📌 CHI TIẾT TỪNG CHẶNG KỸ THUẬT
+## 📌 Phase Engineering Specifications
 
-### CHẶNG 1: Nền Tảng Cốt Lõi & Trải Nghiệm Đơn Ca (v1.0.0 - Baseline)
-- **Trọng tâm**: Xây dựng backend Node.js 22 LTS, bọc tiến trình `yt-dlp` và `ffmpeg`, giao diện VibeEase tương phản cao chuẩn WCAG AAA, phát nghe thử không quảng cáo, tải trực tiếp về máy client.
-- **Hồ sơ tài liệu SSoT**:
-  - `docs/PRD.md` (Phần 1–4)
-  - `docs/SRS.md` (Phần 1–3)
-  - `docs/FSM.md` (Queue Task State Machine)
-  - `docs/adr/ADR-0001` đến `ADR-0006`
-  - `docs/DoD.md`, `docs/DoR.md`, `docs/AC.md`
-- **Kết quả kiểm chứng**: 24/24 ca kiểm thử chạy xanh, 3 issue đóng (#1 TTL Cleanup, #2 Deduplication, #3 Sanitizer).
+### Phase 1: Core Engine & Single-Track UX (v1.0.0 - Baseline)
+- **Focus**: Node.js 22 LTS backend, `yt-dlp` and `ffmpeg` wrappers, SilverMelody high-contrast WCAG AAA interface, ad-free in-app preview player, direct client delivery via HTTP attachment headers.
+- **SSoT Deliverables**: `docs/PRD.md`, `docs/SRS.md`, `docs/FSM.md`, `docs/adr/ADR-0001` through `ADR-0006`, `docs/DoD.md`, `docs/DoR.md`, `docs/AC.md`.
+- **Verification**: 24/24 unit/integration tests passing, closed issues #1 (TTL Cleanup), #2 (Deduplication), #3 (Sanitizer).
 
 ---
 
-### CHẶNG 2: Đóng Gói Container, Multi-Arch GHCR & Triển Khai Máy Chủ Tự Host (v1.1.1)
-- **Vấn đề giải quyết**:
-  - Biên dịch và xác thực trực tiếp Container OCI trên nền tảng Alpine Linux siêu nhẹ ($\le 120\text{MB}$), hỗ trợ cả Docker và Podman.
-  - Cấu hình pipeline CI/CD GitHub Actions đẩy Multi-arch image (`linux/amd64`, `linux/arm64`) lên **GitHub Container Registry (`ghcr.io/tamld/tuneflow`)**.
-  - Xây dựng runbook và thiết lập quyền Public Visibility cho container package trên GitHub.
-  - Bộ mẫu triển khai cho Container: `docker-compose.yml`, nhãn Reverse Proxy (`tuneflow.local`).
-- **Bộ hồ sơ tài liệu**:
-  - **PRD**: `docs/prd/PRD-Phase2-Container-GHCR.md`
-  - **SRS**: `docs/srs/SRS-Phase2-Container-GHCR.md`
-  - **DoD / DoR / AC**: `docs/spec/phase2-dod-dor-ac.md`
-  - **FSM**: `docs/fsm/FSM-Phase2-Container-Lifecycle.md`
-  - **ADR**: `docs/adr/ADR-0007-multi-arch-ghcr-and-container-deployment.md`
+### Phase 2: Container Engine, Multi-Arch GHCR & Homelab Deployment (v1.1.1)
+- **Scope**:
+  - Build ultra-lightweight Alpine Linux OCI container ($\le 120\text{MB}$), supporting Docker and Podman.
+  - Configure GitHub Actions CI/CD to compile and push multi-arch images (`linux/amd64`, `linux/arm64`) to **GitHub Container Registry (`ghcr.io/tamld/tuneflow`)**.
+  - Provide turnkey `compose.yaml` with reverse-proxy recipes (Traefik, Nginx, Caddy, Cloudflare Tunnel).
+  - Healthcheck endpoint `/api/health` monitoring active child processes and runtime memory.
+- **Deliverables**: `docs/prd/PRD-Phase2-Container-GHCR.md`, `docs/srs/SRS-Phase2-Container-GHCR.md`, `docs/adr/ADR-0007-multi-arch-ghcr-and-container-deployment.md`.
 
 ---
 
-### CHẶNG 3: Tải Playlist, Tải Nhiều Bài (Batch Queue) & Xác Thực Checksum (v1.2.0)
-- **Vấn đề giải quyết**:
-  - Bóc tách toàn bộ danh sách bài hát trong một YouTube Playlist (tiêu đề, thumbnail, thời lượng).
-  - Giao diện người lớn tuổi hiển thị danh sách bài kèm nút chọn trực quan: "Chọn tất cả" hoặc "Chọn từng bài ưng ý".
-  - Hàng đợi Bounded Queue: Giới hạn tải tối đa 2 bài song song (`MAX_CONCURRENT_DOWNLOADS = 2`), các bài còn lại xếp hàng tự động nhằm bảo vệ CPU và RAM máy chủ.
-  - Khả năng **Resume** tải dở khi rớt mạng dựa trên file `.part`.
-  - Cơ chế **Checksum SHA-256** tự động kiểm tra tính toàn vẹn của tệp MP3 sau khi ghép âm thanh trước khi bàn giao cho trình duyệt.
-- **Bộ hồ sơ tài liệu**:
-  - **PRD**: `docs/prd/PRD-Phase3-Playlist-Batch-Engine.md`
-  - **SRS**: `docs/srs/SRS-Phase3-Playlist-Batch-Engine.md`
-  - **DoD / DoR / AC**: `docs/spec/phase3-dod-dor-ac.md`
-  - **FSM**: `docs/fsm/FSM-Phase3-Batch-Queue.md`
-  - **ADR**: `docs/adr/ADR-0008-playlist-parsing-and-checksum-verification.md`
+### Phase 3: Playlist Ingestion, Batch Selection Queue & Integrity Checksums (v1.2.0)
+- **Scope**:
+  - YouTube playlist metadata extraction (titles, thumbnails, duration).
+  - Batch selection interface with "Select All" and manual track picker.
+  - Bounded download queue limiting concurrency to `MAX_CONCURRENT_DOWNLOADS = 2` to preserve server CPU/RAM.
+  - Resume-safe `.part` download handling for intermittent network connections.
+  - SHA-256 checksum manifest generation verifying audio integrity before client delivery.
+- **Deliverables**: `docs/prd/PRD-Phase3-Playlist-Batch-Engine.md`, `docs/srs/SRS-Phase3-Playlist-Batch-Engine.md`, `docs/adr/ADR-0008-playlist-parsing-and-checksum-verification.md`.
 
 ---
 
-### CHẶNG 4: Phân Loại Bố & Mẹ, Curation Thông Minh & Zero-Login Anchor (v1.3.0)
-- **Vấn đề giải quyết**:
-  - **Danh mục được định hình sẵn**:
-    - 🌸 **Mẹ hay nghe**: Nhạc thiền êm dịu, nhạc ngủ ngon, nhạc quê hương, niệm Phật, nhạc không lời thư giãn spa.
-    - ☕ **Bố hay nghe**: Nhạc vàng trữ tình, bolero, tiền chiến, quan họ, thời sự âm nhạc.
-    - 🎵 **Bộ lọc nhanh**: Nút gạt to rõ chuyển đổi giữa "Nhạc có lời" và "Nhạc không lời".
-  - **Neo dữ liệu cá nhân hóa (Zero-Login Anchor)**: Bố mẹ bấm "Thích bài này" hoặc tạo mục "Yêu thích", dữ liệu được lưu trực tiếp vào LocalStorage / Persistent Session của trình duyệt, không bắt người lớn tuổi phải nhớ mật khẩu hay đăng nhập tài khoản phức tạp.
-- **Bộ hồ sơ tài liệu**:
-  - **PRD**: `docs/prd/PRD-Phase4-Elderly-Persona-Curation.md`
-  - **SRS**: `docs/srs/SRS-Phase4-Elderly-Persona-Curation.md`
-  - **DoD / DoR / AC**: `docs/spec/phase4-dod-dor-ac.md`
-  - **FSM**: `docs/fsm/FSM-Phase4-Curation-Interaction.md`
-  - **ADR**: `docs/adr/ADR-0009-elderly-persona-taxonomy-and-zero-login-storage.md`
+### Phase 4: Persona Curation & Zero-Login Personalization (v1.3.0)
+- **Scope**:
+  - Pre-curated discovery channels:
+    - 🌸 **Mother's Favorites**: Meditation, peaceful sleep music, traditional folk, spa relaxation.
+    - ☕ **Father's Favorites**: Golden Oldies, nostalgic bolero, pre-1975 classics, news audio.
+    - 🎵 **Quick Filters**: High-contrast toggle between vocal and instrumental tracks.
+  - **Zero-Login Personalization**: Storing favorites directly in browser `localStorage`, eliminating password barriers for elderly users.
+- **Deliverables**: `docs/prd/PRD-Phase4-Elderly-Persona-Curation.md`, `docs/srs/SRS-Phase4-Elderly-Persona-Curation.md`, `docs/adr/ADR-0009-elderly-persona-taxonomy-and-zero-login-storage.md`.
 
 ---
 
-### CHẶNG 5: Kiến Trúc Hybrid Compute & Client-Side Streaming Offloading (v1.4.0)
-- **Vấn đề giải quyết**:
-  - *Nguyên tắc truyền tải*: YouTube mã hóa luồng âm thanh và áp đặt chính sách CORS, do đó bắt buộc phải có backend máy chủ đứng ra giải mã URL gốc bằng `yt-dlp`.
-  - *Tối ưu hóa Offloading*:
-    - Luồng âm thanh được máy chủ pipe trực tiếp về client qua Web Streams API (`ReadableStream`) mà **không cần lưu giữ vĩnh viễn trên ổ cứng máy chủ** (Zero-Disk Retention mode).
-    - Tích hợp **Web Audio API / WebAssembly (WASM)** trên trình duyệt: Các tác vụ như cắt đoạn nhạc (trim audio), tinh chỉnh âm lượng (normalize), gắn metadata ID3 tag được tính toán trực tiếp trên CPU của máy khách (Client Compute), giúp server đạt tải gần như bằng 0!
-- **Bộ hồ sơ tài liệu**:
-  - **PRD**: `docs/prd/PRD-Phase5-Hybrid-Compute-Streaming.md`
-  - **SRS**: `docs/srs/SRS-Phase5-Hybrid-Compute-Streaming.md`
-  - **DoD / DoR / AC**: `docs/spec/phase5-dod-dor-ac.md`
-  - **FSM**: `docs/fsm/FSM-Phase5-Streaming-Pipeline.md`
-  - **ADR**: `docs/adr/ADR-0010-hybrid-client-server-compute-and-wasm-offloading.md`
+### Phase 5: Hybrid Client-Server Compute & Zero-Disk Streaming (v1.4.0)
+- **Scope**:
+  - Zero-disk streaming pipe: Express proxies audio chunks directly to client via `ReadableStream` and byte ranges without persistent server disk retention.
+  - Web Audio API / WASM client offloading: Audio equalization, trimming, and ID3 tagging executed on client CPU.
+- **Deliverables**: `docs/prd/PRD-Phase5-Hybrid-Compute-Streaming.md`, `docs/srs/SRS-Phase5-Hybrid-Compute-Streaming.md`, `docs/adr/ADR-0010-hybrid-client-server-compute-and-wasm-offloading.md`.
 
 ---
 
-### CHẶNG 6: Browser Extension MV3, Lộ Trình Thương Mại Hóa & Pháp Lý Bản Quyền (v2.0.0)
-- **Vấn đề giải quyết**:
-  - **Chrome / Edge Extension (Manifest V3)**:
-    - Khi bố mẹ hoặc người dùng đang xem bất kỳ video nào trên YouTube, extension sẽ tự động hiển thị nút màu xanh to rõ **"Tải MP3 TuneFlow"** ngay dưới tiêu đề video.
-    - Nhấp 1 chạm: Extension gửi tín hiệu về TuneFlow server cục bộ (`http://localhost:3000` hoặc domain nội bộ) để xử lý tải và tự động lưu file về máy tính.
-  - **Chiến lược Thương mại hóa & Rủi ro Bản quyền**:
-    - *Rủi ro pháp lý*: Theo điều khoản dịch vụ YouTube (ToS) và luật sở hữu trí tuệ, việc bán quyền tải bài hát thuộc bản quyền của ca sĩ/nhạc sĩ là vi phạm nghiêm trọng và dễ bị khiếu nại DMCA.
-    - *Mô hình thương mại hóa chuẩn mực*:
-      1. **Bản cá nhân/Gia đình (Self-hosted FOSS)**: Hoàn toàn miễn phí, mã nguồn mở, người dùng tự deploy trên máy chủ cá nhân (Docker/Podman/Kubernetes).
-      2. **Bản thương mại hóa (Turnkey Appliance / Personal Audio Manager)**: Bán thiết bị cắm sẵn (Plug-and-play Mini PC) hoặc bán tiện ích mở rộng cao cấp (Extension VIP) với các tính năng quản lý thư viện âm nhạc, đồng bộ đám mây cá nhân, không kinh doanh nội dung nhạc.
-- **Bộ hồ sơ tài liệu**:
-  - **PRD**: `docs/prd/PRD-Phase6-Browser-Extension-Legal.md`
-  - **SRS**: `docs/srs/SRS-Phase6-Browser-Extension-Legal.md`
-  - **DoD / DoR / AC**: `docs/spec/phase6-dod-dor-ac.md`
-  - **FSM**: `docs/fsm/FSM-Phase6-Browser-Extension.md`
-  - **ADR**: `docs/adr/ADR-0011-browser-extension-mv3-and-legal-compliance-architecture.md`
+### Phase 6: Browser Extension MV3 & Legal Compliance (v2.0.0)
+- **Scope**:
+  - Manifest V3 browser extension displaying a 1-click "Download to TuneFlow" button on YouTube desktop pages.
+  - Formal Legal Compliance and Fair Use charter establishing personal/homelab operational boundaries.
+- **Deliverables**: `docs/prd/PRD-Phase6-Browser-Extension-Legal.md`, `docs/srs/SRS-Phase6-Browser-Extension-Legal.md`, `docs/adr/ADR-0011-browser-extension-mv3-and-legal-compliance-architecture.md`.
 
 ---
 
-### CHẶNG 7: Điều Hướng D-Pad Android TV & Chế Độ Tĩnh Dưỡng Ambient (v2.1.0)
-- **Vấn đề giải quyết**:
-  - **Trải nghiệm 10-foot Android TV (Leanback Remote D-Pad)**:
-    - Cơ chế điều hướng không gian 2D ma trận (`public/js/tv-leanback.js`) hỗ trợ toàn bộ phím remote TV tiêu chuẩn: `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`, `Enter`, `Escape`/`Backspace`.
-    - Focus Ring siêu tương phản đạt chuẩn WCAG 2.2 AAA (`.focused-tv` viền vàng 4px `#f39c12`, phóng to $1.06\times$, glow 24px) nhìn rõ từ cự ly 3 mét trên ghế sofa.
-    - Cuộn mượt mà `scrollIntoView` định vị thẻ bài hát và thanh điều khiển trung tâm màn hình.
-  - **Chế độ Tĩnh Dưỡng Toàn Màn Hình (Ambient Leanback Player)**:
-    - Lớp phủ tràn màn hình hiển thị ảnh bìa album kích thước lớn (320px), cỡ chữ 38px–24px cho người cao tuổi thư giãn, nghe kinh Phật hoặc nhạc vàng xưa.
-    - Nút chuyển đổi nhanh chế độ TV (`#btn-toggle-tv`) và tham số URL `?mode=tv`.
-- **Bộ hồ sơ tài liệu**:
-  - **ADR**: `docs/adr/ADR-0012-android-mobile-and-tv-leanback-architecture.md`
-  - **SPEC**: `docs/spec/SPEC-0007-android-tv-and-mobile-client.md`
+### Phase 7: Android TV D-Pad Spatial Navigation & Ambient Mode (v2.1.0)
+- **Scope**:
+  - 10-foot Leanback spatial navigation (`tv-leanback.js`) supporting standard TV remote keys (`Arrow Keys`, `Enter`, `Back`).
+  - WCAG 2.2 AAA high-contrast focus rings (`.focused-tv` with 4px gold border and 24px glow) visible from 3 meters away.
+  - Fullscreen ambient playback overlay with 320px album artwork and large typography.
+- **Deliverables**: `docs/spec/SPEC-0007-android-tv-and-mobile-client.md`, `docs/adr/ADR-0012-android-mobile-and-tv-leanback-architecture.md`.
 
 ---
 
-### CHẶNG 8: PWA Ngoại Tuyến, Tìm Kiếm Giọng Nói & Ghép Nối LAN (v2.2.0)
-- **Vấn đề giải quyết**:
-  - **Progressive Web App (PWA) & Bộ Nhớ Đệm Ngoại Tuyến (Cache API)**:
-    - Web App Manifest (`public/manifest.webmanifest`) hỗ trợ cài đặt trực tiếp lên màn hình chính (Add to Home Screen) trên Android TV, điện thoại Android và Desktop.
-    - Service Worker (`public/sw.js`) chiến lược Cache-first lưu trữ vỏ ứng dụng tĩnh, cho phép mở ứng dụng tức thì ngay cả khi mất kết nối mạng Wi-Fi gia đình.
-  - **Tìm Kiếm Bằng Giọng Nói Tiếng Việt (Web Speech API Voice Search)**:
-    - Nút micro lớn (`#btn-voice-search`) trợ năng cho người cao tuổi ngại gõ phím.
-    - Tự động nhận diện phát âm tiếng Việt (`vi-VN`) với hiệu ứng nhịp đập ghi âm trực quan (`.recording`), tự động điền từ khóa và kích hoạt tìm kiếm chỉ với 1 chạm.
-  - **Ghép Nối Mạng Cục Bộ LAN & Chẩn Đoán Không Cần Cấu Hình**:
-    - API `GET /api/system/network` tự động quét các giao diện mạng IPv4, cung cấp URL mạng LAN gia đình và tải trọng mã QR để thiết bị di động quét kết nối nhanh.
-- **Bộ hồ sơ tài liệu**:
-  - **SPEC**: `docs/spec/SPEC-0007-android-tv-and-mobile-client.md`
-  - **ADR**: `docs/adr/ADR-0012-android-mobile-and-tv-leanback-architecture.md`
+### Phase 8: Offline PWA Shell, Voice Search & LAN QR Pairing (v2.2.0)
+- **Scope**:
+  - Web App Manifest (`public/manifest.webmanifest`) and Cache-first Service Worker (`public/sw.js`) enabling offline app shell loading.
+  - Vietnamese voice search (`#btn-voice-search`) leveraging Web Speech API with pulsing visual cues.
+  - Local LAN discovery endpoint (`/api/system/network`) providing QR pairing payloads for mobile devices.
+- **Deliverables**: `docs/spec/SPEC-0007-android-tv-and-mobile-client.md`.
 
 ---
 
-### CHẶNG 9: Hệ Quản Trị Dữ Liệu SQLite, Xác Thực Phân Quyền (RBAC) & Hẹn Giờ 2x (v2.3.0)
-- **Vấn đề giải quyết**:
-  - **Cơ Sở Dữ Liệu SQLite & Thiết Kế Phân Tách Ranh Giới (SoC)**:
-    - Sử dụng module gốc của Node.js: `node:sqlite` (`DatabaseSync`) với chế độ WAL và toàn vẹn khóa ngoại `foreign_keys = ON`, zero dependency bên ngoài.
-    - Tổ chức phân tách ranh giới rõ ràng: `src/db/` (kết nối, schema DDL), `src/db/repositories/` (user, session, guest repositories), `src/auth/` (scrypt, timingSafeEqual, auth service), `src/middleware/` (authenticate, authorize RBAC, guest guard).
-  - **Bảo Mật 3 Bậc Quyền (Three-Tier RBAC) Bảo Vệ Máy Chủ Khi Đưa Ra Internet**:
-    - **Admin (Tier 1)**: Quản lý người dùng, chẩn đoán hệ thống, cập nhật yt-dlp, đặt lại thời gian chờ cho khách.
-    - **User (Tier 2)**: Nghe và tải bài hát không giới hạn thời gian cho các thành viên Gia Đình.
-    - **Guest (Tier 3)**: Khách vãng lai chỉ được nghe thử tối đa 30 phút (1800 giây). Hết thời lượng tự động ngắt kết nối và chuyển sang trạng thái cooldown 60 phút. Chống vượt rào bằng cách liên kết IP và mã băm vân tay trình duyệt. Khóa quyền đưa bài vào hàng đợi tải để chống spam tài nguyên máy chủ.
-  - **Hẹn Giờ Tắt Nhạc Cấp Số Nhân (Exponential 2x Sleep Timer) & Cỡ Chữ TV**:
-    - Bổ sung các mốc hẹn giờ theo quy tắc $\times 2$: 15m, 30m, 1h, 2h, 4h với 30 giây giảm dần âm lượng nhẹ nhàng trước khi tắt.
-    - Khắc phục lỗi cỡ chữ TV/Web bằng biến CSS `--user-font-scale` và hàm `calc()`.
-- **Bộ hồ sơ tài liệu**:
-  - **Plan**: `docs/superpowers/plans/2026-09-09-rbac-auth-guest-cooldown.md`
-  - **Issues**: #49, #50, #52
+### Phase 9: SQLite RBAC, Domain Policy & Cooldown Limits (v2.3.0)
+- **Scope**:
+  - Native `node:sqlite` persistence engine with WAL mode and foreign key integrity.
+  - Three-tier RBAC (`admin`, `user`, `guest`) enforced via `requirePermission(perm)` middleware.
+  - 30-minute cumulative preview limit for guests with 60-minute automated cooldown.
+  - Exponential 2x sleep timer (15m, 30m, 1h, 2h, 4h) with 30s gentle audio fade-out.
+- **Deliverables**: `docs/superpowers/plans/2026-09-09-rbac-auth-guest-cooldown.md`, Issues #49, #50, #52.
 
 ---
 
-### CHẶNG 10: Quản Trị Phiên, Bộ Lọc Playlist, Đồng Bộ Yêu Thích & Mã Hóa Lưu Trữ (v2.4.0)
-- **Vấn đề giải quyết**:
-  - **Khám Phá Playlist & Bộ Lọc Kết Hợp Sắp Xếp (Issue #80)**:
-    - Tìm kiếm đa năng phân định loại kết quả: `type=all`, `type=video`, `type=playlist`.
-    - Sắp xếp linh hoạt: Theo độ liên quan (`relevance`), Theo lượt xem (`views`), Theo ngày đăng (`date`).
-    - Nút bấm pill tương phản cao, thẻ Playlist hiển thị số lượng bài hát và nút 1-chạm tải toàn bộ hoặc duyệt chi tiết.
-  - **Quản Trị Phiên Hoạt Động & Kick-Out Khẩn Cấp (Issue #84)**:
-    - Theo dõi chi tiết các phiên đăng nhập (IP, User-Agent, thời gian kết nối, ngày hết hạn).
-    - Bộ công cụ thu hồi phiên theo nhóm: Ngắt toàn bộ tài khoản gia đình (`users`), Đăng xuất sạch khách vãng lai (`guests`), Ngắt các thiết bị khác trừ phiên hiện tại (`all_except_me`), hoặc Lệnh khẩn cấp đăng xuất toàn bộ hệ thống (`revoke-all`).
-    - Giao diện Bảng Quản Trị tích hợp Tab `⚡ Phiên & Thiết Bị`.
-  - **Tự Đổi Mật Khẩu & Admin Reset Mật Khẩu (Issue #81)**:
-    - Người dùng tự đổi mật khẩu qua `POST /api/auth/change-password` với xác thực mật khẩu cũ bằng `scrypt` an toàn, tự động hủy các phiên trên thiết bị cũ.
-    - Admin có quyền đặt lại mật khẩu cho từng tài khoản thành viên trong bảng Accounts kèm thu hồi phiên tức thì.
-  - **Lưu Trữ & Đồng Bộ Bài Yêu Thích 2 Chiều (Issue #81)**:
-    - Lưu danh sách yêu thích vào bảng `user_favorites` theo `user_id`.
-    - Tự động đồng bộ 2 chiều giữa `localStorage` và máy chủ khi đăng nhập, bảo tồn trải nghiệm Zero-Login của khách.
-  - **Mã Hóa Dữ Liệu Nhạy Cảm Tại Chỗ (AES-256-GCM Encryption at Rest - Issue #81)**:
-    - Mã hóa xác thực AES-256-GCM cho địa chỉ IP người dùng và khách vãng lai lưu trong cơ sở dữ liệu SQLite.
-    - Đảm bảo 0 byte plaintext IP rò rỉ trong file nhị phân `tuneflow.db`, tuân thủ tiêu chuẩn an toàn thông tin DLP.
-- **Bộ hồ sơ tài liệu**:
-  - **Issues**: #80, #81, #84
-  - **Pull Requests**: PR #83, PR #85, PR #86
+### Phase 10: Active Sessions, Playlist Filters & AES-256-GCM Encryption (v2.4.0)
+- **Scope**:
+  - Playlist search and multi-criteria sorting (`relevance`, `views`, `date`) via unified query API.
+  - Admin session manager with group revocation (`guests`, `users`, `all_except_me`, `revoke-all`).
+  - User password self-service (`/api/auth/change-password`) and bidirectional favorites synchronization.
+  - AES-256-GCM authenticated encryption at rest for client IP addresses and session tokens in `tuneflow.db`.
+- **Deliverables**: PR #83, PR #85, PR #86 (Issues #80, #81, #84).
 
 ---
 
-### CHẶNG 11: PWA iPhone Standalone, iOS PiP & Unified CI/CD 3-Tier Lifecycle (v2.4.2)
-- **Vấn đề giải quyết**:
-  - **Trải Nghiệm PWA iPhone & Vùng An Toàn Màn Hình (Issue #87)**:
-    - Bổ sung `viewport-fit=cover` và thiết lập hệ thống padding `env(safe-area-inset-*)` bảo vệ giao diện trước notch, Dynamic Island và thanh gạt Home của iOS.
-    - Chuyển đổi thanh hành động Header thành dạng dải cuộn ngang mượt mà (Horizontal Action Chips Bar).
-    - Tái cấu trúc thanh phát nhạc dính đáy (Bottom Player) thành dạng lưới 2 tầng đáp ứng tiêu chuẩn WCAG 2.2 AAA (nút bấm $\ge 44\text{px}$).
-  - **Phát Nhạc Dưới Nền Trên iOS WebKit & Bộ Điều Khiển PiP (Issue #88)**:
-    - Phát hiện tự động thiết bị iOS, chuyển sang cơ chế Direct Audio Bypass nhằm vô hiệu hóa việc WebKit tự động ngắt `AudioContext` khi tắt màn hình hoặc chuyển ứng dụng.
-    - Đồng bộ hóa toàn diện `navigator.mediaSession` (metadata, trạng thái phát, thanh tiến trình) và xử lý sự kiện `visibilitychange`.
-    - Tích hợp cửa sổ nổi Picture-in-Picture (PiP) thông qua luồng Canvas 512x512 thời gian thực (`canvas.captureStream(10)`) nối vào thẻ video ngầm có cờ `playsinline`.
-  - **Chuẩn Hóa Vòng Đời Phát Hành 3 Giai Đoạn Trên GitHub Remote (Issue #90)**:
-    - Hợp nhất quy trình CI/CD vào `.github/workflows/release.yml`, đảm bảo tải nặng dồn hoàn toàn lên runner GitHub Actions:
-      1. **Stage 1: Container Image**: Build multi-arch (`linux/amd64`, `linux/arm64`) và push lên `ghcr.io/tamld/tuneflow`.
-      2. **Stage 2: Android APK**: Biên dịch và ký số APK thực thụ cho Di động (`tuneflow-mobile.apk`) và Android TV (`tuneflow-tv.apk`) kèm mã băm SHA-256 chống giả mạo.
-      3. **Stage 3: GitHub Release**: Tạo bản phát hành chính thức đính kèm đầy đủ tài nguyên APK và ghi chú tự động.
-    - Loại bỏ hoàn toàn nợ kỹ thuật pseudo-APK và triệt tiêu xung đột race condition giữa hai workflow độc lập.
-- **Bộ hồ sơ tài liệu**:
-  - **Issues**: #87, #88, #90
-  - **Pull Requests**: PR #89, PR #91
+### Phase 11: Mobile PWA, iOS PiP & Unified Remote CI/CD (v2.4.2)
+- **Scope**:
+  - Safe-area insets (`env(safe-area-inset-*)`) and 2-tier CSS Grid bottom player for iOS notches and dynamic islands (Issue #87).
+  - iOS Web Audio bypass to native `<audio>` element to preserve background audio on screen lock, paired with dynamic Canvas 512x512 stream PiP (Issue #88).
+  - Unified 3-stage remote release pipeline in `.github/workflows/release.yml` compiling multi-arch containers and real signed Android Mobile & TV APKs (Issue #90).
+- **Deliverables**: `docs/spec/SPEC-0009-ios-pwa-and-unified-release-pipeline.md`, PR #89, PR #91.
 
 ---
 
-## 📋 TRẠNG THÁI TRIỂN KHAI VÀ THEO DÕI (TRACEABILITY MATRIX)
+## 📋 Traceability Matrix
 
-| Mã Yêu Cầu | Hạng Mục Công Việc | Tài Liệu Quy Chiếu | Mã Kiểm Thử / Artifact |
+| Requirement | Scope Description | SSoT Specification | Test Suite / Verification |
 | :--- | :--- | :--- | :--- |
-| **RM-01** | Core yt-dlp & FFmpeg engine | `docs/SRS.md` #3.1 | `tests/engine.test.js` |
-| **RM-02** | Elderly high-contrast UI ($\ge 50$px) | `docs/SRS.md` #3.2 | `tests/e2e.test.js` |
+| **RM-01** | Core `yt-dlp` & `ffmpeg` engine | `docs/SRS.md` | `tests/engine.test.js` |
+| **RM-02** | Elderly high-contrast UI ($\ge 56$px) | `docs/SRS.md` | `tests/e2e.test.js` |
 | **RM-03** | In-app Audio Preview Player | `docs/adr/ADR-0003` | `tests/api.test.js` |
 | **RM-04** | Client direct delivery attachment | `docs/adr/ADR-0004` | `tests/api.test.js` |
-| **RM-05** | Deduplication & TTL Cleanup | `docs/SRS.md` #3.4 | `tests/edge-cases.test.js` |
+| **RM-05** | Deduplication & TTL Cleanup | `docs/SRS.md` | `tests/edge-cases.test.js` |
 | **RM-06** | Container Alpine Build & GHCR | `docs/adr/ADR-0007` | `.github/workflows/release.yml` |
-| **RM-07** | Playlist & Batch selection queue | `docs/adr/ADR-0008` | `tests/playlist.test.js` (Phase 3) |
-| **RM-08** | SHA-256 Checksum integrity | `docs/spec/phase3` | `tests/checksum.test.js` (Phase 3) |
-| **RM-09** | Persona presets (Bố/Mẹ/Thiền) | `docs/adr/ADR-0009` | `tests/playlist.test.js` (Phase 4) |
-| **RM-10** | Hybrid Client-Side WASM Compute | `docs/adr/ADR-0010` | `tests/wasm-stream.test.js` (Phase 5)|
-| **RM-11** | Browser Extension MV3 Integration | `docs/adr/ADR-0011` | `tests/extension.test.js` (Phase 6) |
-| **RM-12** | Android TV D-Pad Leanback & Ambient Player | `docs/adr/ADR-0012` | `tests/tv-leanback.test.js` (Phase 7) |
-| **RM-13** | PWA Offline Shell, Voice Search & LAN QR | `docs/spec/SPEC-0007` | `tests/pwa-voice.test.js` (Phase 8) |
-| **RM-14** | Dynamic CSS Variable Font Scaler on TV/Web | `docs/superpowers/plans` | `tests/font-scaler-and-sleep-timer.test.js` |
-| **RM-15** | Exponential 2x Sleep Timer & 30s Fade-Out | `docs/superpowers/plans` | `tests/font-scaler-and-sleep-timer.test.js` |
-| **RM-16** | SQLite RBAC, 3-Tier Auth & 30m Guest Limit | `docs/superpowers/plans` | `tests/auth-*.test.js` (5 suites) |
-| **RM-17** | Playlist Discovery, Type Filter & Sorting | PR #83, Issue #80 | `tests/search-playlist-sort.test.js` |
-| **RM-18** | Active Session Management & Kick-Out Group | PR #85, Issue #84 | `tests/admin-session-management.test.js` |
-| **RM-19** | Password Self-Service & Favorites Sync | PR #86, Issue #81 | `tests/security-passwords-favorites-encryption.test.js` |
+| **RM-07** | Playlist & Batch selection queue | `docs/adr/ADR-0008` | `tests/playlist.test.js` |
+| **RM-08** | SHA-256 Checksum integrity | `docs/spec/phase3` | `tests/checksum.test.js` |
+| **RM-09** | Persona presets (Father/Mother) | `docs/adr/ADR-0009` | `tests/playlist.test.js` |
+| **RM-10** | Hybrid Client-Side WASM Compute | `docs/adr/ADR-0010` | `tests/wasm-stream.test.js` |
+| **RM-11** | Browser Extension MV3 Integration | `docs/adr/ADR-0011` | `tests/extension.test.js` |
+| **RM-12** | Android TV D-Pad Leanback Navigation | `docs/spec/SPEC-0007` | `tests/tv-leanback.test.js` |
+| **RM-13** | PWA Offline Shell, Voice Search & QR | `docs/spec/SPEC-0007` | `tests/pwa-voice.test.js` |
+| **RM-14** | Dynamic CSS Variable Font Scaler | `docs/superpowers/plans` | `tests/font-scaler-and-sleep-timer.test.js` |
+| **RM-15** | Exponential 2x Sleep Timer & Fade | `docs/superpowers/plans` | `tests/font-scaler-and-sleep-timer.test.js` |
+| **RM-16** | SQLite RBAC, 3-Tier Auth & Cooldown | `docs/superpowers/plans` | `tests/auth-*.test.js` |
+| **RM-17** | Playlist Discovery, Filter & Sorting | PR #83, Issue #80 | `tests/search-playlist-sort.test.js` |
+| **RM-18** | Active Session Management & Kick-Out | PR #85, Issue #84 | `tests/admin-session-management.test.js` |
+| **RM-19** | Password Self-Service & Favorites | PR #86, Issue #81 | `tests/security-passwords-favorites-encryption.test.js` |
 | **RM-20** | AES-256-GCM Data Encryption at Rest | PR #86, Issue #81 | `tests/security-passwords-favorites-encryption.test.js` |
-| **RM-21** | iOS PWA Mobile Responsive & Safe Area Insets | PR #89, Issue #87 | `tests/ios-pwa-responsive.test.js` |
-| **RM-22** | iOS Background Audio Bypass & Canvas PiP | PR #89, Issue #88 | `tests/ios-background-audio-pip.test.js` |
-| **RM-23** | Unified 3-Stage Remote CI/CD Release Pipeline | PR #91, Issue #90 | `tests/ci-cd-unified-pipeline.test.js` |
-
+| **RM-21** | iOS PWA Responsive & Safe Area Insets | PR #89, Issue #87 | `tests/ios-pwa-responsive.test.js` |
+| **RM-22** | iOS Background Audio Bypass & PiP | PR #89, Issue #88 | `tests/ios-background-audio-pip.test.js` |
+| **RM-23** | Unified 3-Stage Remote Release CI/CD | PR #91, Issue #90 | `tests/ci-cd-unified-pipeline.test.js` |

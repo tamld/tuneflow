@@ -1,123 +1,118 @@
-﻿# Đặc Tả Yêu Cầu Phần Mềm (Software Requirements Specification - SRS)
-## Hệ Thống: TuneFlow (YouTube to MP3 / MP4 Converter & Audio Player)
+# Software Requirements Specification (SRS)
+## System: TuneFlow (YouTube to Audio Converter & Media Streamer)
 
-> **Mã tài liệu**: `TUNEFLOW-SRS-01`  
-> **Chuẩn tuân thủ**: IEEE 830 / ISO 29148  
-> **Phiên bản**: `1.0.0`  
-> **Ngày phê duyệt**: 2026-09-06  
-
----
-
-## 1. Giới Thiệu (Introduction)
-
-### 1.1 Mục đích
-Tài liệu này xác định đầy đủ các đặc tả chức năng, giao diện bên ngoài, hiệu năng, bảo mật và các ràng buộc thiết kế của hệ thống **TuneFlow**.
-
-### 1.2 Phạm vi hệ thống
-TuneFlow là ứng dụng Web Full-stack bao gồm:
-- **Tầng Client (Frontend)**: Giao diện web đơn trang (SPA) tối ưu công thái học người cao tuổi, viết bằng HTML5/CSS3/Vanilla ES6, không phụ thuộc các framework cồng kềnh.
-- **Tầng Server (Backend Engine)**: Dịch vụ Node.js Express điều phối hàng đợi tải, tích hợp các công cụ nhị phân `yt-dlp` và `FFmpeg` để xử lý âm thanh.
-- **Tầng Đóng Gói (Infrastructure)**: Docker container nền tảng Alpine Linux tích hợp sẵn nhãn Traefik cho cụm máy chủ gia đình (Self-Hosted).
+> **Document ID**: `TUNEFLOW-SRS-02`  
+> **Compliance Standards**: IEEE 830 / ISO 29148  
+> **Version**: `2.4.2`  
+> **Effective Date**: 2026-09-10  
+> **Status**: APPROVED (Active SSoT)  
 
 ---
 
-## 2. Mô Tả Tổng Quan (Overall Description)
+## 1. Introduction
 
-### 2.1 Kiến trúc tổng thể (Architecture Overview)
+### 1.1 Purpose
+This document specifies the software architecture, external interfaces, functional behaviors, performance boundaries, and security constraints for **TuneFlow v2.4.2**.
+
+### 1.2 System Scope
+TuneFlow is a full-stack, self-hosted media streaming and downloading platform comprising:
+- **Client Presentation Layer**: Vanilla ES6 SPA with zero heavy framework overhead, adhering to WCAG 2.2 AAA accessibility standards ("SilverMelody").
+- **DSP & Spatial Navigation Engine**: In-browser Web Audio biquad filtering, volume boost with dynamic compressor, spatial navigation for Android TV remote D-Pads, and dynamic Canvas stream Picture-in-Picture.
+- **Backend Application Server**: Node.js 22 Express engine coordinating zero-disk streaming pipes, in-memory rate limiting, speculative prewarming, and background download queues.
+- **Storage & Security Subsystem**: Persistent SQLite database with AES-256-GCM encrypted fields for client IPs and active session tokens.
+
+---
+
+## 2. System Architecture
 
 ```text
-[Trình duyệt Bố Mẹ]
-       │
-       ▼ (HTTP / SSE)
-[Traefik Reverse Proxy :80/:443]
-       │
-       ▼ (Private Network)
-[TuneFlow Node.js Server :3000]
-       ├── Express Router (/api/search, /api/preview, /api/queue, /api/download)
-       ├── Download Queue Controller (Concurrency Limit = 2, Retry = 3)
-       ├── yt-dlp Process Wrapper (Safe Argument Array with '--')
-       └── FFmpeg Audio Transcoder (libmp3lame 320kbps + ID3v2 tags)
-               │
-               ▼
-       [Local Temp /app/downloads/temp] ──► [Final /app/downloads]
+┌────────────────────────────────────────────────────────────────────────┐
+│                        CLIENT PRESENTATION LAYER                       │
+│  Desktop Browser / iOS Standalone PWA / Android Mobile / Android TV   │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ HTTP / Byte-Range / MediaSession
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        REVERSE PROXY (OPTIONAL)                        │
+│             Traefik v3 / Nginx / Caddy 2 / Cloudflare Tunnel           │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Private LAN / Localhost:3000
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                     TUNEFLOW NODE.JS APPLICATION CORE                  │
+│                                                                        │
+│  ├── Express Routing & SSRF Whitelisting                               │
+│  ├── Zero-Disk Stream Pipe (/api/stream/pipe/:id)                      │
+│  ├── In-Memory Sliding-Window Rate Limiter & Search Cache              │
+│  ├── Resilient Download Queue (Concurrency = 2, Retry = 3)             │
+│  ├── SQLite Repository (Users, Sessions, Favorites, Guest Quotas)      │
+│  └── AES-256-GCM Crypto Subsystem (Zero Plaintext Leaks)               │
+└───────────────────────────┬───────────────────────────────┬────────────┘
+                            │                               │
+                            ▼                               ▼
+               ┌────────────────────────┐      ┌─────────────────────────┐
+               │ yt-dlp Subprocess Pool │      │ FFmpeg Transcoder Pool  │
+               │ (Isolated Args Array)  │      │ (libmp3lame 320kbps)    │
+               └────────────────────────┘      └─────────────────────────┘
 ```
 
-### 2.2 Ràng buộc thiết kế & vận hành (Constraints)
-1. **Ràng buộc phần cứng**:
-   - máy chủ: Node x86_64 (x86_64 / ARM64).
-   - Bộ nhớ cấp phát tối đa cho container: 256MB RAM.
-   - Dung lượng ổ đĩa khả dụng: Phải có cơ chế tự dọn dẹp các tệp cũ tránh làm đầy ổ lưu trữ server.
-2. **Ràng buộc tương thích**:
-   - Trình duyệt khách hàng: Google Chrome $\ge 110$, Microsoft Edge $\ge 110$, Firefox $\ge 115$, Safari trên iPad $\ge 16$.
-   - JavaScript Runtime: Node.js 22 LTS (Alpine Linux).
+---
+
+## 3. Detailed Functional Requirements
+
+### REQ-FUNC-01: YouTube Video & Playlist Search
+- The system shall query YouTube using the official `yt-dlp` extractor or in-memory cached results.
+- Search queries shall support Unicode and Vietnamese accented characters without malformed URI errors.
+- Cached search metadata shall be stored in memory with an LRU policy to minimize child process spawns.
+
+### REQ-FUNC-02: Zero-Disk In-App Streaming Pipe
+- Endpoint: `GET /api/stream/pipe/:id`
+- The server shall stream audio chunks directly from the YouTube audio pipe to the client using HTTP chunked transfer and `Accept-Ranges: bytes`.
+- The system shall never buffer or write preview audio to the server's persistent disk storage.
+
+### REQ-FUNC-03: Web Audio DSP Equalizer & Volume Boost
+- The web client shall construct a Web Audio `AudioContext` graph featuring:
+  - 3-band biquad filters: Low-shelf (100Hz), Peaking (1.2kHz), High-shelf (10kHz).
+  - Presets: `Vocal Clarity` (+3dB mid, -2dB bass), `Warm Bolero` (+4dB bass, -2dB treble), and `Standard` (flat).
+  - Volume boost tiers: 100%, 125%, and 150%, capped by a dynamic `DynamicsCompressorNode` to eliminate speaker clipping.
+
+### REQ-FUNC-04: iOS PWA Standalone Background Audio & PiP
+- On iOS devices, audio shall bypass the Web Audio graph to directly drive the native HTML5 `<audio>` element, ensuring iOS `mediaserverd` retains playback upon screen lock.
+- `navigator.mediaSession` shall register handlers for `play`, `pause`, `previoustrack`, `nexttrack`, and `seekto`.
+- A dynamic 512x512 `<canvas>` capture stream (`captureStream(10)`) paired with a hidden `<video>` element shall provide Picture-in-Picture (PiP) support on mobile Safari.
+
+### REQ-FUNC-05: Android TV D-Pad Spatial Navigation
+- The client shall integrate `tv-leanback.js`, registering `SpatialNavigation` listeners for D-Pad arrow keys, `OK`, and `Back`.
+- The UI shall support a dedicated 10-foot TV mode with ambient full-screen visualizer overlays and high-contrast focus rings.
+
+### REQ-FUNC-06: Role-Based Access Control & Active Sessions
+- The system shall enforce three distinct security roles: `admin`, `user`, and `guest`.
+- Active sessions shall be stored in SQLite with hashed tokens and authenticated via `requirePermission(perm)` middleware.
+- Administrators shall have authority to revoke active sessions individually or by target group (`guests`, `users`, `all_except_me`).
+
+### REQ-FUNC-07: Sensitive Data Encryption at Rest (AES-256-GCM)
+- Client IP addresses recorded for session tracking and quota accounting shall be encrypted using AES-256-GCM with a server-side encryption key.
+- Raw SQLite file inspection shall yield zero plaintext IP addresses or credentials.
+
+### REQ-FUNC-08: Direct Client File Delivery
+- Downloaded audio shall be delivered to the client via HTTP response headers:
+  `Content-Disposition: attachment; filename="<sanitized-title>.mp3"`
+- Files are saved directly into the user's browser `Downloads` directory, eliminating manual server-side file retrieval.
 
 ---
 
-## 3. Đặc Tả Chi Tiết Chức Năng (Detailed Functional Requirements)
+## 4. API Endpoints Reference
 
-### Chức năng F-01: Tìm Kiếm Video & Danh Sách Phát YouTube (Search Engine)
-- **Mã yêu cầu**: `REQ-FUNC-01`
-- **Mô tả**: Cho phép người dùng tìm kiếm bài hát theo từ khóa tiếng Việt có dấu, hoặc trích xuất thông tin trực tiếp từ đường link YouTube video/playlist.
-- **Đầu vào**: Chuỗi truy vấn `q` (bắt buộc), tùy chọn `sp` (sắp xếp), `limit` (mặc định 10 kết quả).
-- **Xử lý**:
-  - Gọi lệnh `yt-dlp` với cờ `--flat-playlist --dump-json --js-runtimes node:node`.
-  - Phân tích cú pháp từng dòng JSON để chuẩn hóa: `id`, `title`, `uploader`, `duration`, `thumbnail`, `url`.
-- **Đầu ra**: Mảng JSON chứa danh sách bài hát hoặc mã lỗi tiếng Việt thân thiện nếu không tìm thấy.
-
-### Chức năng F-02: Nghe Thử Trực Tiếp Không Tải Toàn Bộ (In-App Audio Preview)
-- **Mã yêu cầu**: `REQ-FUNC-02`
-- **Mô tả**: Cung cấp luồng âm thanh tức thì để trình phát nhạc của trình duyệt có thể chơi nhạc sau dưới 1.5 giây mà không cần tải cả file video dung lượng lớn về server.
-- **Đầu vào**: Video ID (ví dụ: `_HUpk4c9n2Y`).
-- **Xử lý**:
-  - Gọi `yt-dlp -g -f ba/b --js-runtimes node:node` để trích xuất URL phát lại trực tiếp từ máy chủ nội dung của YouTube (`googlevideo.com`).
-  - Gửi mã HTTP `302 Found` chuyển hướng trình duyệt tới URL luồng âm thanh hoặc chuyển tiếp luồng dữ liệu âm thanh.
-- **Đầu ra**: Trình phát nhạc dưới đáy màn hình chuyển sang trạng thái đang chơi và hiển thị thanh thời gian.
-
-### Chức năng F-03: Hàng Đợi Tải & Kiểm Soát Tải Đồng Thời (Asynchronous Queue)
-- **Mã yêu cầu**: `REQ-FUNC-03`
-- **Mô tả**: Quản lý các yêu cầu tải bài hát, khống chế số lượng tác vụ đồng thời để bảo vệ CPU máy chủ.
-- **Quy tắc nghiệp vụ**:
-  - Số tác vụ tải/convert tối đa chạy cùng lúc: `MAX_CONCURRENT_DOWNLOADS = 2`.
-  - Trạng thái chuyển đổi: `queued` ➔ `downloading` ➔ `converting` ➔ `completed`.
-  - Nếu xảy ra lỗi mạng: Tự động thử lại tối đa 3 lần với khoảng thời gian chờ tăng dần.
-  - Tệp tải dở dang (`*.part`) được giữ lại trong thư mục tạm `downloads/temp/` để tiếp tục tải bù.
-
-### Chức năng F-04: Mã Hóa Âm Thanh Chuẩn Phòng Thu & ID3 Tags (Audio Transcoding)
-- **Mã yêu cầu**: `REQ-FUNC-04`
-- **Mô tả**: Chuyển đổi luồng âm thanh tải về sang định dạng MP3 chất lượng cao nhất phục vụ người lớn tuổi nghe trên loa và ô tô.
-- **Tham số FFmpeg**:
-  - Codec: `libmp3lame`.
-  - Bitrate: `320 kbps` hằng số (CBR) hoặc chất lượng cao nhất VBR Q0.
-  - Tần số lấy mẫu (Sample Rate): `44.1 kHz` chuẩn CD âm thanh.
-  - Siêu dữ liệu ID3: Gắn thẻ `title` (Tên bài hát), `artist` (Tên nghệ sĩ/kênh tải), `album` ("TuneFlow Tuyển Chọn").
-
-### Chức năng F-05: Đồng Bộ Trạng Thái Thời Gian Thực (Real-Time SSE Stream)
-- **Mã yêu cầu**: `REQ-FUNC-05`
-- **Mô tả**: Cập nhật tiến độ tải theo thời gian thực tới tất cả các trình duyệt đang mở mà không cần polling liên tục.
-- **Cơ chế**: Sử dụng giao thức **Server-Sent Events (SSE)** tại endpoint `/api/queue/stream`.
-- **Dữ liệu truyền**: JSON snapshot của toàn bộ hàng đợi mỗi khi có thay đổi trạng thái hoặc tiến độ tải tăng lên.
-
-### Chức năng F-06: Tự Động Chuyển Giao Tệp Về Trình Duyệt Khách (Client Delivery)
-- **Mã yêu cầu**: `REQ-FUNC-06`
-- **Mô tả**: Đảm bảo tệp MP3 lưu trên máy chủ Homelab được chuyển tự động vào thư mục `Downloads` của máy tính Bố Mẹ.
-- **Cơ chế**:
-  - Khi nhận sự kiện SSE với trạng thái `completed`, client tự động tạo một thẻ neo ẩn `<a download href="/api/download/:id/file">` và kích hoạt sự kiện click.
-  - Server phản hồi với các tiêu đề HTTP chuẩn:
-    ```http
-    Content-Type: audio/mpeg
-    Content-Disposition: attachment; filename="[Ten_Bai_Hat].mp3"
-    ```
-
----
-
-## 4. Đặc Tả Giao Diện Người Dùng (UI / UX Specifications)
-
-- **Chuẩn công thái học**: **SilverMelody Design System**.
-- **Kích thước nút bấm**: Chiều cao $\ge 50\text{px}$, độ dày viền $\ge 2\text{px}$, hiệu ứng phản hồi xúc giác cơ học `transform: scale(0.98)`.
-- **Độ tương phản màu sắc**:
-  - Nền chính: `#13141c` (Đen than chì ấm).
-  - Khối chứa: `#1e202b` (Tối dịu mắt).
-  - Văn bản chính: `#f3f4f6` (Trắng ngà, tỷ lệ tương phản $13.5:1$).
-  - Điểm nhấn Tải về: `#f59e0b` (Hổ phách ấm, tỷ lệ $8.2:1$).
-  - Điểm nhấn Nghe thử: `#10b981` (Xanh ngọc lục bảo, tỷ lệ $7.4:1$).
-- **Ngôn ngữ**: 100% tiếng Việt đại chúng, không thuật ngữ lập trình.
+| Method | Endpoint | Access Level | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/health` | Public | System status and active task count |
+| `GET` | `/api/search` | Public | Search YouTube videos and playlists |
+| `GET` | `/api/stream/pipe/:id` | Public (Quoted) | Zero-disk live audio stream pipe |
+| `POST` | `/api/queue/add` | User / Admin | Queue track or playlist for background download |
+| `GET` | `/api/queue/list` | User / Admin | Retrieve current active and completed tasks |
+| `GET` | `/api/download/:id/file`| User / Admin | Direct client delivery of completed media file |
+| `POST` | `/api/auth/login` | Public | Authenticate user credentials and issue session |
+| `POST` | `/api/auth/logout` | Authenticated | Terminate current session token |
+| `GET` | `/api/admin/sessions` | Admin | List all active sessions with encrypted IP decoders |
+| `POST` | `/api/admin/sessions/revoke` | Admin | Terminate sessions by token or group filter |
+| `POST` | `/api/system/update-ytdlp` | Admin | Trigger 1-click update of standalone `yt-dlp` |

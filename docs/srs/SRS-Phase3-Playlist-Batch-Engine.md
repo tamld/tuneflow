@@ -1,19 +1,19 @@
 # SRS — Phase 3: Software Requirements Specification (Playlist & Batch Engine)
 
-## 1. Yêu Cầu Chức Năng (Functional Requirements)
+## 1. Functional Requirements
 - **FR-301 (Playlist Metadata Extraction Endpoint)**:
   - Endpoint: `POST /api/playlist/parse`
   - Input: `{ "url": "https://www.youtube.com/playlist?list=..." }`
-  - Output: Mảng các bài hát `[ { "id", "title", "duration", "thumbnail", "channel" } ]`.
-  - Command: `yt-dlp --flat-playlist --dump-single-json --playlist-end 50 -- <url>`.
+  - Output: Array of track objects `[ { "id", "title", "duration", "thumbnail", "channel" } ]`.
+  - Underlying Command: `yt-dlp --flat-playlist --dump-single-json --playlist-end 50 -- <url>`.
 - **FR-302 (Batch Queue Ingestion Endpoint)**:
   - Endpoint: `POST /api/queue/batch-add`
   - Input: `{ "items": [ { "id", "title", "url" } ], "format": "mp3" }`
-  - Xử lý: Duyệt mảng, kiểm tra trùng lặp (deduplication), đẩy vào hàng đợi với trạng thái `queued`.
+  - Logic: Iterate array, verify deduplication, push items to queue with `queued` status.
 - **FR-303 (SHA-256 Checksum Calculation)**:
-  - Sau khi FFmpeg xuất xong tệp `.mp3`, hệ thống tính toán mã băm SHA-256 qua stream:
+  - Following FFmpeg `.mp3` export, compute SHA-256 cryptographic hash over stream:
     `crypto.createHash('sha256').update(fileBuffer).digest('hex')`.
-  - Gắn giá trị vào thuộc tính `item.checksum`.
+  - Store hash in `item.checksum` property.
 - **FR-304 (Client Attachment Stream with Checksum Header)**:
   - Endpoint: `GET /api/download/:id/file`
   - Response Headers:
@@ -21,7 +21,7 @@
     - `ETag: "<sha256>"`
     - `x-tuneflow-checksum: "<sha256>"`
 
-## 2. Yêu Cầu Phi Chức Năng (Non-Functional Requirements)
-- **NFR-301 (Thời gian bóc tách)**: Trích xuất 50 bài hát từ Playlist $\le 3.0\text{ giây}$.
-- **NFR-302 (Độ toàn vẹn)**: 100% tệp tải về máy khách phải khớp mã băm SHA-256 được tính toán tại server.
-- **NFR-303 (Giới hạn tải song song)**: Số lượng tiến trình con tải cùng lúc không bao giờ vượt quá 2 (`MAX_CONCURRENT_DOWNLOADS = 2`).
+## 2. Non-Functional Requirements
+- **NFR-301 (Parsing Latency)**: Extract 50 playlist tracks in $\le 3.0\text{ seconds}$.
+- **NFR-302 (Data Integrity)**: 100% of delivered files match server-computed SHA-256 hashes.
+- **NFR-303 (Bounded Concurrency)**: Active download child processes strictly capped at 2 (`MAX_CONCURRENT_DOWNLOADS = 2`).

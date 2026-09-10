@@ -1,4 +1,4 @@
-﻿# FSM — Phase 6: Browser Extension Interaction State Machine
+# FSM — Phase 6: Browser Extension Interaction State Machine
 
 ```mermaid
 stateDiagram-v2
@@ -6,7 +6,7 @@ stateDiagram-v2
     YouTubePageLoaded --> ContentScriptMounted: DOM listener ready
     ContentScriptMounted --> ButtonInjected: `#tuneflow-quick-btn` rendered
     
-    ButtonInjected --> UserClicked: Elderly clicks "🎧 Tải Về Cho Bố Mẹ"
+    ButtonInjected --> UserClicked: Elderly clicks "🎧 Download for Parents"
     UserClicked --> CheckingServerStatus: ping http://tuneflow.local:3000/api/health
     
     state ServerDispatch {
