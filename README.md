@@ -10,7 +10,7 @@
 [![Design: WCAG AAA](https://img.shields.io/badge/Design-SilverMelody%20WCAG%20AAA-orange.svg)](#)
 [![SQLite: Built-in](https://img.shields.io/badge/SQLite-Zero--Config-blueviolet.svg)](#)
 
-[English](README.md) · [Tiếng Việt](README.vi.md)
+[English](README.md) · [Tiếng Việt](README.vi.md) · [User Guide](docs/USER_GUIDE.md)
 
 </div>
 
