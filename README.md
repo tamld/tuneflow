@@ -4,13 +4,13 @@
 
 **An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted and homelab ready.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node: ≥20](https://img.shields.io/badge/Node-%E2%89%A520-green.svg)](#)
-[![Docker: Alpine](https://img.shields.io/badge/Docker-Alpine%20%3C120MB-cyan.svg)](#)
+[![Latest Release](https://img.shields.io/github/v/release/tamld/tuneflow?color=blue&logo=github)](https://github.com/tamld/tuneflow/releases/latest)
+[![CI Gate](https://github.com/tamld/tuneflow/actions/workflows/ci.yml/badge.svg)](https://github.com/tamld/tuneflow/actions/workflows/ci.yml)
+[![Docker Image](https://img.shields.io/badge/GHCR-tuneflow%3Av2.4.2-2496ED?logo=docker&logoColor=white)](https://github.com/tamld/tuneflow/pkgs/container/tuneflow)
 [![Design: WCAG AAA](https://img.shields.io/badge/Design-SilverMelody%20WCAG%20AAA-orange.svg)](#)
-[![SQLite: Built-in](https://img.shields.io/badge/SQLite-Zero--Config-blueviolet.svg)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-[English](README.md) · [Tiếng Việt](README.vi.md) · [User Guide](docs/USER_GUIDE.md)
+[English](README.md) · [Tiếng Việt](README.vi.md) · [User Guide](docs/USER_GUIDE.md) · [Roadmap](docs/ROADMAP.md)
 
 </div>
 
@@ -18,38 +18,37 @@
 
 ## ⚡ Highlights at a Glance
 
-* 👴👵 **Elderly-Friendly UX ("SilverMelody")**: Large touch targets (≥56px), ultra-high contrast (WCAG AAA), warm Vietnamese typography, and zero confusing error popups.
+* 👴👵 **Elderly-Friendly UX ("SilverMelody")**: Large touch targets (≥56px), ultra-high contrast (WCAG AAA), warm typography, and zero confusing error popups.
+* 📱 **Full PWA & Native App Ecosystem**: Installable PWA with iOS 18 background audio and dynamic Canvas stream Picture-in-Picture (PiP).
+* 📺 **Android TV D-Pad Leanback Mode**: Full 10-foot spatial navigation (`Arrow Keys` / Remote D-Pad) for smooth living room TV playback.
 * 📂 **Playlist Discovery & Smart Sorting**: Search across videos and playlists with 1-click batch download, filter by type (`all`, `video`, `playlist`), and sort by relevance, views, or upload date.
 * 🎧 **Zero-Disk In-App Audio Preview**: Stream and preview any song instantly with speculative prewarming before downloading to ensure it's the exact version you want.
 * 🎛️ **Web Audio DSP Equalizer & Volume Boost**: Built-in 3-band biquad filters (Vocal Clarity, Warm Bolero) and 125%–150% boost with dynamic audio compression to prevent speaker distortion.
-* 📺 **Android TV D-Pad Leanback Mode**: Full 10-foot spatial navigation (`Arrow Keys` / Remote D-Pad) for smooth living room TV playback.
 * 🔐 **SQLite Authentication, RBAC & Session Management**:
   * **Admin**: User accounts CRUD, active session tracking & targeted kick-out (`guests`, `users`, `all_except_me`), guest quota unlock, homelab diagnostics, and 1-click `yt-dlp` updates.
   * **Family User**: Unlimited listening, server-side favorites sync, self-service password changes, and background MP3/MP4 downloads.
   * **Guest**: 30-minute cumulative audio preview quota with automatic cooldown timer.
 * 🛡️ **AES-256-GCM Encryption at Rest**: Sensitive data (client IP addresses and session tokens) is encrypted in SQLite (`tuneflow.db`) with zero plaintext leaks.
-* 💾 **Direct Client Browser Delivery**: Automatically prompts and saves downloaded 320kbps MP3 / MP4 directly to the client's local computer `Downloads` folder.
+* 💾 **Direct Client Browser Delivery**: Prompts and saves downloaded 320kbps MP3 / MP4 directly to the client's local computer `Downloads` folder.
 * 🛡️ **Homelab Reliability**: Storage quota enforcement (FIFO pruning), resume-safe `.part` download handling, and graceful child process management.
+
+---
+
+## 📱 Supported Platforms & Downloads
+
+| Platform | Client Type | Artifact / Access Method | Audio in Background |
+| :--- | :--- | :--- | :---: |
+| **Web Browser** | Desktop (Chrome, Safari, Edge, Firefox) | `http://<server-ip>:3000` | ✅ |
+| **iOS / iPadOS** | Standalone PWA (Safari Add to Home) | HTTPS URL + Safari Home Screen | ✅ (Hardware lock screen) |
+| **Android Mobile** | Native App or PWA | [Download Mobile APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
+| **Android TV** | 10-Foot Leanback (D-Pad remote) | [Download Android TV APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
+| **Homelab / NAS** | Docker / Podman (amd64 / arm64) | `ghcr.io/tamld/tuneflow:v2.4.2` | ✅ |
 
 ---
 
 ## 🚀 Quickstart
 
-### Option A: Local Node.js
-```bash
-# 1. Clone repository
-git clone https://github.com/tamld/tuneflow.git
-cd tuneflow
-
-# 2. Install dependencies
-npm install
-
-# 3. Start server
-npm start
-# 🌐 Access at: http://localhost:3000
-```
-
-### Option B: Docker / Podman Compose (Recommended)
+### Option A: Docker / Podman Compose (Recommended)
 Save as `compose.yaml`:
 
 ```yaml
@@ -75,6 +74,20 @@ Start the container:
 docker compose up -d
 ```
 
+### Option B: Local Node.js
+```bash
+# 1. Clone repository
+git clone https://github.com/tamld/tuneflow.git
+cd tuneflow
+
+# 2. Install dependencies
+npm install
+
+# 3. Start server
+npm start
+# 🌐 Access at: http://localhost:3000
+```
+
 ---
 
 ## 🌐 Optional Reverse Proxy Recipes
@@ -82,7 +95,7 @@ docker compose up -d
 TuneFlow is **100% proxy-agnostic** by default. Choose your preferred reverse proxy recipe below:
 
 ### 🔹 Recipe 1: Traefik v3 (Docker Labels)
-If your homelab uses Traefik, attach these labels to the `tuneflow` service in your `compose.yaml`:
+Attach these labels to the `tuneflow` service in your `compose.yaml`:
 
 ```yaml
 services:
@@ -159,6 +172,15 @@ Point your public hostname to `http://localhost:3000` via Cloudflare Zero Trust 
 * **Username**: `admin`
 * **Password**: `admin` *(or value of `ADMIN_PASSWORD`)*
 * 💡 *Important: Open the Admin Control Panel (`👑 Quản trị`) after logging in to change your password and configure user accounts.*
+
+---
+
+## 📚 Documentation & Specifications
+
+* 📖 **[User Guide](docs/USER_GUIDE.md)**: Action-first installation manual for iOS PWA, Android, Android TV, and Docker.
+* 🗺️ **[Roadmap](docs/ROADMAP.md)**: Product development roadmap across Phase 1 through Phase 11.
+* 📜 **[Changelog](CHANGELOG.md)**: Version release notes, bug fixes, and security enhancements.
+* 🏛️ **[Architecture & Specifications](docs/PRD.md)**: Full PRD, SRS, FSM, and compliance documents.
 
 ---
 
