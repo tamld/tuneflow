@@ -16,39 +16,30 @@
 
 ---
 
-## ⚡ Highlights at a Glance
+## ⚡ Core Features
 
-* 👴👵 **Elderly-Friendly UX ("SilverMelody")**: Large touch targets (≥56px), ultra-high contrast (WCAG AAA), warm typography, and zero confusing error popups.
-* 📱 **Full PWA & Native App Ecosystem**: Installable PWA with iOS 18 background audio and dynamic Canvas stream Picture-in-Picture (PiP).
-* 📺 **Android TV D-Pad Leanback Mode**: Full 10-foot spatial navigation (`Arrow Keys` / Remote D-Pad) for smooth living room TV playback.
-* 📂 **Playlist Discovery & Smart Sorting**: Search across videos and playlists with 1-click batch download, filter by type (`all`, `video`, `playlist`), and sort by relevance, views, or upload date.
-* 🎧 **Zero-Disk In-App Audio Preview**: Stream and preview any song instantly with speculative prewarming before downloading to ensure it's the exact version you want.
-* 🎛️ **Web Audio DSP Equalizer & Volume Boost**: Built-in 3-band biquad filters (Vocal Clarity, Warm Bolero) and 125%–150% boost with dynamic audio compression to prevent speaker distortion.
-* 🔐 **SQLite Authentication, RBAC & Session Management**:
-  * **Admin**: User accounts CRUD, active session tracking & targeted kick-out (`guests`, `users`, `all_except_me`), guest quota unlock, homelab diagnostics, and 1-click `yt-dlp` updates.
-  * **Family User**: Unlimited listening, server-side favorites sync, self-service password changes, and background MP3/MP4 downloads.
-  * **Guest**: 30-minute cumulative audio preview quota with automatic cooldown timer.
-* 🛡️ **AES-256-GCM Encryption at Rest**: Sensitive data (client IP addresses and session tokens) is encrypted in SQLite (`tuneflow.db`) with zero plaintext leaks.
-* 💾 **Direct Client Browser Delivery**: Prompts and saves downloaded 320kbps MP3 / MP4 directly to the client's local computer `Downloads` folder.
-* 🛡️ **Homelab Reliability**: Storage quota enforcement (FIFO pruning), resume-safe `.part` download handling, and graceful child process management.
+1. 👴👵 **Elderly-Friendly UX ("SilverMelody")**: Large touch targets (≥56px), ultra-high contrast (WCAG AAA), and clear typography.
+2. 📱 **Full PWA & Native Ecosystem**: iOS 18 background audio persistence, dynamic Canvas PiP, Android APK, and Android TV D-Pad Leanback mode.
+3. 🎧 **Zero-Disk In-App Audio Preview**: Stream and preview any song instantly before downloading without wasting server disk.
+4. 🎛️ **Web Audio DSP Equalizer**: 3-band presets (Vocal Clarity, Warm Bolero) and safe volume boost (125%–150%) with dynamic audio compression.
+5. 🔐 **Zero-Config SQLite Security**: Role-based access (Admin, User, Guest), active session management, and AES-256-GCM encryption at rest.
 
 ---
 
-## 📱 Supported Platforms & Downloads
+## 📱 Platforms & Downloads
 
-| Platform | Client Type | Artifact / Access Method | Audio in Background |
+| Platform | Client Type | Download / Link | Background Audio |
 | :--- | :--- | :--- | :---: |
 | **Web Browser** | Desktop (Chrome, Safari, Edge, Firefox) | `http://<server-ip>:3000` | ✅ |
-| **iOS / iPadOS** | Standalone PWA (Safari Add to Home) | HTTPS URL + Safari Home Screen | ✅ (Hardware lock screen) |
-| **Android Mobile** | Native App or PWA | [Download Mobile APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
-| **Android TV** | 10-Foot Leanback (D-Pad remote) | [Download Android TV APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
-| **Homelab / NAS** | Docker / Podman (amd64 / arm64) | `ghcr.io/tamld/tuneflow:v2.4.2` | ✅ |
+| **iOS / iPadOS** | Standalone PWA | Safari Add to Home Screen | ✅ (Hardware lock screen) |
+| **Android Mobile** | Native App / PWA | [Download Mobile APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
+| **Android TV** | 10-Foot Leanback UI | [Download Android TV APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
+| **Homelab Server**| Docker Multi-Arch | `ghcr.io/tamld/tuneflow:v2.4.2` | ✅ |
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Quickstart (Docker Compose)
 
-### Option A: Docker / Podman Compose (Recommended)
 Save as `compose.yaml`:
 
 ```yaml
@@ -62,130 +53,31 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
-      - ADMIN_PASSWORD=admin       # Initial password — change after first login!
-      - STORAGE_MAX_MB=20480       # 20GB downloads threshold before FIFO pruning
+      - ADMIN_PASSWORD=admin       # Change after first login!
     volumes:
-      - ./downloads:/app/downloads  # Downloaded audio/video media files
-      - ./data:/app/data            # SQLite DB (users, sessions, guest limits)
+      - ./downloads:/app/downloads  # Media files
+      - ./data:/app/data            # SQLite DB
 ```
 
-Start the container:
+Start the service:
 ```bash
 docker compose up -d
 ```
-
-### Option B: Local Node.js
-```bash
-# 1. Clone repository
-git clone https://github.com/tamld/tuneflow.git
-cd tuneflow
-
-# 2. Install dependencies
-npm install
-
-# 3. Start server
-npm start
-# 🌐 Access at: http://localhost:3000
-```
+Access at `http://localhost:3000`. Default login: `admin` / `admin`.
 
 ---
 
-## 🌐 Optional Reverse Proxy Recipes
-
-TuneFlow is **100% proxy-agnostic** by default. Choose your preferred reverse proxy recipe below:
-
-### 🔹 Recipe 1: Traefik v3 (Docker Labels)
-Attach these labels to the `tuneflow` service in your `compose.yaml`:
-
-```yaml
-services:
-  tuneflow:
-    # ... base container config ...
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.tuneflow.rule=Host(`tuneflow.local`)"
-      - "traefik.http.routers.tuneflow.entrypoints=websecure"
-      - "traefik.http.routers.tuneflow.tls=true"
-      - "traefik.http.services.tuneflow.loadbalancer.server.port=3000"
-```
-
-### 🔹 Recipe 2: Nginx / Nginx Proxy Manager
-Ensure `proxy_buffering` is disabled for real-time audio byte-range streaming:
-
-```nginx
-server {
-    listen 80;
-    server_name tuneflow.local;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Critical for instant audio streaming & byte ranges:
-        proxy_buffering off;
-        proxy_read_timeout 600s;
-        proxy_send_timeout 600s;
-    }
-}
-```
-
-### 🔹 Recipe 3: Caddy 2
-Add to your `Caddyfile`:
-
-```caddy
-tuneflow.local {
-    reverse_proxy localhost:3000
-}
-```
-
-### 🔹 Recipe 4: Cloudflare Tunnel
-Point your public hostname to `http://localhost:3000` via Cloudflare Zero Trust dashboard. No open ports required.
-
----
-
-## ⚙️ Environment Variables Reference
-
-| Variable | Default | Purpose |
-| :--- | :--- | :--- |
-| `PORT` | `3000` | HTTP port TuneFlow binds to |
-| `NODE_ENV` | `production` | Node.js execution environment (`production` / `development`) |
-| `ADMIN_PASSWORD` | `admin` | Bootstrap password for initial default `admin` account |
-| `DB_PATH` | `./data/tuneflow.db` | Persistent SQLite database location |
-| `DOWNLOADS_DIR` | `./downloads` | Local directory for completed audio downloads |
-| `GUEST_MAX_LISTEN_SEC` | `1800` (30m) | Guest cumulative preview duration before cooldown |
-| `GUEST_COOLDOWN_SEC` | `1800` (30m) | Cooldown duration for guests before quota resets |
-| `MAX_DOWNLOADS` | `2` | Concurrent active download tasks |
-| `MAX_CONVERSIONS` | `1` | Concurrent active audio conversion processes |
-| `MAX_RETRIES` | `3` | Maximum download retry attempts upon network drop |
-| `STORAGE_MAX_MB` | `20480` (20GB) | Downloads directory threshold before auto-pruning |
-| `YTDLP_PROXY` | *None* | Optional HTTP/SOCKS5 proxy for YouTube requests |
-| `YTDLP_EXTRACTOR_ARGS` | *None* | Custom `yt-dlp` arguments (e.g. `youtube:player_client=android,web`) |
-
----
-
-## 👑 Default Credentials
-
-* **Username**: `admin`
-* **Password**: `admin` *(or value of `ADMIN_PASSWORD`)*
-* 💡 *Important: Open the Admin Control Panel (`👑 Admin`) after logging in to change your password and configure user accounts.*
-
----
-
-## 📚 Documentation & Specifications
+## 📚 Documentation Hub
 
 * 📖 **[User Guide](docs/USER_GUIDE.md)**: Action-first installation manual for iOS PWA, Android, Android TV, and Docker.
+* ⚙️ **[Configuration Reference](docs/CONFIG.md)**: Full list of environment variables, quotas, and security flags.
+* 🌐 **[Reverse Proxy Recipes](docs/REVERSE_PROXY.md)**: Ready-to-use configurations for Traefik v3, Nginx, Caddy 2, and Cloudflare Tunnel.
 * 🗺️ **[Roadmap](docs/ROADMAP.md)**: Product development roadmap across Phase 1 through Phase 11.
-* 📜 **[Changelog](CHANGELOG.md)**: Version release notes, bug fixes, and security enhancements.
-* 🏛️ **[Architecture & Specifications](docs/PRD.md)**: Full PRD, SRS, FSM, and compliance documents.
+* 📜 **[Changelog](CHANGELOG.md)**: Release history, upgrade notes, and bug fixes.
+* 🏛️ **[Architecture & Specs](docs/PRD.md)**: Full PRD, SRS, FSM, and compliance documents.
 
 ---
 
-## 📄 License & Disclaimer
+## 📄 License
 
-TuneFlow is an educational open-source project designed for personal and homelab use. Please respect content creators' copyrights.
-
-Licensed under the [MIT License](LICENSE).
+TuneFlow is licensed under the [MIT License](LICENSE).
