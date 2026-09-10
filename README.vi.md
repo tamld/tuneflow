@@ -4,13 +4,13 @@
 
 **Ứng dụng tải nhạc & video chuyển đổi MP3 tự động dành cho Bố Mẹ — Giao diện thân thiện người lớn tuổi, nghe thử trực tiếp không giật lag, tự động lưu về máy tính, đóng gói container homelab siêu nhẹ.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node: ≥20](https://img.shields.io/badge/Node-%E2%89%A520-green.svg)](#)
-[![Docker: Alpine](https://img.shields.io/badge/Docker-Alpine%20%3C120MB-cyan.svg)](#)
+[![Latest Release](https://img.shields.io/github/v/release/tamld/tuneflow?color=blue&logo=github)](https://github.com/tamld/tuneflow/releases/latest)
+[![CI Gate](https://github.com/tamld/tuneflow/actions/workflows/ci.yml/badge.svg)](https://github.com/tamld/tuneflow/actions/workflows/ci.yml)
+[![Docker Image](https://img.shields.io/badge/GHCR-tuneflow%3Av2.4.2-2496ED?logo=docker&logoColor=white)](https://github.com/tamld/tuneflow/pkgs/container/tuneflow)
 [![Design: WCAG AAA](https://img.shields.io/badge/Design-SilverMelody%20WCAG%20AAA-orange.svg)](#)
-[![SQLite: Built-in](https://img.shields.io/badge/SQLite-Zero--Config-blueviolet.svg)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-[English](README.md) · [Tiếng Việt](README.vi.md) · [Cẩm nang sử dụng](docs/USER_GUIDE.md)
+[English](README.md) · [Tiếng Việt](README.vi.md) · [Cẩm nang sử dụng](docs/USER_GUIDE.md) · [Lộ trình phát triển](docs/ROADMAP.md)
 
 </div>
 
@@ -19,10 +19,11 @@
 ## ⚡ Điểm Nổi Bật Nhanh
 
 * 👴👵 **Giao diện "SilverMelody" Thân Thiện Bố Mẹ**: Chữ to rõ ràng, độ tương phản cao chống mỏi mắt (chuẩn WCAG AAA), nút bấm khổng lồ (≥56px) rê chuột không bị trượt, thông báo tiếng Việt ấm áp.
+* 📱 **Hệ Sinh Thái Toàn Diện PWA & App Gốc**: Hỗ trợ PWA trên iOS 18 không bị ngắt nhạc khi tắt màn hình, tích hợp Picture-in-Picture (PiP) nổi hình ảnh và sóng nhạc động.
+* 📺 **Chế Độ Điều Khiển TV (Android TV D-Pad)**: Hỗ trợ điều hướng bằng phím mũi tên hoặc Remote TV mượt mà trong phòng khách (10-Foot Leanback UI).
 * 📂 **Khám Phá Playlist & Sắp Xếp Thông Minh**: Tìm kiếm linh hoạt video và playlist, tải 1-chạm cả album, lọc theo loại (`all`, `video`, `playlist`), sắp xếp theo độ liên quan, lượt xem hoặc ngày đăng.
 * 🎧 **Nghe Thử Trực Tiếp Không Tốn Ổ Cứng (Zero-Disk)**: Bấm vào thẻ bài hát là nghe thử ngay với cơ chế tự nạp luồng trước (Speculative Prewarming), chắc chắn đúng bài mới tải.
 * 🎛️ **Bộ Chỉnh Âm Thanh Web Audio DSP & Khuếch Đại An Toàn**: Bộ lọc 3 dải âm (Giọng Trong Trẻo, Nhạc Vàng Bolero Ấm Áp) và khuếch đại 125%–150% kèm nén động lực chống rè loa người già.
-* 📺 **Chế Độ Điều Khiển TV (Android TV D-Pad)**: Hỗ trợ điều hướng bằng phím mũi tên hoặc Remote TV mượt mà trong phòng khách (10-Foot Leanback UI).
 * 🔐 **Hệ Thống Phân Quyền & Quản Trị Phiên SQLite**:
   * **Admin (Quản trị viên)**: Quản lý tài khoản người dùng, giám sát phiên kết nối & kick-out theo nhóm (`guests`, `users`, `all_except_me`), mở khóa hạn ngạch cho khách, theo dõi trạng thái hệ thống và nâng cấp `yt-dlp` chỉ với 1 cú click.
   * **Thành viên Gia Đình**: Nghe không giới hạn, đồng bộ danh sách bài hát yêu thích 2 chiều, tự đổi mật khẩu, tải nhạc MP3/MP4 thoải mái.
@@ -33,23 +34,21 @@
 
 ---
 
+## 📱 Nền Tảng Hỗ Trợ & Tải Ứng Dụng
+
+| Nền tảng | Dạng ứng dụng | Cách cài đặt / Sử dụng | Nghe nền khi tắt màn hình |
+| :--- | :--- | :--- | :---: |
+| **Trình duyệt Web** | Máy tính (Chrome, Safari, Edge, Firefox) | `http://<ip-máy-chủ>:3000` | ✅ |
+| **iOS / iPadOS** | Standalone PWA (Safari Thêm vào MH chính) | Đường dẫn HTTPS + Safari | ✅ (Giữ luồng phần cứng) |
+| **Android Mobile** | Ứng dụng gốc hoặc PWA | [Tải file APK Mobile](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
+| **Android TV** | Giao diện 10-Foot (Điều khiển bằng Remote) | [Tải file APK Android TV](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
+| **Homelab / NAS** | Container Docker / Podman (amd64 / arm64) | `ghcr.io/tamld/tuneflow:v2.4.2` | ✅ |
+
+---
+
 ## 🚀 Khởi Chạy Nhanh
 
-### Cách 1: Chạy Bằng Node.js
-```bash
-# 1. Tải mã nguồn
-git clone https://github.com/tamld/tuneflow.git
-cd tuneflow
-
-# 2. Cài đặt thư viện
-npm install
-
-# 3. Khởi chạy máy chủ
-npm start
-# 🌐 Mở trình duyệt tại: http://localhost:3000
-```
-
-### Cách 2: Triển Khai Docker / Podman Compose (Khuyên dùng)
+### Cách 1: Triển Khai Docker / Podman Compose (Khuyên dùng)
 Tạo file `compose.yaml`:
 
 ```yaml
@@ -63,31 +62,45 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
-      - ADMIN_PASSWORD=admin       # Mật khẩu ban đầu — hãy đổi sau lần đăng nhập đầu!
-      - STORAGE_MAX_MB=20480       # Giới hạn 20GB cho thư mục tải trước khi tự dọn dẹp
+      - ADMIN_PASSWORD=admin       # Mật khẩu khởi tạo — đổi ngay sau lần đăng nhập đầu!
+      - STORAGE_MAX_MB=20480       # Giới hạn 20GB tải trước khi tự động dọn dẹp FIFO
     volumes:
-      - ./downloads:/app/downloads  # Thư mục chứa nhạc/video đã tải
-      - ./data:/app/data            # Dữ liệu SQLite bền vững (tài khoản, hạn mức)
+      - ./downloads:/app/downloads  # Nơi lưu trữ các file nhạc/video tải về
+      - ./data:/app/data            # Cơ sở dữ liệu SQLite (tài khoản, phiên, hạn mức)
 ```
 
-Khởi động container:
+Khởi chạy container:
 ```bash
 docker compose up -d
 ```
 
+### Cách 2: Chạy Bằng Node.js
+```bash
+# 1. Tải mã nguồn
+git clone https://github.com/tamld/tuneflow.git
+cd tuneflow
+
+# 2. Cài đặt thư viện
+npm install
+
+# 3. Khởi chạy máy chủ
+npm start
+# 🌐 Mở trình duyệt tại: http://localhost:3000
+```
+
 ---
 
-## 🌐 Hướng Dẫn Cấu Hình Reverse Proxy (Tùy Chọn)
+## 🌐 Các Cấu Hình Reverse Proxy Tùy Chọn
 
-TuneFlow được thiết kế hoàn toàn **độc lập (agnostic)**. Nếu bạn sử dụng Reverse Proxy trong homelab, hãy chọn cấu hình phù hợp bên dưới:
+TuneFlow mặc định **100% độc lập với Reverse Proxy**. Bạn có thể chọn cấu hình phù hợp với hệ thống Homelab của mình:
 
-### 🔹 Cách 1: Traefik v3 (Sử dụng Docker Labels)
-Nếu máy chủ homelab của bạn đang chạy Traefik, chỉ cần thêm `labels` vào service `tuneflow` trong file `compose.yaml`:
+### 🔹 Mẫu 1: Traefik v3 (Gắn Docker Labels)
+Gắn các nhãn cấu hình sau vào service `tuneflow` trong file `compose.yaml`:
 
 ```yaml
 services:
   tuneflow:
-    # ... cấu hình cơ bản ...
+    # ... cấu hình gốc ...
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tuneflow.rule=Host(`tuneflow.local`)"
@@ -96,8 +109,8 @@ services:
       - "traefik.http.services.tuneflow.loadbalancer.server.port=3000"
 ```
 
-### 🔹 Cách 2: Nginx / Nginx Proxy Manager
-Cần tắt `proxy_buffering` để hỗ trợ tua bài và truyền phát luồng âm thanh thời gian thực:
+### 🔹 Mẫu 2: Nginx / Nginx Proxy Manager
+Tắt bộ đệm `proxy_buffering` để hỗ trợ tua bài và truyền luồng âm thanh theo dải byte (byte-range streaming):
 
 ```nginx
 server {
@@ -112,7 +125,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # Bắt buộc để nghe thử và tua nhạc không bị nghẽn:
+        # Bắt buộc để nghe nhạc tức thì và hỗ trợ tua thanh thời gian:
         proxy_buffering off;
         proxy_read_timeout 600s;
         proxy_send_timeout 600s;
@@ -120,7 +133,7 @@ server {
 }
 ```
 
-### 🔹 Cách 3: Caddy 2
+### 🔹 Mẫu 3: Caddy 2
 Thêm vào file `Caddyfile`:
 
 ```caddy
@@ -129,41 +142,50 @@ tuneflow.local {
 }
 ```
 
-### 🔹 Cách 4: Cloudflare Tunnel
-Trỏ tên miền public của bạn trực tiếp về `http://localhost:3000` trên trang quản trị Cloudflare Zero Trust mà không cần mở port modem.
+### 🔹 Mẫu 4: Cloudflare Tunnel
+Trỏ domain công khai của bạn vào `http://localhost:3000` trên bảng điều khiển Cloudflare Zero Trust. Không cần mở port router.
 
 ---
 
-## ⚙️ Bảng Tra Cứu Biến Môi Trường (Environment Variables)
+## ⚙️ Bảng Tham Số Biến Môi Trường
 
-| Biến Môi Trường | Mặc Định | Ý Nghĩa & Công Dụng |
+| Tên biến | Mặc định | Ý nghĩa sử dụng |
 | :--- | :--- | :--- |
-| `PORT` | `3000` | Cổng HTTP TuneFlow lắng nghe |
-| `NODE_ENV` | `production` | Môi trường thực thi (`production` / `development`) |
-| `ADMIN_PASSWORD` | `admin` | Mật khẩu khởi tạo ban đầu cho tài khoản `admin` mặc định |
-| `DB_PATH` | `./data/tuneflow.db` | Vị trí lưu trữ cơ sở dữ liệu SQLite |
-| `DOWNLOADS_DIR` | `./downloads` | Thư mục lưu các bài hát đã tải về trên máy chủ |
-| `GUEST_MAX_LISTEN_SEC` | `1800` (30 phút) | Tổng thời lượng nghe thử tối đa của khách trước khi nghỉ làm mát |
-| `GUEST_COOLDOWN_SEC` | `1800` (30 phút) | Thời gian khách cần chờ để được nạp lại hạn mức nghe |
-| `MAX_DOWNLOADS` | `2` | Số lượng tác vụ tải video đồng thời tối đa |
-| `MAX_CONVERSIONS` | `1` | Số lượng tiến trình chuyển đổi âm thanh MP3 đồng thời |
-| `MAX_RETRIES` | `3` | Số lần tự động thử lại khi rớt mạng |
-| `STORAGE_MAX_MB` | `20480` (20GB) | Hạn mức dung lượng thư mục tải trước khi tự động dọn dẹp file cũ |
-| `YTDLP_PROXY` | *Không* | Proxy HTTP/SOCKS5 trung gian cho các yêu cầu trích xuất YouTube |
-| `YTDLP_EXTRACTOR_ARGS` | *Không* | Cấu hình trích xuất nâng cao (vd: `youtube:player_client=android,web`) |
+| `PORT` | `3000` | Cổng mạng HTTP của TuneFlow |
+| `NODE_ENV` | `production` | Môi trường vận hành (`production` / `development`) |
+| `ADMIN_PASSWORD` | `admin` | Mật khẩu mặc định khởi tạo cho tài khoản `admin` |
+| `DB_PATH` | `./data/tuneflow.db` | Vị trí file cơ sở dữ liệu SQLite |
+| `DOWNLOADS_DIR` | `./downloads` | Thư mục lưu trữ nhạc/video tải về |
+| `GUEST_MAX_LISTEN_SEC` | `1800` (30m) | Hạn mức thời gian nghe thử tối đa của Khách |
+| `GUEST_COOLDOWN_SEC` | `1800` (30m) | Thời gian nghỉ làm mát trước khi hạn mức khách được hồi lại |
+| `MAX_DOWNLOADS` | `2` | Số tiến trình tải đồng thời tối đa |
+| `MAX_CONVERSIONS` | `1` | Số tiến trình nén/chuyển đổi định dạng âm thanh đồng thời |
+| `MAX_RETRIES` | `3` | Số lần thử lại tối đa khi tải bị đứt mạng |
+| `STORAGE_MAX_MB` | `20480` (20GB) | Giới hạn dung lượng thư mục tải trước khi tự động dọn |
+| `YTDLP_PROXY` | *Không* | Proxy HTTP/SOCKS5 tùy chọn cho các yêu cầu YouTube |
+| `YTDLP_EXTRACTOR_ARGS` | *Không* | Tham số trích xuất mở rộng của yt-dlp |
 
 ---
 
 ## 👑 Tài Khoản Mặc Định Ban Đầu
 
 * **Tên đăng nhập**: `admin`
-* **Mật khẩu**: `admin` *(hoặc giá trị bạn gán vào `ADMIN_PASSWORD`)*
-* 💡 *Lưu ý quan trọng: Sau khi đăng nhập, hãy bấm vào huy hiệu `👑 Quản trị` ở góc trên để đổi mật khẩu và quản lý danh sách tài khoản gia đình.*
+* **Mật khẩu**: `admin` *(hoặc giá trị trong `ADMIN_PASSWORD`)*
+* 💡 *Lưu ý quan trọng: Nhấp vào nút `👑 Quản trị` trên thanh tiêu đề sau khi đăng nhập để đổi mật khẩu và tạo tài khoản cho gia đình.*
 
 ---
 
-## 📄 Giấy Phép & Tuyên Bố Trách Nhiệm
+## 📚 Tài Liệu & Đặc Tả Kỹ Thuật
 
-TuneFlow là dự án mã nguồn mở phục vụ mục đích giáo dục, giải trí cá nhân và gia đình trong homelab. Vui lòng tôn trọng bản quyền của các nghệ sĩ và tác giả nội dung.
+* 📖 **[Cẩm Nang Sử Dụng](docs/USER_GUIDE.md)**: Hướng dẫn cài đặt và sử dụng từng bước (chuẩn ADHD/hành động trước) cho iOS, Android, TV và Docker.
+* 🗺️ **[Lộ Trình Phát Triển](docs/ROADMAP.md)**: Lộ trình hoàn thiện các giai đoạn từ Phase 1 đến Phase 11.
+* 📜 **[Lịch Sử Phát Hành](CHANGELOG.md)**: Nhật ký cập nhật phiên bản, sửa lỗi và nâng cấp bảo mật.
+* 🏛️ **[Đặc Tả & Thiết Kế Kiến Trúc](docs/PRD.md)**: Toàn bộ tài liệu PRD, SRS, FSM và tuân thủ bản quyền.
 
-Phát hành theo [Giấy phép MIT](LICENSE).
+---
+
+## 📄 Bản Quyền & Tuyên Bố Miễn Trừ
+
+TuneFlow là dự án mã nguồn mở phục vụ mục đích giáo dục, sử dụng cá nhân và môi trường gia đình homelab. Vui lòng tôn trọng bản quyền của các tác giả nội dung.
+
+Phát hành theo giấy phép [MIT License](LICENSE).
