@@ -6,6 +6,7 @@ class TuneFlowAuth {
     this.role = 'guest';
     this.guest = null;
     this.heartbeatTimer = null;
+    this.postLoginRedirect = null;
 
     // Generate or retrieve persistent Guest ID
     this.guestId = localStorage.getItem('tuneflow_guest_id');
@@ -62,6 +63,11 @@ class TuneFlowAuth {
     this.authStatusIcon = document.getElementById('auth-status-icon');
     this.authStatusText = document.getElementById('auth-status-text');
 
+    this.btnAdminTrigger = document.getElementById('btn-admin-panel-trigger');
+    this.adminTriggerIcon = document.getElementById('admin-trigger-icon');
+    this.adminTriggerText = document.getElementById('admin-trigger-text');
+    this.authLoginSubtitle = document.getElementById('auth-login-subtitle');
+
     this.modalLogin = document.getElementById('modal-auth-login');
     this.formLogin = document.getElementById('form-auth-login');
     this.inputUsername = document.getElementById('input-auth-username');
@@ -77,6 +83,18 @@ class TuneFlowAuth {
   }
 
   bindEvents() {
+    if (this.btnAdminTrigger) {
+      this.btnAdminTrigger.addEventListener('click', () => {
+        if (this.role === 'admin') {
+          if (window.adminPanel) {
+            window.adminPanel.open();
+          }
+        } else {
+          this.openLoginModal('admin');
+        }
+      });
+    }
+
     if (this.btnAuthStatus) {
       this.btnAuthStatus.addEventListener('click', () => {
         if (this.role === 'admin') {
@@ -133,8 +151,22 @@ class TuneFlowAuth {
         this.guest = data.guest;
         this.updateBadgeGuest();
       }
+
+      this.checkRouteAndOpen();
     } catch (e) {
       console.warn('Lỗi khi kiểm tra phiên đăng nhập:', e);
+    }
+  }
+
+  checkRouteAndOpen() {
+    const isPathAdmin = typeof window !== 'undefined' && (window.location.pathname === '/admin' || window.location.hash === '#admin');
+    if (!isPathAdmin) return;
+    if (this.role === 'admin') {
+      if (window.adminPanel) {
+        window.adminPanel.open();
+      }
+    } else {
+      this.openLoginModal('admin');
     }
   }
 
@@ -149,6 +181,7 @@ class TuneFlowAuth {
       this.authStatusText.textContent = `Gia Đình (${this.user.username})`;
       this.btnAuthStatus.title = `Tài khoản Gia Đình: ${this.user.username} (Bấm để đăng xuất)`;
     }
+    this.updateAdminTriggerBtn();
   }
 
   updateBadgeGuest() {
@@ -157,6 +190,7 @@ class TuneFlowAuth {
 
     if (!this.guest) {
       this.authStatusText.textContent = 'Khách: 30:00';
+      this.updateAdminTriggerBtn();
       return;
     }
 
@@ -171,9 +205,35 @@ class TuneFlowAuth {
       this.authStatusText.textContent = `Khách: ${pad(mins)}:${pad(secs)}`;
       this.btnAuthStatus.title = `Khách vãng lai: còn ${pad(mins)}:${pad(secs)} nghe thử (Bấm để đăng nhập)`;
     }
+    this.updateAdminTriggerBtn();
   }
 
-  openLoginModal() {
+  updateAdminTriggerBtn() {
+    if (!this.btnAdminTrigger) return;
+    if (this.role === 'admin') {
+      if (this.adminTriggerIcon) this.adminTriggerIcon.textContent = '👑';
+      if (this.adminTriggerText) this.adminTriggerText.textContent = 'Quản Trị';
+      this.btnAdminTrigger.classList.add('admin-active');
+      this.btnAdminTrigger.title = 'Bảng Điều Khiển Quản Trị Hệ Thống (Bấm để mở)';
+    } else {
+      if (this.adminTriggerIcon) this.adminTriggerIcon.textContent = '🔐';
+      if (this.adminTriggerText) this.adminTriggerText.textContent = 'Quản Trị';
+      this.btnAdminTrigger.classList.remove('admin-active');
+      this.btnAdminTrigger.title = 'Đăng nhập Quản Trị Viên (Bấm để mở đăng nhập)';
+    }
+  }
+
+  openLoginModal(target = null) {
+    if (target === 'admin') {
+      this.postLoginRedirect = '/admin';
+      if (this.authLoginSubtitle) {
+        this.authLoginSubtitle.innerHTML = 'Đăng nhập tài khoản <strong>Quản trị</strong> để quản lý thành viên và hệ thống.';
+      }
+    } else {
+      if (this.authLoginSubtitle) {
+        this.authLoginSubtitle.innerHTML = 'Đăng nhập tài khoản <strong>Gia Đình</strong> hoặc <strong>Quản Trị</strong> để thưởng thức âm nhạc không giới hạn thời gian và tải bài hát tốc độ cao.';
+      }
+    }
     if (this.modalLogin) {
       this.modalLogin.style.display = 'flex';
       if (this.inputUsername) this.inputUsername.focus();
@@ -232,6 +292,13 @@ class TuneFlowAuth {
       this.role = data.user.role;
       this.closeLoginModal();
       this.updateBadgeLoggedIn();
+
+      if (this.role === 'admin' && (this.postLoginRedirect === '/admin' || (typeof window !== 'undefined' && (window.location.pathname === '/admin' || window.location.hash === '#admin')))) {
+        this.postLoginRedirect = null;
+        if (window.adminPanel) {
+          window.adminPanel.open();
+        }
+      }
 
       if (typeof window.showToast === 'function') {
         window.showToast(`🎉 Chào mừng ${data.user.username} đã đăng nhập!`, 'success');
@@ -294,3 +361,4 @@ class TuneFlowAuth {
 }
 
 window.tuneFlowAuth = new TuneFlowAuth();
+window.authController = window.tuneFlowAuth;

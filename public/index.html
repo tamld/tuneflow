@@ -36,6 +36,11 @@
           <button id="btn-font-reset" class="font-scale-btn" title="Cỡ chữ chuẩn">A</button>
           <button id="btn-font-inc" class="font-scale-btn" title="Chữ to rõ hơn">A+</button>
         </div>
+        <!-- Dedicated Admin Management Entrypoint (Issue #76) -->
+        <button id="btn-admin-panel-trigger" class="font-scale-btn admin-panel-trigger-btn" title="Bảng Điều Khiển Quản Trị Hệ Thống">
+          <span id="admin-trigger-icon">👑</span>
+          <span id="admin-trigger-text">Quản Trị</span>
+        </button>
         <!-- User / Guest Auth Status & Login Trigger (Issue #52) -->
         <button id="btn-auth-status" class="font-scale-btn auth-status-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" title="Tài khoản truy cập / Thời gian nghe thử">
           <span id="auth-status-icon">⏱️</span>
@@ -255,7 +260,7 @@
         <button id="btn-close-auth-modal" class="btn-close" aria-label="Đóng">✕</button>
       </div>
       <div class="modal-body" style="padding: 16px 0;">
-        <p style="margin-top: 0; color: var(--text-secondary); font-size: 14px;">
+        <p id="auth-login-subtitle" style="margin-top: 0; color: var(--text-secondary); font-size: 14px;">
           Đăng nhập tài khoản <strong>Gia Đình</strong> hoặc <strong>Quản Trị</strong> để thưởng thức âm nhạc không giới hạn thời gian và tải bài hát tốc độ cao.
         </p>
         <form id="form-auth-login">
