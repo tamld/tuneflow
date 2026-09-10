@@ -12,6 +12,7 @@ class AdminPanel {
     this.tabButtons = document.querySelectorAll('.admin-tab-btn');
     this.tabContents = {
       accounts: document.getElementById('admin-tab-accounts'),
+      sessions: document.getElementById('admin-tab-sessions'),
       guests: document.getElementById('admin-tab-guests'),
       system: document.getElementById('admin-tab-system')
     };
@@ -23,6 +24,15 @@ class AdminPanel {
     this.inputNewPassword = document.getElementById('input-admin-new-password');
     this.selectNewRole = document.getElementById('select-admin-new-role');
     this.accountMsg = document.getElementById('admin-account-msg');
+
+    // Session Elements (Issue #84)
+    this.sessionListBody = document.getElementById('admin-session-list-body');
+    this.sessionTotalCount = document.getElementById('admin-session-total-count');
+    this.sessionMsg = document.getElementById('admin-session-msg');
+    this.btnKickUsers = document.getElementById('btn-admin-kick-users');
+    this.btnKickGuests = document.getElementById('btn-admin-kick-guests');
+    this.btnKickOthers = document.getElementById('btn-admin-kick-others');
+    this.btnKickAll = document.getElementById('btn-admin-kick-all');
 
     // Guest Elements
     this.guestListBody = document.getElementById('admin-guest-list-body');
@@ -86,6 +96,32 @@ class AdminPanel {
         await this.handleUpdateYtdlp();
       });
     }
+
+    // Session Kick-Out Action Buttons (Issue #84)
+    if (this.btnKickUsers) {
+      this.btnKickUsers.addEventListener('click', async () => {
+        await this.handleRevokeGroup('users', 'Đăng xuất tất cả tài khoản User');
+      });
+    }
+
+    if (this.btnKickGuests) {
+      this.btnKickGuests.addEventListener('click', async () => {
+        await this.handleRevokeGroup('guests', 'Đăng xuất toàn bộ Khách vãng lai');
+      });
+    }
+
+    if (this.btnKickOthers) {
+      this.btnKickOthers.addEventListener('click', async () => {
+        await this.handleRevokeGroup('all_except_me', 'Giữ tôi và đăng xuất tất cả các phiên khác');
+      });
+    }
+
+    if (this.btnKickAll) {
+      this.btnKickAll.addEventListener('click', async () => {
+        await this.handleRevokeAll();
+      });
+    }
+
     // Handle popstate for /admin route deep linking
     window.addEventListener('popstate', () => {
       if (typeof window !== 'undefined' && (window.location.pathname === '/admin' || window.location.hash === '#admin')) {
@@ -111,6 +147,7 @@ class AdminPanel {
     if (!this.modal) return;
     this.modal.style.display = 'none';
     if (this.accountMsg) this.accountMsg.style.display = 'none';
+    if (this.sessionMsg) this.sessionMsg.style.display = 'none';
     if (this.ytdlpUpdateMsg) this.ytdlpUpdateMsg.style.display = 'none';
     if (syncUrl && typeof window !== 'undefined' && window.location.pathname === '/admin') {
       window.history.pushState(null, '', '/');
@@ -129,6 +166,7 @@ class AdminPanel {
     });
 
     if (tabKey === 'accounts') this.loadUsers();
+    if (tabKey === 'sessions') this.loadSessions();
     if (tabKey === 'guests') this.loadGuests();
     if (tabKey === 'system') this.loadSystemStatus();
   }
@@ -244,6 +282,145 @@ class AdminPanel {
     this.accountMsg.style.display = 'block';
     this.accountMsg.style.color = isError ? '#e53e3e' : '#48bb78';
     this.accountMsg.style.background = isError ? 'rgba(229, 62, 62, 0.1)' : 'rgba(72, 187, 120, 0.1)';
+  }
+
+  // --- Session & Device Management (Issue #84) ---
+  async loadSessions() {
+    if (!this.sessionListBody) return;
+    this.sessionListBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 16px; color: var(--text-secondary);">⏳ Đang đọc danh sách phiên...</td></tr>';
+
+    try {
+      const res = await fetch('/api/admin/sessions');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const sessions = data.sessions || [];
+
+      if (this.sessionTotalCount) {
+        this.sessionTotalCount.textContent = sessions.length;
+      }
+
+      if (sessions.length === 0) {
+        this.sessionListBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 16px; color: var(--text-secondary);">Không có phiên kết nối nào</td></tr>';
+        return;
+      }
+
+      this.sessionListBody.innerHTML = sessions.map(s => {
+        const isCurrent = Boolean(s.isCurrent);
+        const roleBadge = s.role === 'admin'
+          ? '<span style="background: rgba(245, 158, 11, 0.2); color: var(--accent-gold); padding: 2px 8px; border-radius: 4px; font-weight: 700;">👑 Quản trị</span>'
+          : '<span style="background: rgba(72, 187, 120, 0.2); color: #48bb78; padding: 2px 8px; border-radius: 4px; font-weight: 600;">👤 Gia Đình</span>';
+
+        const createdStr = s.createdAt ? new Date(s.createdAt).toLocaleString('vi-VN') : '—';
+        const actionBtn = isCurrent
+          ? '<span style="font-size: 12px; color: var(--accent-gold); font-weight: 600;">⭐ Phiên Này (Bạn)</span>'
+          : `<button class="btn-revoke-session secondary-btn" data-token="${this.escapeHtml(s.token)}" data-user="${this.escapeHtml(s.username)}" style="padding: 4px 10px; font-size: 13px; color: #e53e3e; border-color: rgba(229, 62, 62, 0.4);">🚪 Đăng Xuất</button>`;
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border-color); ${isCurrent ? 'background: rgba(245, 158, 11, 0.05);' : ''}">
+            <td style="padding: 10px 12px; font-weight: 600; color: var(--text-primary);">
+              ${this.escapeHtml(s.username)}
+              ${isCurrent ? ' <span style="font-size: 11px; background: var(--accent-gold); color: #000; padding: 1px 6px; border-radius: 10px; font-weight: 700;">Tôi</span>' : ''}
+            </td>
+            <td style="padding: 10px 12px;">${roleBadge}</td>
+            <td style="padding: 10px 12px; font-family: monospace; font-size: 13px; color: var(--text-secondary);">${this.escapeHtml(s.clientIp)}</td>
+            <td style="padding: 10px 12px; font-size: 13px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${this.escapeHtml(s.userAgent)}">${this.escapeHtml(s.userAgent)}</td>
+            <td style="padding: 10px 12px; font-size: 13px; color: var(--text-secondary);">${createdStr}</td>
+            <td style="padding: 10px 12px; text-align: right;">${actionBtn}</td>
+          </tr>
+        `;
+      }).join('');
+
+      this.sessionListBody.querySelectorAll('.btn-revoke-session').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const token = btn.getAttribute('data-token');
+          const user = btn.getAttribute('data-user');
+          if (confirm(`Bạn có chắc muốn thu hồi phiên đăng nhập của "${user}" không?`)) {
+            await this.handleRevokeSession(token, user);
+          }
+        });
+      });
+    } catch (err) {
+      this.sessionListBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 16px; color: #e53e3e;">❌ Lỗi: ${err.message}</td></tr>`;
+    }
+  }
+
+  async handleRevokeSession(token, username) {
+    try {
+      const res = await fetch('/api/admin/sessions/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        this.showSessionMsg(data.message || 'Lỗi khi thu hồi phiên', true);
+        return;
+      }
+      this.showSessionMsg(`Đã đăng xuất phiên của "${username}"`, false);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`🚪 Đã đăng xuất phiên của "${username}"`, 'info');
+      }
+      await this.loadSessions();
+    } catch (err) {
+      this.showSessionMsg(`Lỗi kết nối: ${err.message}`, true);
+    }
+  }
+
+  async handleRevokeGroup(group, desc) {
+    if (!confirm(`Xác nhận: ${desc}?`)) return;
+    try {
+      const res = await fetch('/api/admin/sessions/revoke-group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ group, excludeCurrentSession: true })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        this.showSessionMsg(data.message || 'Lỗi khi đăng xuất nhóm', true);
+        return;
+      }
+      this.showSessionMsg(`🎉 Đã xử lý thành công (${data.count || 0} phiên/lượt bị thu hồi)`, false);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`🎉 ${desc} thành công`, 'success');
+      }
+      await this.loadSessions();
+      if (typeof this.loadGuests === 'function') this.loadGuests();
+    } catch (err) {
+      this.showSessionMsg(`Lỗi kết nối: ${err.message}`, true);
+    }
+  }
+
+  async handleRevokeAll() {
+    if (!confirm('CẢNH BÁO NGUY HIỂM: Bạn có chắc chắn muốn ĐĂNG XUẤT TOÀN BỘ tất cả tài khoản và khách trên toàn hệ thống không?')) return;
+    try {
+      const res = await fetch('/api/admin/sessions/revoke-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ excludeCurrentSession: false })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        this.showSessionMsg(data.message || 'Lỗi khi xóa toàn bộ phiên', true);
+        return;
+      }
+      alert('Đã xóa toàn bộ phiên. Hệ thống sẽ đăng xuất bạn về trang chủ.');
+      this.close();
+      if (window.authController && typeof window.authController.logout === 'function') {
+        window.authController.logout();
+      } else {
+        window.location.reload();
+      }
+    } catch (err) {
+      this.showSessionMsg(`Lỗi kết nối: ${err.message}`, true);
+    }
+  }
+
+  showSessionMsg(text, isError) {
+    if (!this.sessionMsg) return;
+    this.sessionMsg.textContent = text;
+    this.sessionMsg.style.display = 'block';
+    this.sessionMsg.style.color = isError ? '#e53e3e' : '#48bb78';
+    this.sessionMsg.style.background = isError ? 'rgba(229, 62, 62, 0.1)' : 'rgba(72, 187, 120, 0.1)';
   }
 
   // --- Guest Quota Management ---

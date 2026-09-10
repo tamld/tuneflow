@@ -2,7 +2,7 @@ const express = require('express');
 const { authorize } = require('../middleware/authorize');
 const { hashPassword } = require('../auth/crypto_utils');
 
-function createAdminRouter({ userRepo, guestRepo }) {
+function createAdminRouter({ userRepo, guestRepo, sessionRepo }) {
   const router = express.Router();
 
   // All admin endpoints require 'admin' role
@@ -72,6 +72,114 @@ function createAdminRouter({ userRepo, guestRepo }) {
   router.get('/guests', (req, res) => {
     const guests = guestRepo.listGuests();
     return res.status(200).json(guests);
+  });
+
+  // --- Session Management & Kick-Out Endpoints (Issue #84) ---
+
+  router.get('/sessions', (req, res) => {
+    if (!sessionRepo) {
+      return res.status(501).json({ error: 'SESSION_REPO_NOT_CONFIGURED' });
+    }
+    const currentToken = req.token || null;
+    const rawSessions = sessionRepo.listActiveSessions();
+    const sessions = rawSessions.map(s => ({
+      token: s.token,
+      userId: s.user_id,
+      username: s.username,
+      role: s.role,
+      clientIp: s.client_ip || '127.0.0.1',
+      userAgent: s.user_agent || 'Thiết bị không xác định',
+      createdAt: s.created_at,
+      expiresAt: s.expires_at,
+      isCurrent: currentToken ? s.token === currentToken : false
+    }));
+
+    const activeGuests = guestRepo ? guestRepo.listGuests().length : 0;
+    const metrics = {
+      totalActive: sessions.length,
+      activeGuests,
+      roles: {
+        admin: sessions.filter(s => s.role === 'admin').length,
+        user: sessions.filter(s => s.role === 'user').length
+      }
+    };
+
+    return res.status(200).json({
+      ok: true,
+      sessions,
+      metrics
+    });
+  });
+
+  router.post('/sessions/revoke', (req, res) => {
+    if (!sessionRepo) {
+      return res.status(501).json({ error: 'SESSION_REPO_NOT_CONFIGURED' });
+    }
+    const { token } = req.body || {};
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'MISSING_TOKEN', message: 'Token phiên là bắt buộc' });
+    }
+
+    const success = sessionRepo.deleteSession(token);
+    return res.status(200).json({
+      ok: true,
+      revoked: success
+    });
+  });
+
+  router.post('/sessions/revoke-group', (req, res) => {
+    const { group, excludeCurrentSession = true } = req.body || {};
+    const currentToken = excludeCurrentSession ? (req.token || null) : null;
+
+    if (!['guests', 'users', 'all_except_me'].includes(group)) {
+      return res.status(400).json({
+        error: 'INVALID_GROUP',
+        message: 'Nhóm hợp lệ: guests, users, all_except_me'
+      });
+    }
+
+    let revokedCount = 0;
+    if (group === 'guests') {
+      if (guestRepo) {
+        revokedCount = guestRepo.purgeAllGuests();
+      }
+    } else if (group === 'users') {
+      if (sessionRepo) {
+        revokedCount = sessionRepo.deleteSessionsByRole('user');
+      }
+    } else if (group === 'all_except_me') {
+      if (sessionRepo) {
+        revokedCount += sessionRepo.deleteAllSessions(currentToken);
+      }
+      if (guestRepo) {
+        revokedCount += guestRepo.purgeAllGuests();
+      }
+    }
+
+    return res.status(200).json({
+      ok: true,
+      group,
+      count: revokedCount
+    });
+  });
+
+  router.post('/sessions/revoke-all', (req, res) => {
+    const { excludeCurrentSession = false } = req.body || {};
+    const currentToken = excludeCurrentSession ? (req.token || null) : null;
+
+    let revokedCount = 0;
+    if (sessionRepo) {
+      revokedCount += sessionRepo.deleteAllSessions(currentToken);
+    }
+    if (guestRepo) {
+      revokedCount += guestRepo.purgeAllGuests();
+    }
+
+    return res.status(200).json({
+      ok: true,
+      count: revokedCount,
+      excludedCurrent: Boolean(currentToken)
+    });
   });
 
   return router;

@@ -16,6 +16,7 @@ function createAuthenticateMiddleware(authService) {
     if (token) {
       const user = authService.getMe(token);
       if (user) {
+        req.token = token;
         req.user = {
           id: user.id,
           username: user.username,

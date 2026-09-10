@@ -27,6 +27,7 @@ class GuestRepo {
       WHERE client_ip = ?
     `);
     this.listActiveStmt = db.prepare('SELECT * FROM guest_quotas ORDER BY id DESC LIMIT 100');
+    this.purgeAllStmt = db.prepare('DELETE FROM guest_quotas');
   }
 
   _formatGuest(row) {
@@ -123,6 +124,11 @@ class GuestRepo {
 
   listGuests() {
     return this.listActiveStmt.all().map(r => this._formatGuest(r));
+  }
+
+  purgeAllGuests() {
+    const result = this.purgeAllStmt.run();
+    return result.changes;
   }
 }
 
