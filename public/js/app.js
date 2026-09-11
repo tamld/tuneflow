@@ -5,18 +5,27 @@
  * Clear Search, and Font Size Scaling.
  */
 
+// Safe thumbnail URL helper that routes through local server proxy with memory cache
+function getThumbnailSrc(url) {
+  if (!url || typeof url !== 'string') return '';
+  if (url.startsWith('/') || url.startsWith('data:')) return url;
+  return '/api/thumbnail?url=' + encodeURIComponent(url);
+}
+
 // Resilient thumbnail image fallback with backend proxy guard
 function handleImageFallback(img, originalUrl) {
   if (!img) return;
-  if (!img.dataset.proxied && originalUrl && (originalUrl.startsWith('http://') || originalUrl.startsWith('https://'))) {
+  const targetUrl = originalUrl || img.dataset.originalThumb || '';
+  if (!img.dataset.proxied && targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
     img.dataset.proxied = 'true';
-    img.src = '/api/thumbnail?url=' + encodeURIComponent(originalUrl);
+    img.src = '/api/thumbnail?url=' + encodeURIComponent(targetUrl);
     return;
   }
   img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='124' viewBox='0 0 220 124'><rect width='100%' height='100%' fill='%231e222d'/><circle cx='110' cy='62' r='28' fill='%232a3142'/><text x='110' y='70' font-size='24' text-anchor='middle'>🎵</text></svg>";
 }
 if (typeof window !== 'undefined') {
   window.handleImageFallback = handleImageFallback;
+  window.getThumbnailSrc = getThumbnailSrc;
 }
 
 // Senior Desktop Keyboard Shortcuts & Input Guarding (Issue #97)
@@ -627,7 +636,7 @@ if (typeof document !== 'undefined') {
         <input type="checkbox" class="playlist-checkbox" id="chk-${escapeHtml(item.id)}" data-id="${escapeHtml(item.id)}" checked>
         <span style="font-weight: 700; color: var(--accent-gold); min-width: 28px;">${index + 1}.</span>
         <div class="playlist-item-thumb-wrapper" role="button" tabindex="0" title="Bấm để nghe bài hát này" aria-label="Nghe thử: ${escapeHtml(item.title)}">
-          <img class="playlist-item-thumb" src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" referrerpolicy="no-referrer" onerror="handleImageFallback(this, '${escapeHtml(item.thumbnail)}')">
+          <img class="playlist-item-thumb" src="${escapeHtml(getThumbnailSrc(item.thumbnail))}" data-original-thumb="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" referrerpolicy="no-referrer" onerror="handleImageFallback(this)">
           <span class="playlist-play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
         </div>
         <span class="playlist-item-title" role="button" tabindex="0" title="Bấm để nghe bài hát này" aria-label="Nghe thử: ${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
@@ -825,7 +834,7 @@ if (typeof document !== 'undefined') {
 
         card.innerHTML = `
           <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để mở danh sách phát này" aria-label="Mở danh sách phát: ${escapeHtml(song.title)}">
-            <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this, '${escapeHtml(song.thumbnail)}')">
+            <img class="song-thumbnail" src="${escapeHtml(getThumbnailSrc(song.thumbnail))}" data-original-thumb="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this)">
             <div class="song-thumb-overlay" aria-hidden="true">
               <span class="play-icon-overlay">📂</span>
             </div>
@@ -902,7 +911,7 @@ if (typeof document !== 'undefined') {
 
       card.innerHTML = `
         <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">
-          <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this, '${escapeHtml(song.thumbnail)}')">
+          <img class="song-thumbnail" src="${escapeHtml(getThumbnailSrc(song.thumbnail))}" data-original-thumb="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this)">
           <div class="song-thumb-overlay" aria-hidden="true">
             <span class="play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
           </div>

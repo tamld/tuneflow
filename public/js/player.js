@@ -482,7 +482,8 @@ class PreviewPlayer {
         this.pipThumbnailImg = img;
         if (this.isPipActive) this.renderPipCanvas();
       };
-      img.src = track.thumbnail;
+      const thumbSrc = (typeof window.getThumbnailSrc === 'function') ? window.getThumbnailSrc(track.thumbnail) : track.thumbnail;
+      img.src = thumbSrc;
     } else {
       this.pipThumbnailImg = null;
     }

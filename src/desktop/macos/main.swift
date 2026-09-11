@@ -39,6 +39,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         config.mediaTypesRequiringUserActionForPlayback = []
         config.allowsAirPlayForMediaPlayback = true
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+        if #available(macOS 10.15, *) {
+            config.defaultWebpagePreferences.allowsContentJavaScript = true
+        }
 
         webView = WKWebView(frame: rect, configuration: config)
         webView.autoresizingMask = [.width, .height]

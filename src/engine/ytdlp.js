@@ -127,7 +127,7 @@ function runYtDlp(args, options = {}) {
     if (supportsJsRuntimes()) {
       fullArgs.push('--js-runtimes', 'node:node');
     }
-    if (YTDLP_EXTRACTOR_ARGS) {
+    if (YTDLP_EXTRACTOR_ARGS && !options.skipExtractorArgs) {
       fullArgs.push('--extractor-args', YTDLP_EXTRACTOR_ARGS);
     }
     if (YTDLP_COOKIES_PATH && fs.existsSync(YTDLP_COOKIES_PATH)) {
@@ -193,6 +193,26 @@ function runYtDlp(args, options = {}) {
 }
 
 /**
+ * Select genuine playable audio stream URL from potentially multi-line yt-dlp output
+ */
+function selectAudioStreamUrl(rawOutput) {
+  if (!rawOutput || typeof rawOutput !== 'string') return '';
+  const lines = rawOutput.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) return '';
+  // Prioritize audio stream (mime=audio, audio/mp4, audio/webm, itag 140, 251, 139, 250, 249)
+  const audioLine = lines.find(l =>
+    l.includes('mime=audio') ||
+    l.includes('audio%2F') ||
+    l.includes('itag=140') ||
+    l.includes('itag=251') ||
+    l.includes('itag=139') ||
+    l.includes('itag=250') ||
+    l.includes('itag=249')
+  );
+  return audioLine || lines[lines.length - 1];
+}
+
+/**
  * Extract direct playable audio stream URL for In-App Preview Player (Issue #67)
  */
 async function getPreviewStreamUrl(url) {
@@ -202,17 +222,15 @@ async function getPreviewStreamUrl(url) {
   }
 
   try {
-    const streamUrl = await runYtDlp([
+    const streamOutput = await runYtDlp([
       '-g',
-      '-f', 'ba/b',
+      '-f', 'bestaudio[ext=m4a]/140/bestaudio[ext=webm]/251/bestaudio/ba/b',
       '--no-playlist',
       '--no-warnings',
-      '--no-call-home',
-      '--prefer-free-formats',
       '--',
       url
-    ], { timeout: 35000 });
-    const parsed = streamUrl.split('\n')[0].trim();
+    ], { timeout: 35000, skipExtractorArgs: true });
+    const parsed = selectAudioStreamUrl(streamOutput);
     if (parsed) {
       const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
       streamUrlCache.set(url, parsed, dynamicTtl);
@@ -221,17 +239,15 @@ async function getPreviewStreamUrl(url) {
   } catch (_primaryErr) {
     // Fallback to broader audio formats (140=m4a, 251=opus, 139=low-m4a, b=best)
     try {
-      const fallbackStreamUrl = await runYtDlp([
+      const fallbackStreamOutput = await runYtDlp([
         '-g',
-        '-f', '140/251/139/ba/b',
+        '-f', '140/251/139/bestaudio/ba/b',
         '--no-playlist',
         '--no-warnings',
-        '--no-call-home',
-        '--prefer-free-formats',
         '--',
         url
-      ], { timeout: 35000 });
-      const parsed = fallbackStreamUrl.split('\n')[0].trim();
+      ], { timeout: 35000, skipExtractorArgs: true });
+      const parsed = selectAudioStreamUrl(fallbackStreamOutput);
       if (parsed) {
         const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
         streamUrlCache.set(url, parsed, dynamicTtl);

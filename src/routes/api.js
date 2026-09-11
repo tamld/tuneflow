@@ -95,15 +95,6 @@ router.get('/search', searchRateLimiter, async (req, res) => {
       sort: resolvedSort,
       results
     });
-
-    // Speculatively pre-warm audio stream for the top results in background (Issue #70)
-    if (Array.isArray(results) && results.length > 0) {
-      for (const item of results.slice(0, 2)) {
-        if (item && item.url && !item.isPlaylist) {
-          getPreviewStreamUrl(item.url).catch(() => {});
-        }
-      }
-    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -193,6 +184,36 @@ router.get('/preview/:id', guestGuard, async (req, res) => {
   }
 });
 
+// In-memory LRU thumbnail cache (max 300 entries, 24-hour TTL)
+const thumbnailCache = new Map();
+const MAX_THUMBNAIL_CACHE = 300;
+const THUMBNAIL_CACHE_TTL = 24 * 60 * 60 * 1000;
+
+function getCachedThumbnail(key) {
+  const item = thumbnailCache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.timestamp > THUMBNAIL_CACHE_TTL) {
+    thumbnailCache.delete(key);
+    return null;
+  }
+  // LRU bump
+  thumbnailCache.delete(key);
+  thumbnailCache.set(key, item);
+  return item;
+}
+
+function setCachedThumbnail(key, buffer, contentType) {
+  if (thumbnailCache.size >= MAX_THUMBNAIL_CACHE) {
+    const oldestKey = thumbnailCache.keys().next().value;
+    if (oldestKey) thumbnailCache.delete(oldestKey);
+  }
+  thumbnailCache.set(key, {
+    buffer,
+    contentType,
+    timestamp: Date.now()
+  });
+}
+
 // Safe thumbnail image proxy (prevents CDN 403, ATS blocking, and mixed content issues)
 router.get('/thumbnail', async (req, res) => {
   const { url } = req.query;
@@ -221,9 +242,17 @@ router.get('/thumbnail', async (req, res) => {
     return res.status(403).send('Domain not permitted');
   }
 
+  // Check in-memory LRU cache first for instant (<1ms) response
+  const cached = getCachedThumbnail(url);
+  if (cached) {
+    res.setHeader('Content-Type', cached.contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    return res.send(cached.buffer);
+  }
+
   try {
     const abortController = new AbortController();
-    const timer = setTimeout(() => abortController.abort(), 8000);
+    const timer = setTimeout(() => abortController.abort(), 12000);
     const upstream = await fetch(url, {
       signal: abortController.signal,
       headers: {
@@ -235,10 +264,16 @@ router.get('/thumbnail', async (req, res) => {
       return res.status(upstream.status).send('Failed to fetch thumbnail');
     }
     const contentType = upstream.headers.get('content-type') || 'image/jpeg';
+    const arrayBuffer = await upstream.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    setCachedThumbnail(url, buffer, contentType);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
-    Readable.fromWeb(upstream.body).pipe(res);
+    res.send(buffer);
   } catch (err) {
+    if (err.name === 'AbortError') {
+      return res.status(504).send('Thumbnail fetch timeout');
+    }
     res.status(500).send('Thumbnail fetch error: ' + err.message);
   }
 });
