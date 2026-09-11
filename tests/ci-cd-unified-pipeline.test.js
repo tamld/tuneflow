@@ -11,9 +11,9 @@ describe('Issue #90: Unified 3-Stage Remote CI/CD & Android Packaging Suite', ()
   const manifestXmlPath = path.join(rootDir, 'android/app/src/main/AndroidManifest.xml');
   const appBuildGradlePath = path.join(rootDir, 'android/app/build.gradle');
 
-  it('should verify package.json is synchronized to version 2.4.2', () => {
+  it('should verify package.json is synchronized to version 2.4.3', () => {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    assert.strictEqual(pkg.version, '2.4.2', 'package.json version must be 2.4.2');
+    assert.strictEqual(pkg.version, '2.4.3', 'package.json version must be 2.4.3');
   });
 
   it('should verify obsolete standalone android.yml is removed to prevent race conditions', () => {

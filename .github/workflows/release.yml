@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release version tag (e.g. v2.4.2)'
+        description: 'Release version tag (e.g. v2.4.3)'
         required: true
-        default: 'v2.4.2'
+        default: 'v2.4.3'
 
 permissions:
   contents: write
@@ -45,7 +45,7 @@ jobs:
       - name: Install Puppeteer Chrome
         run: npx puppeteer browsers install chrome
 
-      - name: Run Full Test Suite (239 Tests)
+      - name: Run Full Test Suite (257 Tests)
         run: npm test
 
   # ============================================================================
