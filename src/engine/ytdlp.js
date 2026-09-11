@@ -664,6 +664,9 @@ function formatDuration(seconds) {
  * Get yt-dlp binary version
  */
 async function getYtDlpVersion() {
+  if (process.env.MOCK_DIAGNOSTICS_VERSIONS === '1') {
+    return '2025.02.01';
+  }
   try {
     const version = await runYtDlp(['--version']);
     return version || 'unknown';
@@ -676,6 +679,9 @@ async function getYtDlpVersion() {
  * Get FFmpeg binary version
  */
 function getFFmpegVersion() {
+  if (process.env.MOCK_DIAGNOSTICS_VERSIONS === '1') {
+    return Promise.resolve('ffmpeg version 6.1-static');
+  }
   return new Promise((resolve) => {
     try {
       const ffmpegBin = resolveSidecarBinary('ffmpeg');
@@ -751,6 +757,22 @@ async function getSystemDiagnostics() {
  * In-place update of yt-dlp binary (Issue #39)
  */
 async function updateYtDlpBinary() {
+  if (process.env.MOCK_YTDLP_UPDATE === 'success') {
+    return {
+      success: true,
+      oldVersion: '2025.01.01',
+      newVersion: '2025.02.01',
+      message: 'yt-dlp is up to date (mock)'
+    };
+  }
+  if (process.env.MOCK_YTDLP_UPDATE === 'fail') {
+    return {
+      success: false,
+      oldVersion: '2025.01.01',
+      newVersion: '2025.01.01',
+      error: 'Không thể tự động cập nhật yt-dlp: Homebrew managed'
+    };
+  }
   const currentVersion = await getYtDlpVersion();
   try {
     const updateOutput = await runYtDlp(['-U'], { timeout: 6000 });

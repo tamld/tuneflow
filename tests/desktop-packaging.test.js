@@ -104,7 +104,7 @@ describe('SPEC-0010: Desktop Packaging & Branding Verification Suite', () => {
 
     it('should verify CHANGELOG.md documents Phase 13 desktop packaging deliverables', () => {
       const changelog = fs.readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf-8');
-      assert.match(changelog, /## \[2\.5\.0-alpha\]/);
+      assert.match(changelog, /## \[2\.5\.0(-alpha)?\]/);
       assert.match(changelog, /setup\.iss/);
       assert.match(changelog, /generate_icons\.py/);
       assert.match(changelog, /binary_guard\.js/);

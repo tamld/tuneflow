@@ -25,7 +25,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 │ Phase 10 │ Active Sessions, Favorites & Encrypted DB│ v2.4.0      │ ✅ Completed       │
 │ Phase 11 │ Mobile PWA, iOS PiP & Unified CI/CD      │ v2.4.2      │ ✅ Completed       │
 │ Phase 12 │ Schema Migrations & Session Maintenance  │ v2.4.3      │ ✅ Completed       │
-│ Phase 13 │ Portable Binary & Hash Checker Security  │ v2.5.0      │ 🎯 In Progress     │
+│ Phase 13 │ Portable Binary & Hash Checker Security  │ v2.5.0      │ ✅ Completed (SSoT)│
 │ Phase 14 │ Two-Tier Self-Update & WinGet Packaging │ v2.6.0      │ 📅 Planned         │
 │ Phase 15 │ Native Desktop GUI Shell with Tauri v2   │ v3.0.0      │ 📅 Planned         │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
@@ -210,3 +210,4 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-28** | Ed25519 Two-Tier Update Verification | SPEC-0010, Phase 14 | `tests/portable-binary-security.test.js` |
 | **RM-29** | Desktop Setup Wizard & FreeDesktop | SPEC-0010, ADR-0014 | `tests/desktop-packaging.test.js` |
 | **RM-30** | Multi-Size Icon Suite & GHA Pipeline | SPEC-0010, PR #114 | `tests/desktop-packaging.test.js` |
+| **RM-31** | Master 7-Dimensional Testing Matrix & Anti-Theater Gates | SPEC-0011, Phase 13 | `tests/master-testing-matrix-gates.test.js` |

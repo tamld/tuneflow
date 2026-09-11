@@ -69,13 +69,19 @@ class DownloadQueue {
   }
 
   shutdown() {
-    console.log(`🛑 DownloadQueue: Gracefully terminating ${this.activeProcesses.size} active download processes...`);
+    console.log(`🛑 DownloadQueue: Gracefully terminating ${this.activeProcesses.size} active download processes and ${this.sseClients.size} SSE client streams...`);
     for (const [_id, proc] of this.activeProcesses.entries()) {
       try {
         proc.kill('SIGTERM');
       } catch (_e) {}
     }
     this.activeProcesses.clear();
+    for (const client of this.sseClients) {
+      try {
+        client.end();
+      } catch (_e) {}
+    }
+    this.sseClients.clear();
   }
 
   add(itemData) {

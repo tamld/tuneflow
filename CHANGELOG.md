@@ -1,9 +1,13 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
-## [2.5.0-alpha] - Unreleased
+## [2.5.0] - 2026-09-11
 
 ### Đã Thêm (Added)
+- **Ma Trận Kiểm Thử 7 Chiều & Chốt Chặn Chất Lượng Chống "Diễn Kịch" (Master 7-Dimensional Testing Matrix & Anti-Theater Gates - SPEC-0011)**:
+  - Ban hành đặc tả kỹ thuật chuẩn SSoT `docs/spec/SPEC-0011-master-testing-matrix-and-quality-gates.md` xác lập 7 chiều kiểm thử khép kín: (1) Trải nghiệm người cao tuổi & A11y WCAG AAA, (2) User journeys & DSP audio chain, (3) Runtime settings & SQLite schema migrations, (4) Resilience & Chaos/SSRF injection, (5) Defense-in-Depth RBAC & AES-256-GCM authenticated encryption, (6) Context windows & viewports/modals, (7) Cross-platform native packaging (Inno Setup 6 Zero-Admin, FreeDesktop).
+  - Triệt tiêu hoàn toàn "test theater" và flaky test leaks: giải phóng 100% SSE keep-alive connection trong `DownloadQueue.shutdown()`, bọc kín hermetic mocks cho hệ điều hành / chẩn đoán / cập nhật nhị phân.
+  - Bộ kiểm thử `tests/master-testing-matrix-gates.test.js` chạy trong dưới 100ms với tỷ lệ vượt qua 100% (21/21 assertions).
 - **Bộ Ảnh Chụp Trực Quan & Thư Viện Giao Diện Người Dùng (Visual UI Screenshots & Interface Showcase - Issue #127)**:
   - Bổ sung bộ ảnh chụp màn hình độ nét cao (Retina 2x/1.5x) vào `docs/assets/screenshots/` ([Issue #127](https://github.com/tamld/tuneflow/issues/127)):
     - `desktop-player.png`: Giao diện nghe và tải nhạc trên máy tính, hiển thị danh mục bài hát, thẻ bài hát SilverMelody, bộ lọc và thanh phát nhạc dưới cùng với bộ cân bằng âm thanh DSP.

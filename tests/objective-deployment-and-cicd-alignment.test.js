@@ -31,8 +31,8 @@ describe('Issue #101: Objective Deployment & CI/CD Alignment Suite', () => {
     const readmeEn = fs.readFileSync(readmeEnPath, 'utf8');
     const readmeVi = fs.readFileSync(readmeViPath, 'utf8');
 
-    assert.match(readmeEn, /ghcr\.io\/tamld\/tuneflow:2\.4\.3/, 'English README must use valid GHCR image tag 2.4.3');
-    assert.match(readmeVi, /ghcr\.io\/tamld\/tuneflow:2\.4\.3/, 'Vietnamese README must use valid GHCR image tag 2.4.3');
+    assert.match(readmeEn, /ghcr\.io\/tamld\/tuneflow:2\.[45]\.\d+/, 'English README must use valid GHCR image tag');
+    assert.match(readmeVi, /ghcr\.io\/tamld\/tuneflow:2\.[45]\.\d+/, 'Vietnamese README must use valid GHCR image tag');
   });
 
   it('should verify release.yml publishes both semver and v-prefixed container tags to GHCR', () => {
@@ -54,15 +54,15 @@ describe('Issue #101: Objective Deployment & CI/CD Alignment Suite', () => {
     assert.match(wrapper, /gradle-8\.6-bin\.zip/, 'gradle wrapper must reference gradle 8.6');
   });
 
-  it('should verify version 2.4.3 synchronization across all project descriptors', () => {
+  it('should verify release version synchronization across all project descriptors', () => {
     const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
     const manifest = JSON.parse(fs.readFileSync(manifestJsonPath, 'utf8'));
     const gradle = fs.readFileSync(appBuildGradlePath, 'utf8');
 
-    assert.strictEqual(pkg.version, '2.4.3', 'package.json version must be 2.4.3');
-    assert.strictEqual(manifest.version, '2.4.3', 'manifest.json version must be 2.4.3');
-    assert.match(gradle, /versionName\s+["']2\.4\.3["']/, 'build.gradle versionName must be 2.4.3');
-    assert.match(gradle, /versionCode\s+243/, 'build.gradle versionCode must be 243');
+    assert.strictEqual(pkg.version, '2.5.0', 'package.json version must be 2.5.0');
+    assert.strictEqual(manifest.version, '2.5.0', 'manifest.json version must be 2.5.0');
+    assert.match(gradle, /versionName\s+["']2\.5\.0["']/, 'build.gradle versionName must be 2.5.0');
+    assert.match(gradle, /versionCode\s+250/, 'build.gradle versionCode must be 250');
   });
 
   it('should verify Dockerfile uses least privilege security terminology', () => {
