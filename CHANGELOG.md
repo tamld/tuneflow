@@ -4,6 +4,15 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 ## [2.5.0] - 2026-09-11
 
 ### Đã Thêm (Added)
+- **Đóng Gói Ứng Dụng Bản Địa macOS (DMG), Linux Portable & Bộ Khởi Chạy Desktop Đa Nền Tảng (Cross-Platform Native Desktop Packaging & DMG Suite - SPEC-0010)**:
+  - Xây dựng động cơ khởi chạy desktop hợp nhất `src/desktop/launcher.js` và CLI executable `bin/tuneflow.js`: tự động dò tìm cổng khả dụng (port scanning 3000..3010), khởi động server an toàn và tự động kích hoạt trình duyệt mặc định trên Windows (`start`), macOS (`open`), và Linux (`xdg-open`).
+  - Xây dựng bộ đóng gói macOS hoàn chỉnh:
+    - Bản mô tả ứng dụng Apple Bundle `installer/macos/Info.plist` (`com.tamld.tuneflow`, Retina high-res, min macOS 12.0) và tệp biểu tượng macOS đa tầng Retina `assets/branding/icon.icns`.
+    - Script tự động hóa `scripts/package_macos.sh` đóng gói đĩa cài đặt kéo-thả `TuneFlow-2.5.0-macos-arm64.dmg` bằng công cụ hệ thống `hdiutil` và tệp nén di động `TuneFlow-2.5.0-macos-arm64.tar.gz`.
+    - Thực nghiệm trực tiếp trên máy Mac Mini M4: mount đĩa `/Volumes/TuneFlow`, kiểm định liên kết kéo-thả `/Applications` và kiểm tra phản hồi `/api/health` 200 OK từ `TuneFlow.app`.
+  - Xây dựng bộ đóng gói Linux portable `scripts/package_linux.sh` tạo tệp `TuneFlow-2.5.0-linux-x64.tar.gz` kèm launcher `bin/tuneflow` và tệp đăng ký FreeDesktop `tuneflow.desktop`.
+  - Tích hợp Stage 4 `macos-desktop-build` và Stage 5 `linux-desktop-build` vào `.github/workflows/release.yml`, đính kèm đầy đủ bộ artifact `.dmg`, `.tar.gz`, `.exe`, `.apk` và bảng mã băm toàn vẹn `SHA256SUMS.txt`.
+  - Bổ sung các bộ kiểm thử tự động mới: `tests/desktop-launcher.test.js`, `tests/macos-desktop-packaging.test.js`, và `tests/linux-desktop-packaging.test.js`.
 - **Đặc Tả Kỹ Thuật & Kiến Trúc Tự Cập Nhật Hai Tầng & Phân Phối Gói Bản Địa (Two-Tier Self-Update & WinGet/Scoop Manifests - SPEC-0012, Issue #131)**:
   - Ban hành đặc tả kỹ thuật SSoT `docs/spec/SPEC-0012-two-tier-self-update-and-winget-distribution.md` chuẩn hóa kiến trúc tự cập nhật hai tầng (Two-Tier Self-Update Architecture) kết hợp mã hóa khóa công khai Ed25519 (`ed25519-detached`).
   - Xây dựng module bảo mật `src/security/update_verifier.js` với các tính năng cốt lõi:

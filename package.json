@@ -3,6 +3,9 @@
   "version": "2.5.0",
   "description": "TuneFlow - An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted & container-ready (Docker, Podman, VPS, Cloud).",
   "main": "src/server.js",
+  "bin": {
+    "tuneflow": "./bin/tuneflow.js"
+  },
   "type": "commonjs",
   "scripts": {
     "start": "node src/server.js",
