@@ -6,7 +6,7 @@ const router = express.Router();
 const { searchYouTube, getVideoMetadata, getPreviewStreamUrl, parsePlaylist, getSystemDiagnostics, updateYtDlpBinary } = require('../engine/ytdlp');
 const queue = require('../engine/queue');
 const { DOWNLOADS_DIR, DB_PATH, GUEST_MAX_LISTEN_SEC, GUEST_COOLDOWN_SEC, ADMIN_PASSWORD } = require('../config');
-const { isValidYouTubeUrl, isValidVideoId } = require('../utils/validator');
+const { isValidYouTubeUrl, isValidVideoId, isValidStreamMimeType, isSafeRemoteStreamUrl } = require('../utils/validator');
 const { createRateLimiter } = require('../utils/rateLimiter');
 
 // SQLite DB & Auth Services (Issue #52)
@@ -132,6 +132,9 @@ router.get('/preview/:id', guestGuard, async (req, res) => {
 
   try {
     const streamUrl = await getPreviewStreamUrl(videoUrl);
+    if (!isSafeRemoteStreamUrl(streamUrl)) {
+      return res.status(400).json({ error: 'Nguồn phát luồng âm thanh không an toàn' });
+    }
 
     // Forward Range header if requested by HTML5 audio element for seeking
     const headers = {};
@@ -155,8 +158,13 @@ router.get('/preview/:id', guestGuard, async (req, res) => {
       return res.status(upstreamRes.status).json({ error: 'Không thể phát luồng âm thanh từ YouTube' });
     }
 
+    const contentType = upstreamRes.headers.get('content-type') || 'audio/webm';
+    if (!isValidStreamMimeType(contentType)) {
+      return res.status(415).json({ error: 'Định dạng dữ liệu phát không phải âm thanh hợp lệ' });
+    }
+
     res.status(upstreamRes.status);
-    res.setHeader('Content-Type', upstreamRes.headers.get('content-type') || 'audio/webm');
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Accept-Ranges', 'bytes');
     if (upstreamRes.headers.get('content-range')) {
       res.setHeader('Content-Range', upstreamRes.headers.get('content-range'));
@@ -409,6 +417,9 @@ router.get('/stream/pipe/:id', guestGuard, async (req, res) => {
   const videoUrl = `https://www.youtube.com/watch?v=${id}`;
   try {
     const streamUrl = await getPreviewStreamUrl(videoUrl);
+    if (!isSafeRemoteStreamUrl(streamUrl)) {
+      return res.status(400).json({ error: 'Nguồn phát luồng âm thanh không an toàn' });
+    }
 
     // Forward Range headers for seeking/buffering
     const headers = {};
@@ -432,8 +443,13 @@ router.get('/stream/pipe/:id', guestGuard, async (req, res) => {
       return res.status(audioRes.status).send('Không thể kết nối đến luồng âm thanh YouTube');
     }
 
+    const contentType = audioRes.headers.get('content-type') || 'audio/webm';
+    if (!isValidStreamMimeType(contentType)) {
+      return res.status(415).json({ error: 'Định dạng dữ liệu phát không phải âm thanh hợp lệ' });
+    }
+
     res.status(audioRes.status);
-    res.setHeader('Content-Type', audioRes.headers.get('content-type') || 'audio/webm');
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Cache-Control', 'no-cache');
 

@@ -567,6 +567,8 @@ async function parsePlaylistInnertube(url, limit = 50) {
     }
 
     return entries.length > 0 ? { title, uploader, count: entries.length, entries } : null;
+  } catch (_err) {
+    return null;
   } finally {
     clearTimeout(timeoutId);
   }

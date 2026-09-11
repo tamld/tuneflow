@@ -4,6 +4,11 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 ## [2.5.0-alpha] - Unreleased
 
 ### Đã Thêm (Added)
+- **Bộ Kiểm Thử & Chốt Chặn Xác Thực 4 Tầng (4-Tier Validation Gates Suite - Issue #124)**:
+  - **Gate 1 - YouTube Innertube Contract Fragility & Fallback Mocking** (`tests/innertube-fallback.test.js`): Kiểm thử bắt buộc chuyển đổi dự phòng sang `yt-dlp` khi YouTube trả về mã lỗi HTTP 429, 403, HTML cảnh báo Captcha hoặc cấu trúc phản hồi bị thay đổi; bọc kín khối parse JSON trong `parsePlaylistInnertube()` ngăn ngừa vỡ tiến trình do lỗi cú pháp.
+  - **Gate 2 - Headless Browser Puppeteer Real DOM E2E Integration** (`tests/puppeteer-e2e.test.js`): Kiểm thử E2E không đầu trên trình duyệt Chromium thực tế, xác minh trạng thái giao diện, kiểm định 100% thẻ hình ảnh có thuộc tính `referrerpolicy="no-referrer"`, kiểm tra tính toàn vẹn của nút phát danh sách liên tục và cơ chế chuyển đổi ngôn ngữ Anh - Việt.
+  - **Gate 3 - Audio Stream Pipe MIME & SSRF Guard** (`tests/stream-security.test.js`): Phòng thủ chống tấn công Server-Side Request Forgery (SSRF) và ép kiểu nội dung giả mạo trên các endpoint `/api/preview/:id` và `/api/stream/pipe/:id`; xác thực chặt chẽ giao thức `https:`, từ chối địa chỉ IP Loopback/Private/Cloud Metadata, và trả về HTTP 415 khi MIME type trả về không phải là tệp âm thanh hợp lệ (`audio/*`, `application/ogg`).
+  - **Gate 4 - Desktop Installer Integrity & Binary Checksum Gate** (`tests/release-integrity.test.js`): Kiểm định tính hợp lệ của script đóng gói Windows Inno Setup 6 (`setup.iss`) với cờ Zero-Admin `PrivilegesRequired=lowest`, tệp Linux Desktop entry (`tuneflow.desktop`), và đối soát mã băm nhị phân SHA-256 theo cơ chế Fail-Closed trong `binary_guard.js`.
 - **Phát Tuyển Tập / Playlist Liên Tục & Nút Phát Hành Động Header (Continuous Playlist Playback & Header Play Action - Issue #119)**:
   - Bổ sung nút `▶️ Phát Danh Sách` (`#btn-play-playlist`) và huy hiệu số lượng bài (`#batch-play-count`) trên thanh tác vụ của `#playlist-panel`.
   - Hỗ trợ chuyển đổi trạng thái động giữa `▶️ Phát Danh Sách`, `⏸️ Tạm Dừng Tuyển Tập`, và `▶️ Tiếp Tục Phát`.
@@ -28,6 +33,8 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Ban hành `docs/superpowers/plans/2026-09-11-superpowers-tuneflow-mandatory-steps.md` quy định 8 bước bắt buộc và cơ chế chống stale docs.
 
 ### Đã Sửa (Fixed)
+- **Bổ Sung Referrer Policy Cho Ảnh Nền Ambient Cover (Ambient Cover Referrer Policy - Issue #124)**:
+  - Bổ sung thuộc tính `referrerpolicy="no-referrer"` cho thẻ `#ambient-cover` trong `public/index.html`, ngăn chặn trình duyệt gửi tiêu đề Referrer làm vỡ ảnh nền khi tải từ CDN của Google.
 - **Bản Địa Hóa Động Toàn Diện Tiếng Anh & Khắc Phục Lỗi Ngôn Ngữ Hỗn Hợp (Dynamic English Localization Engine - Issue #121)**:
   - Bổ sung các token dịch thuật còn thiếu trong `public/js/i18n.js` cho nhãn bộ lọc tìm kiếm (`filter_content_label`, `filter_sort_label`), các chip định dạng (`filter_song_type`, `filter_playlist_type`), huy hiệu thẻ bài hát/album và tiêu đề kết quả tìm kiếm.
   - Cung cấp hàm `window.reRenderActiveCards()` đồng bộ lại giao diện thẻ bài hát và danh sách phát tức thời khi chuyển đổi qua lại giữa tiếng Việt và tiếng Anh.
