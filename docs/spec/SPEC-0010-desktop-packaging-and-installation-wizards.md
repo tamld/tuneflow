@@ -105,11 +105,12 @@ graph TD
 - [x] **Clean Baseline**: All existing 266 unit and integration tests passing green (0 failures).
 
 ### 3.2 Definition of Done (DoD)
-- [ ] **Installer Blueprint Created**: installer/windows/setup.iss and installer/linux/tuneflow.desktop checked into repository.
-- [ ] **Dual-Mode Persistence Verified**: Automated tests confirm %LOCALAPPDATA%, Library, and XDG_DATA_HOME resolution.
-- [ ] **Hash Checker Enforced**: ytdlp.js, fmpeg.js, and queue.js route execution through inary_guard.js.
-- [ ] **Static Analysis Clean**: 0 ESLint errors across all JavaScript modules.
-- [ ] **Packaging Verification**: CI workflow builds clean release bundles with authentic SHA256SUMS.txt.
+- [x] **Installer Blueprint Created**: `installer/windows/setup.iss` and `installer/linux/tuneflow.desktop` checked into repository.
+- [x] **Dual-Mode Persistence Verified**: Automated tests confirm `%LOCALAPPDATA%`, Library, and XDG_DATA_HOME resolution.
+- [x] **Hash Checker Enforced**: `ytdlp.js`, `ffmpeg.js`, and `queue.js` route execution through `binary_guard.js`.
+- [x] **Static Analysis Clean**: 0 ESLint errors across all JavaScript modules.
+- [x] **Packaging & Icon Verification**: `scripts/generate_icons.py` generates multi-resolution ICO and GHA `release.yml` includes `windows-desktop-build`.
+- [x] **CI Test Gate Resilience**: Full cross-platform path determinism (`path.win32` / `path.posix`) passing across all platforms.
 
 ---
 

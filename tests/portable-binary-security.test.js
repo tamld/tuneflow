@@ -19,14 +19,14 @@ describe('SPEC-0008: Portable Binary Security & AV Defense Suite', () => {
   describe('Storage & Persistence Isolation', () => {
     it('should resolve OS-standard persistence directory when not in portable mode', () => {
       const pathsWin = resolveStoragePaths('win32', { LOCALAPPDATA: 'C:\\Users\\User\\AppData\\Local' }, false);
-      assert.strictEqual(pathsWin.dataDir, 'C:\\Users\\User\\AppData\\Local\\TuneFlow\\data');
-      assert.strictEqual(pathsWin.downloadsDir, 'C:\\Users\\User\\AppData\\Local\\TuneFlow\\downloads');
+      assert.strictEqual(pathsWin.dataDir, path.win32.join('C:\\Users\\User\\AppData\\Local', 'TuneFlow', 'data'));
+      assert.strictEqual(pathsWin.downloadsDir, path.win32.join('C:\\Users\\User\\AppData\\Local', 'TuneFlow', 'downloads'));
 
       const pathsMac = resolveStoragePaths('darwin', { HOME: '/Users/testuser' }, false);
-      assert.strictEqual(pathsMac.dataDir, path.normalize('/Users/testuser/Library/Application Support/TuneFlow/data'));
+      assert.strictEqual(pathsMac.dataDir, path.posix.join('/Users/testuser', 'Library', 'Application Support', 'TuneFlow', 'data'));
 
       const pathsLinux = resolveStoragePaths('linux', { HOME: '/home/testuser' }, false);
-      assert.strictEqual(pathsLinux.dataDir, path.normalize('/home/testuser/.local/share/tuneflow/data'));
+      assert.strictEqual(pathsLinux.dataDir, path.posix.join('/home/testuser', '.local', 'share', 'tuneflow', 'data'));
     });
 
     it('should stay strictly local in portable mode or when .portable marker exists', () => {

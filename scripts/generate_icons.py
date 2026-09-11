@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 scripts/generate_icons.py - Authoritative Icon Generator & Branding Packager
 
@@ -18,12 +18,6 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-
-try:
-    from PIL import Image
-except ImportError:
-    sys.stderr.write("❌ Error: Pillow is required. Install via 'pip install Pillow'.\n")
-    sys.exit(1)
 
 # Standard Windows and Desktop Icon Resolutions
 ICO_SIZES = [
@@ -51,6 +45,12 @@ def verify_ico_file(ico_path: Path) -> bool:
 
 def generate_branding_assets(source_path: Path, repo_root: Path, dry_run: bool = False) -> dict:
     """Generate all target icons and synchronization targets."""
+    try:
+        from PIL import Image
+    except ImportError:
+        sys.stderr.write("❌ Error: Pillow is required to generate icons. Install via 'pip install Pillow'.\n")
+        sys.exit(1)
+
     if not source_path.exists():
         raise FileNotFoundError(f"Source icon not found at: {source_path}")
 

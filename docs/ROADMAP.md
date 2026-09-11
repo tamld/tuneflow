@@ -147,13 +147,14 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 13: Cross-Platform Portable Binary & Defense-in-Depth Hash Checker (v2.5.0)
+### Phase 13: Cross-Platform Portable Binary, Wizards & AV Defense (v2.5.0)
 - **Scope**:
-  - Zero-Install portable folder bundle for Windows, Linux, and macOS without SFX/UPX compression to prevent dropper heuristic triggers (SPEC-0008).
+  - Zero-Install portable folder bundle and Inno Setup 6 zero-admin user-level wizard (`installer/windows/setup.iss`).
   - Pre-flight Content-Addressable Storage (CAS) Hash Checker verifying SHA-256 baseline before child process execution (`src/security/binary_guard.js`).
-  - Dual-mode storage resolver (`.portable` local retention vs OS standard `%LOCALAPPDATA%` / `Library` / XDG).
-  - Clean PE Resource Metadata (`.rc` table) and Microsoft Defender Security Intelligence (WDSI) automated submission pipeline.
-- **Deliverables**: `docs/superpowers/plans/2026-09-11-cross-platform-binary-packaging.md`, `tests/portable-binary-security.test.js`.
+  - Dual-mode storage resolver (`.portable` local retention vs OS standard `%LOCALAPPDATA%` / `Library` / XDG) with cross-platform deterministic paths (`path.win32` / `path.posix`).
+  - Multi-resolution icon generation suite (`scripts/generate_icons.py`) and SSoT branding repository (`assets/branding/`).
+  - GHA release workflow with Windows Inno Setup build matrix and consolidated SHA256 checksums.
+- **Deliverables**: SPEC-0010, ADR-0014, PR #110, PR #112, PR #114, PR #116.
 
 ---
 
@@ -204,6 +205,8 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-23** | Unified 3-Stage Remote Release CI/CD | PR #91, Issue #90 | `tests/ci-cd-unified-pipeline.test.js` |
 | **RM-24** | SQLite Dynamic Schema Migrations | PR #106, Issue #105| `tests/database-migrations.test.js` |
 | **RM-25** | Automated Background Session Pruning | PR #104, Issue #103| `tests/session-cleanup-maintenance.test.js` |
-| **RM-26** | Dual-Mode Storage Path Isolation | SPEC-0008, Phase 13 | `tests/portable-binary-security.test.js` |
-| **RM-27** | Fail-Closed CAS Hash Checker Guard | SPEC-0008, Phase 13 | `tests/portable-binary-security.test.js` |
-| **RM-28** | Ed25519 Two-Tier Update Verification | SPEC-0008, Phase 14 | `tests/portable-binary-security.test.js` |
+| **RM-26** | Dual-Mode Storage Path Isolation | SPEC-0010, Phase 13 | `tests/portable-binary-security.test.js` |
+| **RM-27** | Fail-Closed CAS Hash Checker Guard | SPEC-0010, Phase 13 | `tests/portable-binary-security.test.js` |
+| **RM-28** | Ed25519 Two-Tier Update Verification | SPEC-0010, Phase 14 | `tests/portable-binary-security.test.js` |
+| **RM-29** | Desktop Setup Wizard & FreeDesktop | SPEC-0010, ADR-0014 | `tests/desktop-packaging.test.js` |
+| **RM-30** | Multi-Size Icon Suite & GHA Pipeline | SPEC-0010, PR #114 | `tests/desktop-packaging.test.js` |
