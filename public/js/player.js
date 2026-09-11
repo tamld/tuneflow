@@ -565,6 +565,60 @@ class PreviewPlayer {
     }
   }
 
+  togglePlayPause() {
+    this.togglePlay();
+  }
+
+  toggleMute() {
+    if (!this.audio) return;
+    this.audio.muted = !this.audio.muted;
+    if (this.btnVolume) {
+      if (this.audio.muted) {
+        this.btnVolume.textContent = '🔇';
+        this.btnVolume.title = 'Âm lượng: Đang tắt tiếng (Bấm để bật)';
+      } else {
+        const icon = this.volumeIcons[this.volumeIndex] || '🔊';
+        const pct = Math.round(this.audio.volume * 100);
+        this.btnVolume.textContent = icon;
+        this.btnVolume.title = `Âm lượng: ${pct}% (Bấm để đổi)`;
+      }
+    }
+    if (typeof window.showToast === 'function') {
+      window.showToast(this.audio.muted ? '🔇 Đã tắt tiếng' : '🔊 Đã bật âm thanh', 'info');
+    }
+  }
+
+  seekAudio(offsetSeconds) {
+    if (!this.audio || isNaN(this.audio.duration)) return;
+    const newTime = Math.max(0, Math.min(this.audio.duration, this.audio.currentTime + offsetSeconds));
+    this.audio.currentTime = newTime;
+    if (this.progressBar && this.audio.duration > 0) {
+      this.progressBar.value = (newTime / this.audio.duration) * 100;
+    }
+    if (this.timeCurrent) {
+      this.timeCurrent.textContent = this.formatTime(newTime);
+    }
+    this.updateMediaSessionPositionState();
+  }
+
+  adjustVolume(delta) {
+    if (!this.audio) return;
+    if (this.audio.muted && delta > 0) {
+      this.audio.muted = false;
+    }
+    let newVol = Math.max(0, Math.min(1.0, this.audio.volume + delta));
+    newVol = Math.round(newVol * 100) / 100;
+    this.audio.volume = newVol;
+    const pct = Math.round(newVol * 100);
+    if (this.btnVolume) {
+      this.btnVolume.textContent = newVol === 0 ? '🔇' : (newVol > 0.5 ? '🔊' : '🔉');
+      this.btnVolume.title = `Âm lượng: ${pct}% (Bấm để đổi)`;
+    }
+    if (typeof window.showToast === 'function') {
+      window.showToast(`🔊 Âm lượng: ${pct}%`, 'info');
+    }
+  }
+
   formatSleepLabel(mins) {
     if (!mins) return 'Tắt';
     if (mins >= 60) {

@@ -23,8 +23,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static assets for the Elderly-friendly Frontend
-app.use(express.static(path.join(ROOT_DIR, 'public')));
+// Serve static assets for the Elderly-friendly Frontend with 1-day client cache & ETag
+app.use(express.static(path.join(ROOT_DIR, 'public'), {
+  maxAge: '1d',
+  etag: true
+}));
 
 // Mount API routes
 app.use('/api', apiRoutes);

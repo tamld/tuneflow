@@ -20,23 +20,54 @@ class SimpleCache {
       this.cache.delete(key);
       return null;
     }
+    // True LRU: Re-insert entry to refresh recent usage position
+    this.cache.delete(key);
+    this.cache.set(key, entry);
     return entry.value;
   }
 
-  set(key, value) {
-    if (this.cache.size >= this.maxSize) {
+  set(key, value, customTtlMs = null) {
+    const ttl = (customTtlMs && customTtlMs > 0) ? customTtlMs : this.ttlMs;
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
       this.cache.delete(firstKey);
     }
     this.cache.set(key, {
       value,
-      expiry: Date.now() + this.ttlMs
+      expiry: Date.now() + ttl
     });
   }
 
   clear() {
     this.cache.clear();
   }
+}
+
+/**
+ * Extract dynamic TTL from YouTube CDN stream URL based on its upstream expire timestamp
+ * @param {string} streamUrl
+ * @param {number} defaultTtlMs
+ * @returns {number}
+ */
+function extractStreamUrlTtl(streamUrl, defaultTtlMs = 15 * 60 * 1000) {
+  if (!streamUrl || typeof streamUrl !== 'string') {
+    return defaultTtlMs;
+  }
+  const match = streamUrl.match(/[?&]expire=(\d+)/);
+  if (!match) {
+    return defaultTtlMs;
+  }
+  const expireSec = parseInt(match[1], 10);
+  const expireMs = expireSec * 1000;
+  const now = Date.now();
+  // 60-second safety buffer before actual expiry
+  const remainingMs = expireMs - now - (60 * 1000);
+  if (remainingMs <= 0) {
+    return defaultTtlMs;
+  }
+  return remainingMs;
 }
 
 const searchCache = new SimpleCache(15 * 60 * 1000, 100);
@@ -166,7 +197,8 @@ async function getPreviewStreamUrl(url) {
     ]);
     const parsed = streamUrl.split('\n')[0].trim();
     if (parsed) {
-      streamUrlCache.set(url, parsed);
+      const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
+      streamUrlCache.set(url, parsed, dynamicTtl);
       return parsed;
     }
   } catch (_primaryErr) {
@@ -184,7 +216,8 @@ async function getPreviewStreamUrl(url) {
       ]);
       const parsed = fallbackStreamUrl.split('\n')[0].trim();
       if (parsed) {
-        streamUrlCache.set(url, parsed);
+        const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
+        streamUrlCache.set(url, parsed, dynamicTtl);
         return parsed;
       }
     } catch (fallbackErr) {
@@ -639,5 +672,7 @@ module.exports = {
   updateYtDlpBinary,
   searchCache,
   playlistCache,
-  streamUrlCache
+  streamUrlCache,
+  SimpleCache,
+  extractStreamUrlTtl
 };

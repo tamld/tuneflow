@@ -4,7 +4,97 @@
  * Zero-Login Favorites, Persistent Queue Drawer, Accessible Guidance Modal,
  * Clear Search, and Font Size Scaling.
  */
-document.addEventListener('DOMContentLoaded', () => {
+
+// Senior Desktop Keyboard Shortcuts & Input Guarding (Issue #97)
+function isEditableElement(target) {
+  if (!target || typeof target !== 'object') return false;
+  const tagName = (target.tagName || '').toUpperCase();
+  if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') {
+    return true;
+  }
+  if (target.isContentEditable) {
+    return true;
+  }
+  return false;
+}
+
+function handleGlobalKeydown(e, player = (typeof window !== 'undefined' ? window.previewPlayer : null)) {
+  if (!e || !player) return false;
+  const target = e.target || (typeof document !== 'undefined' ? document.activeElement : null);
+  if (isEditableElement(target)) {
+    return false;
+  }
+
+  // Guard against TV mode handling d-pad if active
+  if (typeof window !== 'undefined' && window.tvLeanback && window.tvLeanback.isTVMode) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      return false;
+    }
+  }
+
+  const key = e.key;
+
+  if (key === ' ' || key === 'k' || key === 'K') {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof player.togglePlayPause === 'function') {
+      player.togglePlayPause();
+    } else if (typeof player.togglePlay === 'function') {
+      player.togglePlay();
+    }
+    return true;
+  }
+
+  if (key === 'm' || key === 'M') {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof player.toggleMute === 'function') {
+      player.toggleMute();
+    }
+    return true;
+  }
+
+  if (key === 'ArrowLeft') {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof player.seekAudio === 'function') {
+      player.seekAudio(-5);
+    }
+    return true;
+  }
+
+  if (key === 'ArrowRight') {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof player.seekAudio === 'function') {
+      player.seekAudio(5);
+    }
+    return true;
+  }
+
+  if (key === 'ArrowUp') {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof player.adjustVolume === 'function') {
+      player.adjustVolume(0.05);
+    }
+    return true;
+  }
+
+  if (key === 'ArrowDown') {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof player.adjustVolume === 'function') {
+      player.adjustVolume(-0.05);
+    }
+    return true;
+  }
+
+  return false;
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', (e) => {
+    handleGlobalKeydown(e, window.previewPlayer);
+  });
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('search-input');
   const searchBtn = document.getElementById('search-btn');
   const btnClearSearch = document.getElementById('btn-clear-search');
@@ -1222,3 +1312,11 @@ document.addEventListener('DOMContentLoaded', () => {
   window.renderResults = renderResults;
   window.renderPlaylistBatch = renderPlaylistBatch;
 });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    isEditableElement,
+    handleGlobalKeydown
+  };
+}
