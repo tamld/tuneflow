@@ -160,6 +160,22 @@ function resolveSidecarBinary(name, customBinDir = null) {
     return candidatePath;
   }
 
+  // Check known standard candidate locations if not found in default local bin/
+  if (!customBinDir) {
+    const os = require('os');
+    const candidateDirs = [
+      '/opt/homebrew/bin',
+      '/usr/local/bin',
+      path.join(os.homedir(), '.local', 'bin')
+    ];
+    for (const dir of candidateDirs) {
+      const full = path.join(dir, `${name}${ext}`);
+      if (fs.existsSync(full)) {
+        return full;
+      }
+    }
+  }
+
   // Fallback to system PATH binary
   return name;
 }

@@ -1,6 +1,28 @@
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { resolveStoragePaths } = require('./security/binary_guard');
+
+// Ensure standard binary directories are in PATH (GUI apps on macOS/Linux don't inherit shell PATH)
+if (process.platform !== 'win32') {
+  const extraPaths = [
+    '/opt/homebrew/bin',
+    '/opt/homebrew/sbin',
+    '/usr/local/bin',
+    '/usr/bin',
+    '/bin',
+    '/usr/sbin',
+    '/sbin',
+    path.join(os.homedir(), '.local', 'bin')
+  ];
+  const current = (process.env.PATH || '').split(path.delimiter);
+  for (const p of extraPaths) {
+    if (fs.existsSync(p) && !current.includes(p)) {
+      current.unshift(p);
+    }
+  }
+  process.env.PATH = current.join(path.delimiter);
+}
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const storage = resolveStoragePaths(process.platform);

@@ -28,5 +28,12 @@
     <true/>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 Tam Le Duc. All rights reserved.</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
 </dict>
 </plist>

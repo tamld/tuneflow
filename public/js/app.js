@@ -5,6 +5,20 @@
  * Clear Search, and Font Size Scaling.
  */
 
+// Resilient thumbnail image fallback with backend proxy guard
+function handleImageFallback(img, originalUrl) {
+  if (!img) return;
+  if (!img.dataset.proxied && originalUrl && (originalUrl.startsWith('http://') || originalUrl.startsWith('https://'))) {
+    img.dataset.proxied = 'true';
+    img.src = '/api/thumbnail?url=' + encodeURIComponent(originalUrl);
+    return;
+  }
+  img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='124' viewBox='0 0 220 124'><rect width='100%' height='100%' fill='%231e222d'/><circle cx='110' cy='62' r='28' fill='%232a3142'/><text x='110' y='70' font-size='24' text-anchor='middle'>🎵</text></svg>";
+}
+if (typeof window !== 'undefined') {
+  window.handleImageFallback = handleImageFallback;
+}
+
 // Senior Desktop Keyboard Shortcuts & Input Guarding (Issue #97)
 function isEditableElement(target) {
   if (!target || typeof target !== 'object') return false;
@@ -613,7 +627,7 @@ if (typeof document !== 'undefined') {
         <input type="checkbox" class="playlist-checkbox" id="chk-${escapeHtml(item.id)}" data-id="${escapeHtml(item.id)}" checked>
         <span style="font-weight: 700; color: var(--accent-gold); min-width: 28px;">${index + 1}.</span>
         <div class="playlist-item-thumb-wrapper" role="button" tabindex="0" title="Bấm để nghe bài hát này" aria-label="Nghe thử: ${escapeHtml(item.title)}">
-          <img class="playlist-item-thumb" src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" referrerpolicy="no-referrer" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'70\\' height=\\'45\\' viewBox=\\'0 0 70 45\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%231e222d\\'/><circle cx=\\'35\\' cy=\\'22\\' r=\\'12\\' fill=\\'%232a3142\\'/><text x=\\'35\\' y=\\'27\\' font-size=\\'14\\' text-anchor=\\'middle\\'>🎵</text></svg>'">
+          <img class="playlist-item-thumb" src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" referrerpolicy="no-referrer" onerror="handleImageFallback(this, '${escapeHtml(item.thumbnail)}')">
           <span class="playlist-play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
         </div>
         <span class="playlist-item-title" role="button" tabindex="0" title="Bấm để nghe bài hát này" aria-label="Nghe thử: ${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
@@ -811,7 +825,7 @@ if (typeof document !== 'undefined') {
 
         card.innerHTML = `
           <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để mở danh sách phát này" aria-label="Mở danh sách phát: ${escapeHtml(song.title)}">
-            <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' viewBox=\\'0 0 220 124\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%231e222d\\'/><circle cx=\\'110\\' cy=\\'62\\' r=\\'28\\' fill=\\'%232a3142\\'/><text x=\\'110\\' y=\\'70\\' font-size=\\'24\\' text-anchor=\\'middle\\'>🎵</text></svg>'">
+            <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this, '${escapeHtml(song.thumbnail)}')">
             <div class="song-thumb-overlay" aria-hidden="true">
               <span class="play-icon-overlay">📂</span>
             </div>
@@ -888,7 +902,7 @@ if (typeof document !== 'undefined') {
 
       card.innerHTML = `
         <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">
-          <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' viewBox=\\'0 0 220 124\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%231e222d\\'/><circle cx=\\'110\\' cy=\\'62\\' r=\\'28\\' fill=\\'%232a3142\\'/><text x=\\'110\\' y=\\'70\\' font-size=\\'24\\' text-anchor=\\'middle\\'>🎵</text></svg>'">
+          <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this, '${escapeHtml(song.thumbnail)}')">
           <div class="song-thumb-overlay" aria-hidden="true">
             <span class="play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
           </div>

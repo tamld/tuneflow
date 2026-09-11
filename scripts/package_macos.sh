@@ -19,8 +19,8 @@ MACOS_APP="$DIST_DIR/macos/TuneFlow.app"
 DMG_STAGING="$DIST_DIR/dmg-staging"
 INSTALLER_DIR="$DIST_DIR/installer"
 
+rm -rf "$MACOS_APP" "$DMG_STAGING"
 mkdir -p "$DIST_DIR/macos" "$DMG_STAGING" "$INSTALLER_DIR"
-rm -rf "$MACOS_APP" "$DMG_STAGING/*"
 
 # 1. Ensure assets/branding/icon.icns exists
 ICNS_PATH="$REPO_ROOT/assets/branding/icon.icns"
@@ -73,6 +73,9 @@ cp -R "$REPO_ROOT/src" "$MACOS_APP/Contents/Resources/app/"
 cp -R "$REPO_ROOT/public" "$MACOS_APP/Contents/Resources/app/"
 cp -R "$REPO_ROOT/bin" "$MACOS_APP/Contents/Resources/app/"
 chmod +x "$MACOS_APP/Contents/Resources/app/bin/tuneflow.js"
+if [ -d "$REPO_ROOT/node_modules" ]; then
+    cp -R "$REPO_ROOT/node_modules" "$MACOS_APP/Contents/Resources/app/"
+fi
 
 echo "✅ TuneFlow.app successfully assembled at: $MACOS_APP"
 

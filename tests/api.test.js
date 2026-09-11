@@ -92,4 +92,21 @@ describe('TuneFlow API Integration Tests', () => {
     assert.equal(data.success, true);
     assert.equal(data.prewarming, 'dQw4w9WgXcQ');
   });
+
+  it('GET /api/thumbnail should reject missing url with 400', async () => {
+    const res = await fetch(`${baseUrl}/api/thumbnail`);
+    assert.equal(res.status, 400);
+  });
+
+  it('GET /api/thumbnail should reject untrusted domains with 403', async () => {
+    const res = await fetch(`${baseUrl}/api/thumbnail?url=https://evil.com/fake.jpg`);
+    assert.equal(res.status, 403);
+  });
+
+  it('GET /api/thumbnail should proxy valid YouTube thumbnail with 200 and image headers', async () => {
+    const validUrl = 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg';
+    const res = await fetch(`${baseUrl}/api/thumbnail?url=${encodeURIComponent(validUrl)}`);
+    assert.equal(res.status, 200);
+    assert.ok(res.headers.get('content-type').startsWith('image/'));
+  });
 });

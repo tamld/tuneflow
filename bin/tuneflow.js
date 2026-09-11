@@ -53,6 +53,14 @@ if (portIdx !== -1 && args[portIdx + 1]) {
 
 const autoOpenBrowser = !args.includes('--no-browser');
 
+// Sidecar lifeline: Auto-exit cleanly if parent process pipe terminates
+if (!autoOpenBrowser) {
+  process.stdin.resume();
+  process.stdin.on('end', () => {
+    process.exit(0);
+  });
+}
+
 // Run desktop launcher
 launch({ port, autoOpenBrowser }).catch((err) => {
   console.error(`💥 Failed to launch TuneFlow Desktop:`, err.message);

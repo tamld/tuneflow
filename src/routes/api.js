@@ -188,7 +188,58 @@ router.get('/preview/:id', guestGuard, async (req, res) => {
     });
   } catch (err) {
     if (err.name === 'AbortError') return;
+    console.error(`⚠️ Preview stream error for id ${id}:`, err.message);
     res.status(500).json({ error: 'Không thể phát nghe thử bài hát này.' });
+  }
+});
+
+// Safe thumbnail image proxy (prevents CDN 403, ATS blocking, and mixed content issues)
+router.get('/thumbnail', async (req, res) => {
+  const { url } = req.query;
+  if (!url || typeof url !== 'string') {
+    return res.status(400).send('Missing url parameter');
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch (_e) {
+    return res.status(400).send('Invalid url');
+  }
+
+  // Restrict to trusted YouTube and Google CDN domains
+  const allowedHosts = [
+    'i.ytimg.com',
+    'yt3.ggpht.com',
+    'yt4.ggpht.com',
+    'googleusercontent.com',
+    'lh3.googleusercontent.com',
+    'img.youtube.com'
+  ];
+  const isAllowed = allowedHosts.some(host => parsed.hostname === host || parsed.hostname.endsWith('.' + host));
+  if (!isAllowed || parsed.protocol !== 'https:') {
+    return res.status(403).send('Domain not permitted');
+  }
+
+  try {
+    const abortController = new AbortController();
+    const timer = setTimeout(() => abortController.abort(), 8000);
+    const upstream = await fetch(url, {
+      signal: abortController.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+    clearTimeout(timer);
+    if (!upstream.ok) {
+      return res.status(upstream.status).send('Failed to fetch thumbnail');
+    }
+    const contentType = upstream.headers.get('content-type') || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    Readable.fromWeb(upstream.body).pipe(res);
+  } catch (err) {
+    res.status(500).send('Thumbnail fetch error: ' + err.message);
   }
 });
 

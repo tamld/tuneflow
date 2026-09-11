@@ -87,7 +87,8 @@ function supportsJsRuntimes() {
   }
   try {
     const { spawnSync } = require('child_process');
-    const res = spawnSync('yt-dlp', ['--help'], { windowsHide: true, timeout: 3000 });
+    const ytdlpBin = resolveSidecarBinary('yt-dlp');
+    const res = spawnSync(ytdlpBin, ['--help'], { windowsHide: true, timeout: 15000 });
     const stdout = res.stdout ? res.stdout.toString() : '';
     isJsRuntimesSupportedCache = (res.status === 0 && stdout.includes('--js-runtimes'));
   } catch (_e) {
@@ -115,11 +116,11 @@ function parseDurationString(str) {
 /**
  * Execute yt-dlp with argument injection protection (using '--' delimiter)
  * Includes bot challenge bypasses: extractor-args, cookies, and proxy (Issue #23, #64)
- * Added timeout guard to prevent hung child processes (Issue #67)
+ * Added timeout guard and process group cleanup to prevent hung child processes (Issue #67)
  */
 function runYtDlp(args, options = {}) {
   return new Promise((resolve, reject) => {
-    const timeoutMs = options.timeout || 15000;
+    const timeoutMs = options.timeout || 35000;
     let timer = null;
 
     const fullArgs = [];
@@ -138,14 +139,26 @@ function runYtDlp(args, options = {}) {
     fullArgs.push(...args);
 
     const ytdlpBin = resolveSidecarBinary('yt-dlp');
+    const isDetached = process.platform !== 'win32';
     const proc = spawn(ytdlpBin, fullArgs, {
       windowsHide: true,
+      detached: isDetached,
       env: getSanitizedEnv(process.env)
     });
 
+    const cleanupProcessTree = () => {
+      try {
+        if (isDetached && proc.pid) {
+          process.kill(-proc.pid, 'SIGKILL');
+        } else {
+          proc.kill('SIGKILL');
+        }
+      } catch (_e) {}
+    };
+
     if (timeoutMs > 0) {
       timer = setTimeout(() => {
-        try { proc.kill('SIGKILL'); } catch (_e) {}
+        cleanupProcessTree();
         reject(new Error(`yt-dlp timed out after ${timeoutMs}ms`));
       }, timeoutMs);
       if (timer.unref) timer.unref();
@@ -173,6 +186,7 @@ function runYtDlp(args, options = {}) {
 
     proc.on('error', (err) => {
       if (timer) clearTimeout(timer);
+      cleanupProcessTree();
       reject(err);
     });
   });
@@ -197,7 +211,7 @@ async function getPreviewStreamUrl(url) {
       '--prefer-free-formats',
       '--',
       url
-    ]);
+    ], { timeout: 35000 });
     const parsed = streamUrl.split('\n')[0].trim();
     if (parsed) {
       const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
@@ -216,7 +230,7 @@ async function getPreviewStreamUrl(url) {
         '--prefer-free-formats',
         '--',
         url
-      ]);
+      ], { timeout: 35000 });
       const parsed = fallbackStreamUrl.split('\n')[0].trim();
       if (parsed) {
         const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
