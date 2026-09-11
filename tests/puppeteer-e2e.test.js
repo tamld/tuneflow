@@ -260,4 +260,87 @@ describe('Gate 2: Headless Browser Puppeteer Real DOM & E2E Validation', () => {
 
     assert.strictEqual(dspResult.boostLevel, 1.25, 'Volume boost tier 1 must be 1.25x (125%)');
   });
+
+  it('should render volume boost button as an elegant capsule pill without text overflow or aspect distortion', async (t) => {
+    if (!page) return t.skip('Chrome executable not available in environment');
+
+    // 1. Test Desktop Viewport
+    await page.setViewport({ width: 1280, height: 800 });
+    const deskMetrics = await page.evaluate(() => {
+      const player = window.previewPlayer;
+      if (!player) return null;
+
+      if (player.playerContainer) {
+        player.playerContainer.classList.add('visible');
+      }
+
+      // Set Boost to 125%
+      player.setBoostPreset(1);
+
+      const btn = document.getElementById('btn-player-boost');
+      if (!btn) return null;
+
+      const rect = btn.getBoundingClientRect();
+      const style = window.getComputedStyle(btn);
+      const isBoosted = btn.classList.contains('boosted');
+      const hasIcon = Boolean(btn.querySelector('.boost-icon'));
+      const hasPct = Boolean(btn.querySelector('.boost-pct'));
+      const text = btn.textContent;
+      const scrollWidth = btn.scrollWidth;
+      const clientWidth = btn.clientWidth;
+      const borderRadius = style.borderRadius;
+
+      return {
+        isBoosted,
+        hasIcon,
+        hasPct,
+        text,
+        width: rect.width,
+        height: rect.height,
+        scrollWidth,
+        clientWidth,
+        borderRadius,
+        whiteSpace: style.whiteSpace
+      };
+    });
+
+    assert.ok(deskMetrics, 'Desktop boost button metrics must be retrieved');
+    assert.strictEqual(deskMetrics.isBoosted, true, 'Boost button must have "boosted" class');
+    assert.strictEqual(deskMetrics.hasIcon, true, 'Boost button must render .boost-icon element');
+    assert.strictEqual(deskMetrics.hasPct, true, 'Boost button must render .boost-pct element');
+    assert.ok(deskMetrics.text.includes('125%'), 'Boost button text must include 125%');
+    assert.ok(deskMetrics.width >= 66, `Boost button width (${deskMetrics.width}px) must be >= 66px capsule pill`);
+    assert.strictEqual(deskMetrics.height, 44, 'Boost button height must be 44px');
+    assert.strictEqual(Math.round(parseFloat(deskMetrics.borderRadius)), 22, 'Capsule pill border radius must be 22px');
+    assert.strictEqual(deskMetrics.whiteSpace, 'nowrap', 'Text must not wrap inside capsule pill');
+    assert.ok(deskMetrics.scrollWidth <= deskMetrics.clientWidth + 1, 'Content must not overflow capsule boundaries');
+
+    // 2. Test Mobile Viewport (max-width 768px)
+    await page.setViewport({ width: 390, height: 844 });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const mobMetrics = await page.evaluate(() => {
+      const btn = document.getElementById('btn-player-boost');
+      if (!btn) return null;
+      const rect = btn.getBoundingClientRect();
+      const style = window.getComputedStyle(btn);
+      return {
+        width: rect.width,
+        height: rect.height,
+        borderRadius: style.borderRadius,
+        scrollWidth: btn.scrollWidth,
+        clientWidth: btn.clientWidth
+      };
+    });
+
+    assert.ok(mobMetrics, 'Mobile boost button metrics must be retrieved');
+    assert.ok(mobMetrics.width >= 58, `Mobile boost button width (${mobMetrics.width}px) must be >= 58px`);
+    assert.strictEqual(Math.round(mobMetrics.height), 42, 'Mobile boost button height must be 42px');
+    assert.strictEqual(Math.round(parseFloat(mobMetrics.borderRadius)), 21, 'Mobile border radius must be 21px');
+    assert.ok(mobMetrics.scrollWidth <= mobMetrics.clientWidth + 1, 'Mobile content must not overflow boundaries');
+
+    // Reset back to default boost
+    await page.evaluate(() => {
+      window.previewPlayer.setBoostPreset(0);
+    });
+  });
 });

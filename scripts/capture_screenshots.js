@@ -81,13 +81,17 @@ async function capture() {
           window.previewPlayer.progressBar.value = 28;
         }
         window.previewPlayer.updatePlayPauseIcon();
-        if (window.previewPlayer.btnEq) {
+        if (window.previewPlayer.setEqPreset) {
+          window.previewPlayer.setEqPreset('vocal');
+        } else if (window.previewPlayer.btnEq) {
           window.previewPlayer.btnEq.textContent = '🗣️';
           window.previewPlayer.btnEq.classList.add('active');
         }
-        if (window.previewPlayer.btnBoost) {
-          window.previewPlayer.btnBoost.textContent = '⚡ 125%';
-          window.previewPlayer.btnBoost.classList.add('active');
+        if (window.previewPlayer.setBoostPreset) {
+          window.previewPlayer.setBoostPreset(1);
+        } else if (window.previewPlayer.btnBoost) {
+          window.previewPlayer.btnBoost.innerHTML = '<span class="boost-icon">⚡</span><span class="boost-pct">125%</span>';
+          window.previewPlayer.btnBoost.classList.add('boosted');
         }
       }
       window.scrollBy(0, 220);
@@ -125,6 +129,12 @@ async function capture() {
           window.previewPlayer.progressBar.value = 28;
         }
         window.previewPlayer.updatePlayPauseIcon();
+        if (window.previewPlayer.setEqPreset) {
+          window.previewPlayer.setEqPreset('vocal');
+        }
+        if (window.previewPlayer.setBoostPreset) {
+          window.previewPlayer.setBoostPreset(1);
+        }
       }
       const grid = document.getElementById('results-grid');
       if (grid) {
