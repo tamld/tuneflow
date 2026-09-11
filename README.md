@@ -30,6 +30,8 @@
 
 | Platform | Client Type | Download / Link | Background Audio |
 | :--- | :--- | :--- | :---: |
+| **Windows Desktop** | Native Setup Wizard (Inno Setup 6, Zero-Admin) | [Download Setup.exe](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
+| **Linux Desktop** | Standalone & FreeDesktop Application | [Download Linux Assets](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
 | **Web Browser** | Desktop (Chrome, Safari, Edge, Firefox) | `http://<server-ip>:3000` | ✅ |
 | **iOS / iPadOS** | Standalone PWA | Safari Add to Home Screen | ✅ (Hardware lock screen) |
 | **Android Mobile** | Native App / PWA | [Download Mobile APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
