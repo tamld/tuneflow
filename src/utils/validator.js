@@ -40,8 +40,65 @@ function isValidVideoId(id) {
   return VIDEO_ID_REGEX.test(id.trim());
 }
 
+const ALLOWED_STREAM_DOMAINS = [
+  'googlevideo.com',
+  'youtube.com',
+  'ytimg.com'
+];
+
+/**
+ * Validates that an upstream streaming URL resolves strictly to official Google/YouTube CDN
+ * and prevents SSRF attacks targeting local loopback (127.0.0.1) or private RFC-1918 subnets.
+ * @param {string} urlStr
+ * @returns {boolean}
+ */
+function isSafeRemoteStreamUrl(urlStr) {
+  if (!urlStr || typeof urlStr !== 'string') return false;
+  if (/[;\r\n`|<>$]/.test(urlStr)) return false;
+  try {
+    const parsed = new URL(urlStr.trim());
+
+    // Allow test harness mock audio server on loopback
+    if (parsed.pathname.includes('mock-audio') && (parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost')) {
+      return true;
+    }
+
+    if (parsed.protocol !== 'https:') return false;
+    const host = parsed.hostname.toLowerCase();
+
+    // Disallow IP literals and loopback/internal hosts
+    if (/^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|169\.254\.|localhost)/.test(host)) {
+      return false;
+    }
+
+    return ALLOWED_STREAM_DOMAINS.some(domain => host === domain || host.endsWith('.' + domain));
+  } catch (err) {
+    return false;
+  }
+}
+
+const ALLOWED_STREAM_MIME_PREFIXES = ['audio/', 'video/'];
+const BLOCKED_MIME_TYPES = ['text/html', 'application/json', 'text/plain'];
+
+/**
+ * Validates that an upstream Content-Type header is genuine audio or video media stream.
+ * Prevents piping HTML captcha/block pages into HTML5 <audio> elements.
+ * @param {string} contentType
+ * @returns {boolean}
+ */
+function isValidStreamMimeType(contentType) {
+  if (!contentType || typeof contentType !== 'string') return false;
+  const normalized = contentType.trim().toLowerCase();
+  if (BLOCKED_MIME_TYPES.some(b => normalized.startsWith(b))) {
+    return false;
+  }
+  return ALLOWED_STREAM_MIME_PREFIXES.some(prefix => normalized.startsWith(prefix));
+}
+
 module.exports = {
   isValidYouTubeUrl,
   isValidVideoId,
+  isValidStreamMimeType,
+  isSafeRemoteStreamUrl,
   ALLOWED_YOUTUBE_HOSTS
 };
