@@ -20,10 +20,21 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Module `src/security/binary_guard.js` thực hiện Content-Addressable Storage (CAS) đối soát SHA-256 trước khi thực thi `yt-dlp` và `ffmpeg`.
   - Lọc sạch biến môi trường độc hại (`NODE_OPTIONS`, `PYTHONPATH`) ngăn ngừa inject subprocess.
   - Cơ chế tráo file nguyên tử `atomicSwapExecutable()` né lỗi khóa file Windows File Lock.
+- **Tách Danh Sách Phát Tốc Độ Cao Bằng YouTube Innertube API (Zero-Subprocess Playlist Extraction - Issue #122)**:
+  - Tích hợp hàm `parsePlaylistInnertube()` trong `src/engine/ytdlp.js` gọi trực tiếp YouTube Innertube Browse API (`VL` + `playlistId`), giảm độ trễ trích xuất playlist từ 8–15s xuống còn dưới 400ms không cần gọi tiến trình con `yt-dlp`.
+  - Hỗ trợ cơ chế dự phòng thông minh: tự động chuyển sang `yt-dlp` khi Innertube gặp danh sách định dạng đặc thù.
+  - Phản hồi trực quan tức thì: Nút `btn-open-playlist` chuyển sang trạng thái disabled hiển thị biểu tượng tải xoay vòng, cuộn trang mượt mà (`scrollIntoView`) đến danh sách bài hát mà không xóa trắng vùng kết quả tìm kiếm.
 - **Quy Chuẩn Vận Hành Superpowers Bắt Buộc (Superpowers 8 Mandatory Steps Governance - Issue #115)**:
   - Ban hành `docs/superpowers/plans/2026-09-11-superpowers-tuneflow-mandatory-steps.md` quy định 8 bước bắt buộc và cơ chế chống stale docs.
 
 ### Đã Sửa (Fixed)
+- **Bản Địa Hóa Động Toàn Diện Tiếng Anh & Khắc Phục Lỗi Ngôn Ngữ Hỗn Hợp (Dynamic English Localization Engine - Issue #121)**:
+  - Bổ sung các token dịch thuật còn thiếu trong `public/js/i18n.js` cho nhãn bộ lọc tìm kiếm (`filter_content_label`, `filter_sort_label`), các chip định dạng (`filter_song_type`, `filter_playlist_type`), huy hiệu thẻ bài hát/album và tiêu đề kết quả tìm kiếm.
+  - Cung cấp hàm `window.reRenderActiveCards()` đồng bộ lại giao diện thẻ bài hát và danh sách phát tức thời khi chuyển đổi qua lại giữa tiếng Việt và tiếng Anh.
+- **Khắc Phục Lỗi Tải Ảnh Thu Nhỏ & Chặn Hotlink Trình Duyệt (Thumbnail Resilience, CSP & Anti-Hotlink Guard - Issue #122)**:
+  - Bổ sung thẻ `<meta name="referrer" content="no-referrer">` và thuộc tính `referrerpolicy="no-referrer"` trên toàn bộ thẻ `<img>` và module phát nhạc `player.js`, vô hiệu hóa cơ chế chặn hotlink của Google/YouTube CDN khi truy cập qua Reverse Proxy/Cloudflare Tunnel.
+  - Mở rộng chính sách bảo mật CSP (`Content-Security-Policy`) trong `src/server.js` cho phép nạp ảnh từ `*.ggpht.com` và `*.googleusercontent.com`.
+  - Thay thế khối xám `#2e323e` đơn điệu khi lỗi ảnh bằng SVG âm nhạc mang biểu tượng `🎵` và gradient màu thương hiệu SilverMelody.
 - **Chuẩn Hóa Đường Dẫn Đa Nền Tảng Trên Linux & Windows (Cross-Platform Path Determinism - Issue #115)**:
   - Ép buộc sử dụng `path.win32` cho Windows và `path.posix` cho POSIX trong `binary_guard.js` và `tests/portable-binary-security.test.js`, khắc phục triệt để lỗi gãy CI trên Ubuntu runner.
   - Tối ưu hóa `scripts/generate_icons.py` sử dụng Lazy Import thư viện Pillow, cho phép cờ `--check` chạy mượt mà trên môi trường headless container.

@@ -528,9 +528,11 @@ if (typeof document !== 'undefined') {
         return;
       }
 
+      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):';
+      const foundMsg = foundTemplate.replace('{count}', data.results.length);
       resultsHeader.textContent = genreLabel
-        ? `📻 Thể loại: ${genreLabel} — Tìm thấy ${data.results.length} bài hát hay (Bố Mẹ bấm nghe thử hoặc tải về máy nhé!):`
-        : `🎵 Tìm thấy ${data.results.length} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):`;
+        ? `📻 ${genreLabel} — ${foundMsg}`
+        : foundMsg;
       renderResults(data.results);
     } catch (err) {
       if (err && err.name === 'AbortError') return;
@@ -540,13 +542,23 @@ if (typeof document !== 'undefined') {
   }
 
   // 5. Playlist Ingestion Handler
-  async function handlePlaylistUrl(url) {
-    resultsHeader.textContent = '⏳ Đang bóc tách danh sách phát...';
-    resultsContainer.innerHTML = '';
+  async function handlePlaylistUrl(url, triggerBtn = null) {
+    let originalBtnHtml = '';
+    if (triggerBtn) {
+      originalBtnHtml = triggerBtn.innerHTML;
+      triggerBtn.disabled = true;
+      triggerBtn.innerHTML = `⏳ ${window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_loading_btn') : 'Đang mở tuyển tập...'}`;
+    }
+
+    const loadingText = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_loading') : '⏳ Đang bóc tách danh sách phát...';
+    resultsHeader.textContent = loadingText;
     playlistPanel.style.display = 'block';
-    playlistPanelTitle.textContent = '⏳ Đang tải toàn bộ danh sách phát...';
-    playlistPanelMeta.textContent = 'Vui lòng chờ một chút ạ...';
-    playlistItemsList.innerHTML = '<div style="padding: 20px; text-align: center; font-size: 18px;">Đang đọc thông tin các bài hát trong playlist...</div>';
+    if (typeof playlistPanel.scrollIntoView === 'function') {
+      playlistPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    playlistPanelTitle.textContent = loadingText;
+    playlistPanelMeta.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_panel_meta') : 'Vui lòng chờ một chút ạ...';
+    playlistItemsList.innerHTML = '<div style="padding: 20px; text-align: center; font-size: 18px; color: var(--text-muted);">⏳ Đang đọc thông tin các bài hát trong playlist...</div>';
 
     try {
       const res = await fetch('/api/playlist/parse', {
@@ -563,19 +575,30 @@ if (typeof document !== 'undefined') {
       }
 
       currentPlaylistTracks = data.items;
-      playlistPanelTitle.textContent = `📻 ${data.title || 'Danh Sách Tuyển Chọn'}`;
-      playlistPanelMeta.textContent = `Tuyển tập gồm ${data.count} bài hát của "${data.uploader || 'Nghệ sĩ'}"`;
+      const defaultTitle = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_panel_title') : 'Danh Sách Tuyển Chọn';
+      const defaultArtist = window.TuneFlowI18n ? window.TuneFlowI18n.t('artist_default') : 'Nghệ sĩ';
+      playlistPanelTitle.textContent = `📻 ${data.title || defaultTitle}`;
+      playlistPanelMeta.textContent = `Tuyển tập gồm ${data.count} bài hát của "${data.uploader || defaultArtist}"`;
       renderPlaylistBatch(data.items);
-      resultsHeader.textContent = `✨ Đã hiển thị toàn bộ tuyển tập gồm ${data.count} bài hát.`;
+      const displayTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_display_all') : '✨ Đã hiển thị toàn bộ tuyển tập gồm {count} bài hát.';
+      resultsHeader.textContent = displayTemplate.replace('{count}', data.count);
     } catch (err) {
       showToast('❌ Lỗi khi đọc danh sách phát', 'error');
       playlistPanel.style.display = 'none';
+    } finally {
+      if (triggerBtn) {
+        triggerBtn.disabled = false;
+        triggerBtn.innerHTML = originalBtnHtml;
+      }
     }
   }
 
   // 6. Render Playlist Batch Panel
   function renderPlaylistBatch(items) {
     playlistItemsList.innerHTML = '';
+    const pauseLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_pause') : '⏸️ Dừng';
+    const playLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶️ Nghe';
+
     items.forEach((item, index) => {
       const isCurrentlyPlaying = window.previewPlayer && window.previewPlayer.currentTrack && window.previewPlayer.currentTrack.id === item.id && window.previewPlayer.isPlaying;
       const row = document.createElement('div');
@@ -585,12 +608,12 @@ if (typeof document !== 'undefined') {
         <input type="checkbox" class="playlist-checkbox" id="chk-${escapeHtml(item.id)}" data-id="${escapeHtml(item.id)}" checked>
         <span style="font-weight: 700; color: var(--accent-gold); min-width: 28px;">${index + 1}.</span>
         <div class="playlist-item-thumb-wrapper" role="button" tabindex="0" title="Bấm để nghe bài hát này" aria-label="Nghe thử: ${escapeHtml(item.title)}">
-          <img class="playlist-item-thumb" src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'70\\' height=\\'45\\' fill=\\'%232e323e\\'><rect width=\\'100%\\' height=\\'100%\\'/></svg>'">
+          <img class="playlist-item-thumb" src="${escapeHtml(item.thumbnail)}" alt="${escapeHtml(item.title)}" referrerpolicy="no-referrer" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'70\\' height=\\'45\\' viewBox=\\'0 0 70 45\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%231e222d\\'/><circle cx=\\'35\\' cy=\\'22\\' r=\\'12\\' fill=\\'%232a3142\\'/><text x=\\'35\\' y=\\'27\\' font-size=\\'14\\' text-anchor=\\'middle\\'>🎵</text></svg>'">
           <span class="playlist-play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
         </div>
         <span class="playlist-item-title" role="button" tabindex="0" title="Bấm để nghe bài hát này" aria-label="Nghe thử: ${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
         <span class="playlist-item-duration">${escapeHtml(item.duration_string || '00:00')}</span>
-        <button class="btn-preview" style="min-height: 40px; padding: 6px 14px; font-size: 15px;" id="btn-preview-pl-${escapeHtml(item.id)}">${isCurrentlyPlaying ? '⏸️ Dừng' : '▶️ Nghe'}</button>
+        <button class="btn-preview" style="min-height: 40px; padding: 6px 14px; font-size: 15px;" id="btn-preview-pl-${escapeHtml(item.id)}">${isCurrentlyPlaying ? pauseLabel : playLabel}</button>
       `;
 
       const playItemHandler = (e) => {
@@ -660,21 +683,25 @@ if (typeof document !== 'undefined') {
     const current = window.previewPlayer ? window.previewPlayer.currentTrack : null;
     const isCurrentInPlaylist = Boolean(current && currentPlaylistTracks && currentPlaylistTracks.some(t => t.id === current.id));
 
+    const pauseLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_pause') : '⏸️ Tạm Dừng Tuyển Tập';
+    const resumeLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_resume') : '▶️ Tiếp Tục Phát';
+    const playAllLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_play_all') : '▶️ Phát Danh Sách';
+
     if (isCurrentInPlaylist && window.previewPlayer && window.previewPlayer.isPlaying) {
       btnPlayPlaylist.classList.add('playing');
-      btnPlayPlaylist.innerHTML = '⏸️ Tạm Dừng Tuyển Tập';
-      btnPlayPlaylist.title = 'Bấm để tạm dừng phát tuyển tập này';
-      btnPlayPlaylist.setAttribute('aria-label', 'Tạm dừng phát tuyển tập');
+      btnPlayPlaylist.innerHTML = pauseLabel;
+      btnPlayPlaylist.title = pauseLabel;
+      btnPlayPlaylist.setAttribute('aria-label', pauseLabel);
     } else if (isCurrentInPlaylist && window.previewPlayer && !window.previewPlayer.isPlaying) {
       btnPlayPlaylist.classList.remove('playing');
-      btnPlayPlaylist.innerHTML = `▶️ Tiếp Tục Phát (<span id="batch-play-count">${checkedCount}</span>)`;
-      btnPlayPlaylist.title = 'Bấm để tiếp tục nghe tuyển tập này';
-      btnPlayPlaylist.setAttribute('aria-label', 'Tiếp tục phát tuyển tập');
+      btnPlayPlaylist.innerHTML = `${resumeLabel} (<span id="batch-play-count">${checkedCount}</span>)`;
+      btnPlayPlaylist.title = resumeLabel;
+      btnPlayPlaylist.setAttribute('aria-label', resumeLabel);
     } else {
       btnPlayPlaylist.classList.remove('playing');
-      btnPlayPlaylist.innerHTML = `▶️ Phát Danh Sách (<span id="batch-play-count">${checkedCount}</span>)`;
-      btnPlayPlaylist.title = 'Bấm để phát liên tục các bài đã chọn trong tuyển tập';
-      btnPlayPlaylist.setAttribute('aria-label', 'Phát liên tục các bài đã chọn');
+      btnPlayPlaylist.innerHTML = `${playAllLabel} (<span id="batch-play-count">${checkedCount}</span>)`;
+      btnPlayPlaylist.title = playAllLabel;
+      btnPlayPlaylist.setAttribute('aria-label', playAllLabel);
     }
   }
 
@@ -689,7 +716,9 @@ if (typeof document !== 'undefined') {
     const checkboxes = playlistItemsList.querySelectorAll('.playlist-checkbox');
     const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
     checkboxes.forEach(cb => cb.checked = anyUnchecked);
-    btnSelectAll.textContent = anyUnchecked ? 'Bỏ Chọn Tất Cả' : 'Đánh Dấu Tất Cả';
+    const selectAllLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_select_all') : 'Đánh Dấu Tất Cả';
+    const deselectAllLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_deselect_all') : 'Bỏ Chọn Tất Cả';
+    btnSelectAll.textContent = anyUnchecked ? deselectAllLabel : selectAllLabel;
     updateSelectedBatchCount();
   });
 
@@ -760,6 +789,14 @@ if (typeof document !== 'undefined') {
     resultsContainer.innerHTML = '';
     activeTrackList = songs;
 
+    const artistDefault = window.TuneFlowI18n ? window.TuneFlowI18n.t('artist_default') : 'Nghệ sĩ';
+    const playlistTypeBadge = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_type_badge') : '📻 Tuyển Tập / Album';
+    const playlistDuration = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_duration_badge') : '📁 Tuyển tập';
+    const btnOpenPlaylistText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_open_playlist') : '📂 Mở Tuyển Tập Nghe & Tải';
+    const btnPreviewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶️ Nghe Thử Trước';
+    const btnPauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_pause') : '⏸️ Tạm Dừng';
+    const btnDownloadText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnDownload') : '⬇️ Tải Về Máy (MP3)';
+
     songs.forEach(song => {
       const isPlaylist = Boolean(song.isPlaylist || (song.id && String(song.id).startsWith('PL')));
       if (isPlaylist) {
@@ -769,30 +806,32 @@ if (typeof document !== 'undefined') {
 
         card.innerHTML = `
           <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để mở danh sách phát này" aria-label="Mở danh sách phát: ${escapeHtml(song.title)}">
-            <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' fill=\\'%232e323e\\'><rect width=\\'100%\\' height=\\'100%\\'/></svg>'">
+            <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' viewBox=\\'0 0 220 124\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%231e222d\\'/><circle cx=\\'110\\' cy=\\'62\\' r=\\'28\\' fill=\\'%232a3142\\'/><text x=\\'110\\' y=\\'70\\' font-size=\\'24\\' text-anchor=\\'middle\\'>🎵</text></svg>'">
             <div class="song-thumb-overlay" aria-hidden="true">
               <span class="play-icon-overlay">📂</span>
             </div>
-            <span class="song-duration" style="background: rgba(217, 119, 6, 0.9); font-weight: 700;">📁 ${escapeHtml(song.duration_string || 'Tuyển tập')}</span>
+            <span class="song-duration" style="background: rgba(217, 119, 6, 0.9); font-weight: 700;">${playlistDuration}</span>
           </div>
           <div class="song-info">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
               <h3 class="song-title" role="button" tabindex="0" title="Bấm để mở tuyển tập này" aria-label="Mở tuyển tập: ${escapeHtml(song.title)}">${escapeHtml(song.title)}</h3>
             </div>
-            <p class="song-uploader">🎙️ ${escapeHtml(song.uploader || 'Tuyển Tập')}</p>
-            <div style="margin-top: 6px; font-size: 13px; font-weight: 700; color: #f59e0b;">📻 Tuyển Tập / Album</div>
+            <p class="song-uploader">🎙️ ${escapeHtml(song.uploader || artistDefault)}</p>
+            <div style="margin-top: 6px; font-size: 13px; font-weight: 700; color: #f59e0b;">${playlistTypeBadge}</div>
           </div>
           <div class="song-actions" style="display: flex;">
             <button class="btn-preview btn-open-playlist" id="btn-playlist-${escapeHtml(song.id)}" style="flex: 1; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 700; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer;">
-              📂 Mở Tuyển Tập Nghe & Tải
+              ${btnOpenPlaylistText}
             </button>
           </div>
         `;
 
+        const btnPl = card.querySelector(`#btn-playlist-${song.id}`);
+
         const openPlaylistHandler = (e) => {
           if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
           const targetUrl = song.url || `https://www.youtube.com/playlist?list=${song.id}`;
-          handlePlaylistUrl(targetUrl);
+          handlePlaylistUrl(targetUrl, btnPl || card);
         };
 
         const thumbWrapper = card.querySelector('.song-thumbnail-wrapper');
@@ -817,7 +856,6 @@ if (typeof document !== 'undefined') {
           });
         }
 
-        const btnPl = card.querySelector(`#btn-playlist-${song.id}`);
         if (btnPl) {
           btnPl.addEventListener('click', openPlaylistHandler);
         }
@@ -827,7 +865,7 @@ if (typeof document !== 'undefined') {
         card.setAttribute('title', `Bấm để mở danh sách phát: ${song.title}`);
         card.addEventListener('click', openPlaylistHandler);
         card.addEventListener('keydown', (e) => {
-          if (e.target === card && (e.key === 'Enter' || e.key === ' ')) {
+          if (e.target === card && (e.key === 'Enter' || e.key === ' ') && !e.target.closest('button')) {
             e.preventDefault();
             openPlaylistHandler(e);
           }
@@ -845,7 +883,7 @@ if (typeof document !== 'undefined') {
 
       card.innerHTML = `
         <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">
-          <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' fill=\\'%232e323e\\'><rect width=\\'100%\\' height=\\'100%\\'/></svg>'">
+          <img class="song-thumbnail" src="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'124\\' viewBox=\\'0 0 220 124\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%231e222d\\'/><circle cx=\\'110\\' cy=\\'62\\' r=\\'28\\' fill=\\'%232a3142\\'/><text x=\\'110\\' y=\\'70\\' font-size=\\'24\\' text-anchor=\\'middle\\'>🎵</text></svg>'">
           <div class="song-thumb-overlay" aria-hidden="true">
             <span class="play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
           </div>
@@ -856,15 +894,15 @@ if (typeof document !== 'undefined') {
             <h3 class="song-title" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">${escapeHtml(song.title)}</h3>
             <button class="btn-fav" id="btn-fav-${escapeHtml(song.id)}" title="Lưu bài hát yêu thích">${isFav ? '❤️' : '🤍'}</button>
           </div>
-          <p class="song-uploader">🎙️ ${escapeHtml(song.uploader || 'Nghệ sĩ')}</p>
+          <p class="song-uploader">🎙️ ${escapeHtml(song.uploader || artistDefault)}</p>
           <div class="song-status-badge" id="status-${escapeHtml(song.id)}" style="margin-top: 8px; font-size: 16px; font-weight: 600; color: var(--accent-gold); display: none;"></div>
         </div>
         <div class="song-actions">
           <button class="btn-preview" id="btn-preview-${escapeHtml(song.id)}">
-            ${isCurrentlyPlaying ? '⏸️ Tạm Dừng' : '▶️ Nghe Thử Trước'}
+            ${isCurrentlyPlaying ? btnPauseText : btnPreviewText}
           </button>
           <button class="btn-download" id="btn-download-${escapeHtml(song.id)}">
-            ⬇️ Tải Về Máy (MP3)
+            ${btnDownloadText}
           </button>
         </div>
       `;
@@ -958,6 +996,16 @@ if (typeof document !== 'undefined') {
       resultsContainer.appendChild(card);
     });
   }
+
+  // Dynamic card re-render for i18n language toggle (Issue #121)
+  window.reRenderActiveCards = function() {
+    if (activeTrackList && activeTrackList.length > 0) {
+      renderResults(activeTrackList);
+    }
+    if (currentPlaylistTracks && currentPlaylistTracks.length > 0 && playlistPanel && playlistPanel.style.display !== 'none') {
+      renderPlaylistBatch(currentPlaylistTracks);
+    }
+  };
 
   // 8. Favorites Management (Zero-Login & Server-Sync for Authenticated Users)
   function toggleFavorite(song, btnEl) {

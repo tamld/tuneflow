@@ -414,6 +414,7 @@ class PreviewPlayer {
     if (track.thumbnail && typeof window !== 'undefined' && window.Image) {
       const img = new window.Image();
       img.crossOrigin = 'anonymous';
+      img.referrerPolicy = 'no-referrer';
       img.onload = () => {
         this.pipThumbnailImg = img;
         if (this.isPipActive) this.renderPipCanvas();
