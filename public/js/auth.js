@@ -209,14 +209,19 @@ class TuneFlowAuth {
 
   updateBadgeLoggedIn() {
     if (!this.authStatusIcon || !this.authStatusText) return;
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
     if (this.role === 'admin') {
       this.authStatusIcon.textContent = '👑';
-      this.authStatusText.textContent = `Quản trị (${this.user.username})`;
-      this.btnAuthStatus.title = `Tài khoản Quản trị: ${this.user.username} (Bấm để mở Bảng Quản Trị)`;
+      this.authStatusText.textContent = `${isEn ? 'Admin' : 'Quản trị'} (${this.user.username})`;
+      this.btnAuthStatus.title = isEn
+        ? `Admin account: ${this.user.username} (Click to open Admin Panel)`
+        : `Tài khoản Quản trị: ${this.user.username} (Bấm để mở Bảng Quản Trị)`;
     } else {
       this.authStatusIcon.textContent = '👤';
-      this.authStatusText.textContent = `Gia Đình (${this.user.username})`;
-      this.btnAuthStatus.title = `Tài khoản Gia Đình: ${this.user.username} (Bấm để đăng xuất)`;
+      this.authStatusText.textContent = `${isEn ? 'Family' : 'Gia Đình'} (${this.user.username})`;
+      this.btnAuthStatus.title = isEn
+        ? `Family account: ${this.user.username} (Click to log out)`
+        : `Tài khoản Gia Đình: ${this.user.username} (Bấm để đăng xuất)`;
     }
     if (this.btnChangePasswordTrigger) {
       this.btnChangePasswordTrigger.style.display = 'inline-flex';
@@ -231,38 +236,44 @@ class TuneFlowAuth {
     }
     this.authStatusIcon.textContent = '⏱️';
 
+    const guestLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('guest_label') : 'Khách';
+
     if (!this.guest) {
-      this.authStatusText.textContent = 'Khách: 30:00';
+      this.authStatusText.textContent = `${guestLabel}: 30:00`;
       this.updateAdminTriggerBtn();
       return;
     }
 
     if (this.guest.status === 'cooldown' || !this.guest.can_listen) {
-      this.authStatusText.textContent = 'Khách: Đã ngắt';
-      this.btnAuthStatus.title = 'Hết 30 phút nghe thử - Bấm để đăng nhập';
+      this.authStatusText.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('guest_disconnected') : 'Khách: Đã ngắt';
+      this.btnAuthStatus.title = window.TuneFlowI18n ? window.TuneFlowI18n.t('guest_cooldown_msg') : 'Hết 30 phút nghe thử - Bấm để đăng nhập';
     } else {
       const remainingSec = this.guest.remaining_sec || 0;
       const mins = Math.floor(remainingSec / 60);
       const secs = remainingSec % 60;
       const pad = (n) => (n < 10 ? '0' : '') + n;
-      this.authStatusText.textContent = `Khách: ${pad(mins)}:${pad(secs)}`;
-      this.btnAuthStatus.title = `Khách vãng lai: còn ${pad(mins)}:${pad(secs)} nghe thử (Bấm để đăng nhập)`;
+      const timeStr = `${pad(mins)}:${pad(secs)}`;
+      this.authStatusText.textContent = `${guestLabel}: ${timeStr}`;
+      const titleTpl = window.TuneFlowI18n ? window.TuneFlowI18n.t('guest_remaining_title') : 'Khách vãng lai: còn {time} nghe thử (Bấm để đăng nhập)';
+      this.btnAuthStatus.title = titleTpl.replace('{time}', timeStr);
     }
     this.updateAdminTriggerBtn();
   }
 
   updateAdminTriggerBtn() {
     if (!this.btnAdminTrigger) return;
+    const adminLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('admin_panel') : 'Quản Trị';
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
     if (this.role === 'admin') {
       if (this.adminTriggerIcon) this.adminTriggerIcon.textContent = '👑';
-      if (this.adminTriggerText) this.adminTriggerText.textContent = 'Quản Trị';
+      if (this.adminTriggerText) this.adminTriggerText.textContent = adminLabel;
       this.btnAdminTrigger.classList.add('admin-active');
-      this.btnAdminTrigger.title = 'Bảng Điều Khiển Quản Trị Hệ Thống (Bấm để mở)';
+      this.btnAdminTrigger.title = isEn ? 'System Administration Dashboard (Click to open)' : 'Bảng Điều Khiển Quản Trị Hệ Thống (Bấm để mở)';
     } else {
       if (this.adminTriggerIcon) this.adminTriggerIcon.textContent = '🔐';
-      if (this.adminTriggerText) this.adminTriggerText.textContent = 'Quản Trị';
+      if (this.adminTriggerText) this.adminTriggerText.textContent = adminLabel;
       this.btnAdminTrigger.classList.remove('admin-active');
-      this.btnAdminTrigger.title = 'Đăng nhập Quản Trị Viên (Bấm để mở đăng nhập)';
+      this.btnAdminTrigger.title = isEn ? 'Administrator Login (Click to open login)' : 'Đăng nhập Quản Trị Viên (Bấm để mở đăng nhập)';
     }
   }
 
@@ -477,3 +488,4 @@ class TuneFlowAuth {
 
 window.tuneFlowAuth = new TuneFlowAuth();
 window.authController = window.tuneFlowAuth;
+window.authManager = window.tuneFlowAuth;

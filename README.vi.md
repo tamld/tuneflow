@@ -12,7 +12,22 @@
 
 [English](README.md) · [Tiếng Việt](README.vi.md) · [Cẩm nang sử dụng](docs/USER_GUIDE.vi.md) · [Lộ trình phát triển](docs/ROADMAP.md)
 
+<br />
+
+<img src="docs/assets/screenshots/desktop-player.png" alt="Giao diện TuneFlow trên máy tính (Desktop)" width="100%" />
+
+*✨ Chuẩn thiết kế SilverMelody: Nút bấm lớn dễ bấm, bộ lọc âm thanh Web Audio DSP thời gian thực & nghe thử trực tiếp*
+
 </div>
+
+---
+
+## 🖼️ Trải Nghiệm Giao Diện Thực Tế
+
+| 📱 Ứng dụng Di Động PWA (iOS / Android) | 📺 Chế Độ Android TV 10-Foot Leanback |
+| :---: | :---: |
+| <img src="docs/assets/screenshots/mobile-pwa.png" alt="TuneFlow Mobile PWA UI" width="300" /> | <img src="docs/assets/screenshots/tv-leanback.png" alt="TuneFlow Android TV Leanback UI" width="520" /> |
+| *Nghe thử bỏ túi, PWA chạy offline, điều khiển ngoài màn hình khóa* | *Xem từ xa trên sofa phòng khách, điều hướng remote D-pad viền vàng* |
 
 ---
 

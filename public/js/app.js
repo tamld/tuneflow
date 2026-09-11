@@ -227,6 +227,7 @@ if (typeof document !== 'undefined') {
   };
 
   let currentPersona = 'mom';
+  let lastSearchResults = null;
 
   btnPersonaMom.addEventListener('click', () => switchPersona('mom', true));
   btnPersonaDad.addEventListener('click', () => switchPersona('dad', true));
@@ -248,6 +249,7 @@ if (typeof document !== 'undefined') {
   function refreshCurrentPersonaPresets() {
     switchPersona(currentPersona, false);
   }
+
 
   function removeFavBatchBar() {
     const existingBar = document.getElementById('fav-batch-bar');
@@ -523,11 +525,13 @@ if (typeof document !== 'undefined') {
       }
 
       if (!data.results || data.results.length === 0) {
-        resultsHeader.textContent = 'Không tìm thấy bài hát';
+        lastSearchResults = null;
+        resultsHeader.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_no_results') : 'Không tìm thấy bài hát';
         resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 20px;">Dạ không tìm thấy bài hát này. Bố Mẹ thử chọn thể loại khác hoặc gõ tên khác xem sao nhé!</div>';
         return;
       }
 
+      lastSearchResults = { results: data.results, genreLabel };
       const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):';
       const foundMsg = foundTemplate.replace('{count}', data.results.length);
       resultsHeader.textContent = genreLabel
@@ -536,6 +540,7 @@ if (typeof document !== 'undefined') {
       renderResults(data.results);
     } catch (err) {
       if (err && err.name === 'AbortError') return;
+      lastSearchResults = null;
       resultsHeader.textContent = 'Lỗi kết nối';
       resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--accent-red);">Dạ mạng đang bị gián đoạn, Bố Mẹ bấm thử lại nha!</div>`;
     }
@@ -997,14 +1002,32 @@ if (typeof document !== 'undefined') {
     });
   }
 
-  // Dynamic card re-render for i18n language toggle (Issue #121)
+  // Dynamic card re-render for i18n language toggle (Issue #121, Issue #126)
   window.reRenderActiveCards = function() {
-    if (activeTrackList && activeTrackList.length > 0) {
+    if (lastSearchResults && lastSearchResults.results && lastSearchResults.results.length > 0) {
+      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):';
+      const foundMsg = foundTemplate.replace('{count}', lastSearchResults.results.length);
+      resultsHeader.textContent = lastSearchResults.genreLabel
+        ? `📻 ${lastSearchResults.genreLabel} — ${foundMsg}`
+        : foundMsg;
+      renderResults(lastSearchResults.results);
+      if (window.previewPlayer) {
+        window.previewPlayer.updateCardState();
+      }
+    } else if (activeTrackList && activeTrackList.length > 0) {
       renderResults(activeTrackList);
+      if (window.previewPlayer) {
+        window.previewPlayer.updateCardState();
+      }
     }
     if (currentPlaylistTracks && currentPlaylistTracks.length > 0 && playlistPanel && playlistPanel.style.display !== 'none') {
       renderPlaylistBatch(currentPlaylistTracks);
     }
+  };
+
+  window.setLastSearchResults = function(results, genreLabel = '') {
+    lastSearchResults = { results, genreLabel };
+    window.reRenderActiveCards();
   };
 
   // 8. Favorites Management (Zero-Login & Server-Sync for Authenticated Users)

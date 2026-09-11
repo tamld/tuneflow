@@ -166,6 +166,9 @@ router.get('/preview/:id', guestGuard, async (req, res) => {
     res.status(upstreamRes.status);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Accept');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     if (upstreamRes.headers.get('content-range')) {
       res.setHeader('Content-Range', upstreamRes.headers.get('content-range'));
     }
@@ -452,6 +455,9 @@ router.get('/stream/pipe/:id', guestGuard, async (req, res) => {
     res.setHeader('Content-Type', contentType);
     res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Accept');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
 
     if (audioRes.headers.get('content-range')) {
       res.setHeader('Content-Range', audioRes.headers.get('content-range'));

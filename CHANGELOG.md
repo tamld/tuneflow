@@ -4,6 +4,13 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 ## [2.5.0-alpha] - Unreleased
 
 ### Đã Thêm (Added)
+- **Bộ Ảnh Chụp Trực Quan & Thư Viện Giao Diện Người Dùng (Visual UI Screenshots & Interface Showcase - Issue #127)**:
+  - Bổ sung bộ ảnh chụp màn hình độ nét cao (Retina 2x/1.5x) vào `docs/assets/screenshots/` ([Issue #127](https://github.com/tamld/tuneflow/issues/127)):
+    - `desktop-player.png`: Giao diện nghe và tải nhạc trên máy tính, hiển thị danh mục bài hát, thẻ bài hát SilverMelody, bộ lọc và thanh phát nhạc dưới cùng với bộ cân bằng âm thanh DSP.
+    - `mobile-pwa.png`: Giao diện ứng dụng PWA trên điện thoại với nút bấm siêu lớn, điều khiển bài hát và hỗ trợ màn hình khóa.
+    - `tv-leanback.png`: Giao diện 10-foot cho Android TV với điều hướng D-pad viền vàng nổi bật và trải nghiệm xem từ xa trên sofa.
+  - Tích hợp khu vực trưng bày hình ảnh `## 🖼️ Interface Showcase` trực tiếp vào `README.md` và `README.vi.md`.
+  - Bổ sung script tự động hóa `scripts/capture_screenshots.js` bằng Puppeteer và bộ kiểm thử đối soát `tests/screenshots-assets.test.js`.
 - **Bộ Kiểm Thử & Chốt Chặn Xác Thực 4 Tầng (4-Tier Validation Gates Suite - Issue #124)**:
   - **Gate 1 - YouTube Innertube Contract Fragility & Fallback Mocking** (`tests/innertube-fallback.test.js`): Kiểm thử bắt buộc chuyển đổi dự phòng sang `yt-dlp` khi YouTube trả về mã lỗi HTTP 429, 403, HTML cảnh báo Captcha hoặc cấu trúc phản hồi bị thay đổi; bọc kín khối parse JSON trong `parsePlaylistInnertube()` ngăn ngừa vỡ tiến trình do lỗi cú pháp.
   - **Gate 2 - Headless Browser Puppeteer Real DOM E2E Integration** (`tests/puppeteer-e2e.test.js`): Kiểm thử E2E không đầu trên trình duyệt Chromium thực tế, xác minh trạng thái giao diện, kiểm định 100% thẻ hình ảnh có thuộc tính `referrerpolicy="no-referrer"`, kiểm tra tính toàn vẹn của nút phát danh sách liên tục và cơ chế chuyển đổi ngôn ngữ Anh - Việt.
@@ -33,6 +40,11 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Ban hành `docs/superpowers/plans/2026-09-11-superpowers-tuneflow-mandatory-steps.md` quy định 8 bước bắt buộc và cơ chế chống stale docs.
 
 ### Đã Sửa (Fixed)
+- **Bản Địa Hóa Tiếng Anh Toàn Diện 100% & Gia Cố Luồng Xử Lý Web Audio DSP (Complete 100% English Localization & Web Audio Pipeline Hardening - Issue #126)**:
+  - Bản địa hóa toàn bộ các thành phần còn sót lại trong giao diện khi chuyển sang tiếng Anh ([Issue #126](https://github.com/tamld/tuneflow/issues/126)): nút Cài App (`Install App`), Chế độ TV (`TV Mode`), Quản trị (`Admin`), trạng thái khách (`Guest: mm:ss`, `Guest: Disconnected`), nút Hàng Đợi (`Queue (N)`), nhãn đổi mật khẩu, công cụ chỉnh cỡ chữ, nhãn tác vụ danh sách phát và các thông báo nổi (Toasts).
+  - Cung cấp hàm `window.setLastSearchResults()` và cập nhật `window.reRenderActiveCards()` đồng bộ động cả tiêu đề kết quả tìm kiếm và các thẻ bài hát khi đổi ngôn ngữ.
+  - Gia cố chính sách CORS trên các endpoint `/api/preview/:id` và `/api/stream/pipe/:id` (`Access-Control-Allow-Origin: *`, `Access-Control-Allow-Headers: Range, Content-Type, Accept`) và thiết lập `audio.crossOrigin = 'anonymous'` trong `public/js/player.js`.
+  - Kích hoạt chủ động `audioCtx.resume()` ngay khi khởi tạo Web Audio API và tại các sự kiện tương tác người dùng, giải quyết dứt điểm cảnh báo Autoplay Policy của trình duyệt và đảm bảo các bộ lọc âm thanh (Equalizer, Volume Boost) luôn hoạt động ổn định.
 - **Bổ Sung Referrer Policy Cho Ảnh Nền Ambient Cover (Ambient Cover Referrer Policy - Issue #124)**:
   - Bổ sung thuộc tính `referrerpolicy="no-referrer"` cho thẻ `#ambient-cover` trong `public/index.html`, ngăn chặn trình duyệt gửi tiêu đề Referrer làm vỡ ảnh nền khi tải từ CDN của Google.
 - **Bản Địa Hóa Động Toàn Diện Tiếng Anh & Khắc Phục Lỗi Ngôn Ngữ Hỗn Hợp (Dynamic English Localization Engine - Issue #121)**:

@@ -73,7 +73,44 @@
       playlist_panel_meta: 'Tích chọn các bài Bố Mẹ ưng ý để tải về máy nhé!',
       playlist_loading: '⏳ Đang đọc danh sách tuyển tập...',
       playlist_loading_btn: '⏳ Đang mở tuyển tập...',
-      playlist_display_all: '✨ Đã hiển thị toàn bộ tuyển tập gồm {count} bài hát.'
+      playlist_display_all: '✨ Đã hiển thị toàn bộ tuyển tập gồm {count} bài hát.',
+      install_app_title: 'Cài đặt ứng dụng lên màn hình chính / Install App',
+      tv_mode_btn: '📺 Chế Độ TV',
+      tv_mode_title: 'Bật/Tắt chế độ điều khiển TV / Android TV Leanback Mode',
+      admin_panel: 'Quản Trị',
+      admin_panel_title: 'Bảng Điều Khiển Quản Trị Hệ Thống',
+      guest_label: 'Khách',
+      guest_disconnected: 'Khách: Đã ngắt',
+      guest_cooldown_msg: 'Hết 30 phút nghe thử - Bấm để đăng nhập',
+      guest_remaining_title: 'Khách vãng lai: còn {time} nghe thử (Bấm để đăng nhập)',
+      change_password_btn: '🔑 Đổi MK',
+      change_password_title: 'Đổi mật khẩu tài khoản',
+      queue_button: '📥 Hàng Đợi',
+      queue_button_title: 'Mở danh sách các bài hát đang tải',
+      font_group_title: 'Chỉnh cỡ chữ hiển thị cho Bố Mẹ dễ đọc',
+      font_dec_title: 'Chữ nhỏ hơn',
+      font_reset_title: 'Cỡ chữ chuẩn',
+      font_inc_title: 'Chữ to rõ hơn',
+      player_stream_connecting: '⏳ Đang kết nối luồng nhạc...',
+      player_streaming_live: '🟢 Đang nghe thử trực tiếp...',
+      player_paused: 'Tạm dừng nghe thử',
+      player_ready: 'Bấm nút Play để bắt đầu nghe thử',
+      player_ended: 'Đã nghe hết bài',
+      player_error: 'Dạ bài này đang bị giới hạn, Bố Mẹ thử chọn bài khác nhé!',
+      btn_loading: '⏳ Đang tải...',
+      btn_pause: '⏸️ Tạm Dừng',
+      btn_resume: '▶️ Tiếp Tục Nghe',
+      btn_preview_short: '▶️ Nghe',
+      btn_pause_short: '⏸️ Dừng',
+      player_title_play: 'Phát nhạc',
+      player_title_pause: 'Tạm dừng',
+      player_title_repeat: 'Lặp lại bài hát',
+      player_title_volume: 'Âm lượng',
+      player_title_sleep: 'Hẹn giờ tắt',
+      player_title_ambient: 'Toàn màn hình tĩnh dưỡng / Ambient Leanback Mode',
+      player_title_pip: 'Chế độ cửa sổ nổi (Picture-in-Picture) / PiP Mode',
+      lang_switch_label: '🇬🇧 English',
+      lang_switch_title: 'Chuyển đổi sang Tiếng Anh / Switch to English'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -144,7 +181,44 @@
       playlist_panel_meta: 'Check the songs you love to download or play on your device!',
       playlist_loading: '⏳ Loading playlist tracks...',
       playlist_loading_btn: '⏳ Opening playlist...',
-      playlist_display_all: '✨ Displayed all {count} tracks from the playlist.'
+      playlist_display_all: '✨ Displayed all {count} tracks from the playlist.',
+      install_app_title: 'Install TuneFlow to your home screen',
+      tv_mode_btn: '📺 TV Mode',
+      tv_mode_title: 'Toggle Android TV Leanback Mode',
+      admin_panel: 'Admin',
+      admin_panel_title: 'System Administration Dashboard',
+      guest_label: 'Guest',
+      guest_disconnected: 'Guest: Disconnected',
+      guest_cooldown_msg: '30-minute preview expired - Click to log in',
+      guest_remaining_title: 'Guest preview: {time} remaining (Click to log in)',
+      change_password_btn: '🔑 Change Pass',
+      change_password_title: 'Change account password',
+      queue_button: '📥 Queue',
+      queue_button_title: 'Open active download queue',
+      font_group_title: 'Adjust font size for easier reading',
+      font_dec_title: 'Smaller text',
+      font_reset_title: 'Standard text',
+      font_inc_title: 'Larger text',
+      player_stream_connecting: '⏳ Connecting audio stream...',
+      player_streaming_live: '🟢 Streaming live preview...',
+      player_paused: 'Preview paused',
+      player_ready: 'Press Play button to start preview',
+      player_ended: 'Playback finished',
+      player_error: 'This track is restricted, please try another song!',
+      btn_loading: '⏳ Loading...',
+      btn_pause: '⏸️ Pause',
+      btn_resume: '▶️ Resume',
+      btn_preview_short: '▶️ Play',
+      btn_pause_short: '⏸️ Pause',
+      player_title_play: 'Play audio',
+      player_title_pause: 'Pause audio',
+      player_title_repeat: 'Repeat playback',
+      player_title_volume: 'Volume',
+      player_title_sleep: 'Sleep timer',
+      player_title_ambient: 'Ambient Leanback Mode',
+      player_title_pip: 'Picture-in-Picture (PiP) Mode',
+      lang_switch_label: '🇻🇳 Tiếng Việt',
+      lang_switch_title: 'Chuyển sang Tiếng Việt / Switch to Vietnamese'
     }
   };
 
@@ -331,6 +405,83 @@
     const resultsHeader = document.getElementById('results-header');
     if (resultsHeader && resultsHeader.textContent.includes('✨ Bấm chọn') || (resultsHeader && resultsHeader.textContent.includes('✨ Tap a genre'))) {
       resultsHeader.textContent = getTranslation('resultsDefault');
+    }
+
+    // Top Header Actions
+    const btnLang = document.getElementById('btn-lang-toggle');
+    if (btnLang) {
+      btnLang.textContent = getTranslation('lang_switch_label');
+      btnLang.title = getTranslation('lang_switch_title');
+    }
+
+    const pwaBtn = document.getElementById('btn-install-pwa');
+    if (pwaBtn) {
+      pwaBtn.innerHTML = getTranslation('install_app');
+      pwaBtn.title = getTranslation('install_app_title');
+    }
+
+    const tvBtn = document.getElementById('btn-toggle-tv');
+    if (tvBtn) {
+      tvBtn.textContent = getTranslation('tv_mode_btn');
+      tvBtn.title = getTranslation('tv_mode_title');
+    }
+
+    const adminText = document.getElementById('admin-trigger-text');
+    if (adminText) adminText.textContent = getTranslation('admin_panel');
+    const adminBtn = document.getElementById('btn-admin-panel-trigger');
+    if (adminBtn) adminBtn.title = getTranslation('admin_panel_title');
+
+    const queueBtn = document.getElementById('btn-floating-queue');
+    if (queueBtn) {
+      const qCount = document.getElementById('queue-badge-count')?.textContent || '0';
+      queueBtn.innerHTML = `${getTranslation('queue_button')} (<span id="queue-badge-count">${qCount}</span>)`;
+      queueBtn.title = getTranslation('queue_button_title');
+    }
+
+    const changePassBtn = document.getElementById('btn-change-password-trigger');
+    if (changePassBtn) {
+      changePassBtn.textContent = getTranslation('change_password_btn');
+      changePassBtn.title = getTranslation('change_password_title');
+    }
+
+    const fontGroup = document.querySelector('.font-scale-group');
+    if (fontGroup) fontGroup.title = getTranslation('font_group_title');
+    const fontDec = document.getElementById('btn-font-dec');
+    if (fontDec) fontDec.title = getTranslation('font_dec_title');
+    const fontReset = document.getElementById('btn-font-reset');
+    if (fontReset) fontReset.title = getTranslation('font_reset_title');
+    const fontInc = document.getElementById('btn-font-inc');
+    if (fontInc) fontInc.title = getTranslation('font_inc_title');
+
+    // Playlist Panel Action Buttons
+    const btnPlayPl = document.getElementById('btn-play-playlist');
+    if (btnPlayPl) {
+      const isPlaying = window.previewPlayer && window.previewPlayer.isPlaying;
+      btnPlayPl.innerHTML = `${isPlaying ? getTranslation('playlist_pause') : getTranslation('playlist_play_all')} (<span id="batch-play-count">${document.getElementById('batch-play-count')?.textContent || '0'}</span>)`;
+    }
+    const btnSelectAll = document.getElementById('btn-select-all');
+    if (btnSelectAll) {
+      btnSelectAll.textContent = getTranslation('playlist_select_all');
+    }
+    const btnDlSelected = document.getElementById('btn-download-selected');
+    if (btnDlSelected) {
+      const selCount = document.getElementById('selected-count')?.textContent || '0';
+      btnDlSelected.innerHTML = `${getTranslation('playlist_download_selected')} (<span id="selected-count">${selCount}</span>)`;
+    }
+
+    // Refresh Auth Status Badge
+    const authObj = window.tuneFlowAuth || window.authController || window.authManager;
+    if (authObj && typeof authObj.updateBadgeGuest === 'function') {
+      if (authObj.role === 'guest') {
+        authObj.updateBadgeGuest();
+      } else {
+        authObj.updateBadgeLoggedIn();
+      }
+    }
+
+    // Refresh Player Controls Localization
+    if (window.previewPlayer && typeof window.previewPlayer.updateLanguage === 'function') {
+      window.previewPlayer.updateLanguage();
     }
 
     // Trigger persona reload if active
