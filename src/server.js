@@ -50,11 +50,26 @@ if (require.main === module) {
   server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🎶 TuneFlow Server is running on http://localhost:${PORT}`);
     console.log(`📂 Ready for parents to search, preview, and download music!`);
+
+    // Start background maintenance engine (Issue #103)
+    try {
+      const maintenance = require('./engine/maintenance');
+      maintenance.startMaintenance();
+    } catch (err) {
+      console.error('⚠️ Could not start background maintenance engine:', err.message);
+    }
   });
 
-  // Graceful shutdown (Issue #22, #56)
+  // Graceful shutdown (Issue #22, #56, #103)
   const gracefulShutdown = () => {
     console.log('\n🛑 TuneFlow shutting down safely...');
+    try {
+      const maintenance = require('./engine/maintenance');
+      if (maintenance && typeof maintenance.stopMaintenance === 'function') {
+        maintenance.stopMaintenance();
+      }
+    } catch (_e) {}
+
     try {
       const queue = require('./engine/queue');
       if (queue && typeof queue.shutdown === 'function') {
