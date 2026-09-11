@@ -41,7 +41,7 @@ COPY scripts/ ./scripts/
 # Create downloads directory with proper permissions
 RUN mkdir -p /app/downloads/temp && chown -R node:node /app
 
-# Run as non-root user for Homelab security
+# Run as non-root user for container security (least privilege principle)
 USER node
 
 EXPOSE 3000
