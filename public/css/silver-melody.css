@@ -1068,8 +1068,9 @@ body {
   transform: translateY(-2px);
 }
 
-/* Modal Overlay & Card (Issue #10) */
-.modal-overlay {
+/* Modal Overlay & Backdrop (Issue #10, #99) */
+.modal-overlay,
+.modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
