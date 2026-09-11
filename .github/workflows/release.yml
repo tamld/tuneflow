@@ -45,7 +45,7 @@ jobs:
       - name: Install Puppeteer Chrome
         run: npx puppeteer browsers install chrome
 
-      - name: Run Full Test Suite (213+ Tests)
+      - name: Run Full Test Suite (239 Tests)
         run: npm test
 
   # ============================================================================
@@ -81,6 +81,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
+            type=semver,pattern=v{{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
@@ -120,6 +121,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.6'
 
       - name: Build Android Packages (Mobile & TV Leanback)
         id: build-apks

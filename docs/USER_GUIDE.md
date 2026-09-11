@@ -1,6 +1,6 @@
 # 📖 TuneFlow User Guide
 
-Action-first manual for running, installing, and navigating TuneFlow across iOS, Android, Android TV, and Homelab servers.
+Action-first manual for running, installing, and navigating TuneFlow across iOS, Android, Android TV, and Self-Hosted / Cloud servers.
 
 ---
 
@@ -31,7 +31,7 @@ Action-first manual for running, installing, and navigating TuneFlow across iOS,
 
 ### Option B: Download Official APK
 1. Open [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
-2. Download `tuneflow-mobile-v2.4.2.apk`.
+2. Download the latest mobile APK (`tuneflow-mobile-*.apk`).
 3. Open the downloaded APK file and tap **Install**.
 
 ---
@@ -41,8 +41,8 @@ Action-first manual for running, installing, and navigating TuneFlow across iOS,
 > **Estimated Time:** 1 minute.
 
 ### Installation
-1. Download `tuneflow-tv-v2.4.2.apk` from [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
-2. Sideload onto your Android TV box via USB or `adb install tuneflow-tv-v2.4.2.apk`.
+1. Download the latest TV APK (`tuneflow-tv-*.apk`) from [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
+2. Sideload onto your Android TV box via USB or `adb install <apk-file>`.
 3. Launch TuneFlow from your Android TV apps row.
 
 ### Remote Control D-Pad Shortcuts
@@ -55,8 +55,8 @@ Action-first manual for running, installing, and navigating TuneFlow across iOS,
 
 ---
 
-## 4. Run TuneFlow in Homelab Docker
-> **Goal:** Self-host TuneFlow container with persistent storage.  
+## 4. Run TuneFlow via Docker / Container (Server, VPS, Cloud, Homelab, NAS)
+> **Goal:** Run TuneFlow container on any Docker/Podman host (Linux VPS, Cloud VM, NAS, Local machine, or Homelab) with persistent storage.  
 > **Estimated Time:** 3 minutes.
 
 ### Step 1: Create `compose.yaml`

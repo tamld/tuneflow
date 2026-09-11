@@ -1,6 +1,6 @@
 # 📖 Cẩm Nang Sử Dụng TuneFlow
 
-Hướng dẫn trực diện, chuẩn hành động (ADHD) để cài đặt, cấu hình và sử dụng TuneFlow trên iPhone, Android, Android TV và máy chủ Homelab.
+Hướng dẫn trực diện, chuẩn hành động (ADHD) để cài đặt, cấu hình và sử dụng TuneFlow trên iPhone, Android, Android TV và máy chủ tự lưu trữ / VPS / Cloud / Homelab.
 
 ---
 
@@ -31,7 +31,7 @@ Hướng dẫn trực diện, chuẩn hành động (ADHD) để cài đặt, c�
 
 ### Cách B: Cài đặt file APK chính thức
 1. Truy cập trang [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
-2. Tải file `tuneflow-mobile-v2.4.2.apk`.
+2. Tải file APK Mobile phiên bản mới nhất (`tuneflow-mobile-*.apk`).
 3. Mở file APK vừa tải về và chọn **Cài đặt**.
 
 ---
@@ -41,8 +41,8 @@ Hướng dẫn trực diện, chuẩn hành động (ADHD) để cài đặt, c�
 > **Thời gian dự tính:** 1 phút.
 
 ### Cài đặt ứng dụng
-1. Tải file `tuneflow-tv-v2.4.2.apk` từ trang [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
-2. Chép vào USB hoặc dùng lệnh `adb install tuneflow-tv-v2.4.2.apk` để cài đặt lên Android TV box.
+1. Tải file APK Android TV phiên bản mới nhất (`tuneflow-tv-*.apk`) từ trang [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
+2. Chép vào USB hoặc dùng lệnh `adb install <file-apk>` để cài đặt lên Android TV box.
 3. Mở ứng dụng TuneFlow trên màn hình chính Android TV.
 
 ### Phím tắt điều khiển bằng Remote (D-Pad)
@@ -55,8 +55,8 @@ Hướng dẫn trực diện, chuẩn hành động (ADHD) để cài đặt, c�
 
 ---
 
-## 4. Khởi chạy TuneFlow trong Homelab Docker
-> **Mục tiêu:** Tự lưu trữ container TuneFlow với cơ sở dữ liệu và thư mục tải bền vững.  
+## 4. Khởi chạy TuneFlow qua Docker / Container (Server, VPS, Cloud, Homelab, NAS)
+> **Mục tiêu:** Tự lưu trữ container TuneFlow trên mọi môi trường chạy Docker/Podman (VPS Linux, máy ảo Cloud, NAS, máy cá nhân hoặc Homelab) với lưu trữ dữ liệu bền vững.  
 > **Thời gian dự tính:** 3 phút.
 
 ### Bước 1: Tạo file `compose.yaml`

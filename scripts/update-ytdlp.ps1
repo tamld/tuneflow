@@ -1,5 +1,5 @@
-﻿# ==============================================================================
-# TuneFlow - yt-dlp Auto-Update & Maintenance Script for Windows Homelab
+# ==============================================================================
+# TuneFlow - yt-dlp Auto-Update & Maintenance Script for Windows / Self-Hosted Host
 # ==============================================================================
 
 Write-Host "🔍 [TuneFlow Ops] Checking for yt-dlp updates..." -ForegroundColor Cyan

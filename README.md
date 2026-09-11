@@ -2,11 +2,11 @@
 
 <div align="center">
 
-**An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted and homelab ready.**
+**An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted & container-ready (Docker, Podman, VPS, Cloud, Local).**
 
 [![Latest Release](https://img.shields.io/github/v/release/tamld/tuneflow?color=blue&logo=github)](https://github.com/tamld/tuneflow/releases/latest)
 [![CI Gate](https://github.com/tamld/tuneflow/actions/workflows/ci.yml/badge.svg)](https://github.com/tamld/tuneflow/actions/workflows/ci.yml)
-[![Docker Image](https://img.shields.io/badge/GHCR-tuneflow%3Av2.4.2-2496ED?logo=docker&logoColor=white)](https://github.com/tamld/tuneflow/pkgs/container/tuneflow)
+[![Docker Image](https://img.shields.io/badge/GHCR-tuneflow%3A2.4.2-2496ED?logo=docker&logoColor=white)](https://github.com/tamld/tuneflow/pkgs/container/tuneflow)
 [![Design: WCAG AAA](https://img.shields.io/badge/Design-SilverMelody%20WCAG%20AAA-orange.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -34,7 +34,7 @@
 | **iOS / iPadOS** | Standalone PWA | Safari Add to Home Screen | ✅ (Hardware lock screen) |
 | **Android Mobile** | Native App / PWA | [Download Mobile APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
 | **Android TV** | 10-Foot Leanback UI | [Download Android TV APK](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
-| **Homelab Server**| Docker Multi-Arch | `ghcr.io/tamld/tuneflow:v2.4.2` | ✅ |
+| **Self-Hosted / Server** | Container (Docker / Podman / Compose) | `ghcr.io/tamld/tuneflow:2.4.2` | ✅ |
 
 ---
 
