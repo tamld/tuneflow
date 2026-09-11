@@ -44,7 +44,7 @@ describe('Issue #90: Unified 3-Stage Remote CI/CD & Android Packaging Suite', ()
 
     // Stage 3: Unified GitHub Release
     assert.match(content, /github-release:\s*\n\s*name:/, 'Must contain github-release job');
-    assert.match(content, /needs:\s*\[container-image,\s*apk-build\]/,
+    assert.match(content, /needs:\s*\[.*container-image.*apk-build.*\]/,
       'github-release must depend on both container-image and apk-build completing first');
     assert.match(content, /softprops\/action-gh-release/, 'Must publish release via action-gh-release');
     assert.match(content, /release-assets\/\*\.apk/, 'Release must attach all compiled APKs');

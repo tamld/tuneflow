@@ -20,33 +20,35 @@ function resolveStoragePaths(platform, env = process.env, isPortableOverride = n
   }
 
   if (platform === 'win32') {
-    const localAppData = env.LOCALAPPDATA || path.join(env.USERPROFILE || 'C:\\', 'AppData', 'Local');
-    const root = path.join(localAppData, 'TuneFlow');
+    const p = path.win32;
+    const localAppData = env.LOCALAPPDATA || p.join(env.USERPROFILE || 'C:\\', 'AppData', 'Local');
+    const root = p.join(localAppData, 'TuneFlow');
     return {
       isPortable: false,
-      dataDir: path.join(root, 'data'),
-      downloadsDir: path.join(root, 'downloads')
+      dataDir: p.join(root, 'data'),
+      downloadsDir: p.join(root, 'downloads')
     };
   }
 
+  const p = path.posix;
   if (platform === 'darwin') {
     const home = env.HOME || '/';
-    const root = path.join(home, 'Library', 'Application Support', 'TuneFlow');
+    const root = p.join(home, 'Library', 'Application Support', 'TuneFlow');
     return {
       isPortable: false,
-      dataDir: path.join(root, 'data'),
-      downloadsDir: path.join(root, 'downloads')
+      dataDir: p.join(root, 'data'),
+      downloadsDir: p.join(root, 'downloads')
     };
   }
 
   // linux and other unix
   const home = env.HOME || '/';
-  const dataHome = env.XDG_DATA_HOME || path.join(home, '.local', 'share');
-  const root = path.join(dataHome, 'tuneflow');
+  const dataHome = env.XDG_DATA_HOME || p.join(home, '.local', 'share');
+  const root = p.join(dataHome, 'tuneflow');
   return {
     isPortable: false,
-    dataDir: path.join(root, 'data'),
-    downloadsDir: path.join(root, 'downloads')
+    dataDir: p.join(root, 'data'),
+    downloadsDir: p.join(root, 'downloads')
   };
 }
 
