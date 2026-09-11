@@ -6,7 +6,7 @@
 
 [![Latest Release](https://img.shields.io/github/v/release/tamld/tuneflow?color=blue&logo=github)](https://github.com/tamld/tuneflow/releases/latest)
 [![CI Gate](https://github.com/tamld/tuneflow/actions/workflows/ci.yml/badge.svg)](https://github.com/tamld/tuneflow/actions/workflows/ci.yml)
-[![Docker Image](https://img.shields.io/badge/GHCR-tuneflow%3A2.4.2-2496ED?logo=docker&logoColor=white)](https://github.com/tamld/tuneflow/pkgs/container/tuneflow)
+[![Docker Image](https://img.shields.io/badge/GHCR-tuneflow%3A2.4.3-2496ED?logo=docker&logoColor=white)](https://github.com/tamld/tuneflow/pkgs/container/tuneflow)
 [![Design: WCAG AAA](https://img.shields.io/badge/Design-SilverMelody%20WCAG%20AAA-orange.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -34,7 +34,7 @@
 | **iOS / iPadOS** | Standalone PWA | Safari Thêm vào MH chính | ✅ (Giữ luồng phần cứng) |
 | **Android Mobile** | Ứng dụng gốc / PWA | [Tải file APK Mobile](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
 | **Android TV** | Giao diện 10-Foot Leanback | [Tải file APK Android TV](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
-| **Máy chủ / Tự lưu trữ** | Container (Docker / Podman / Compose) | `ghcr.io/tamld/tuneflow:2.4.2` | ✅ |
+| **Máy chủ / Tự lưu trữ** | Container (Docker / Podman / Compose) | `ghcr.io/tamld/tuneflow:2.4.3` | ✅ |
 
 ---
 

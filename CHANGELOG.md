@@ -1,6 +1,38 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.4.3] - 2026-09-11
+
+### Đã Thêm (Added)
+- **Dọn Dẹp Phiên Hết Hạn Tự Động Theo Chu Kỳ (Automated Periodic Session Cleanup - Issue #103)**:
+  - Bổ sung luồng tác vụ bảo trì ngầm `src/engine/maintenance.js` chạy định kỳ mỗi 1 giờ (`unref()` timer) để tự động xóa sạch các bản ghi phiên đăng nhập (`sessions`) đã quá hạn ([Issue #103](https://github.com/tamld/tuneflow/issues/103)).
+  - Bổ sung chỉ mục hiệu năng `idx_sessions_expires_at` và `idx_sessions_user_id` tối ưu tốc độ truy vấn dọn dẹp $O(\log N)$.
+  - Tích hợp vòng đời tắt máy an toàn (`gracefulShutdown`) giải phóng timer bảo trì và ngắt kết nối an toàn.
+- **Động Cơ Di Trú Lược Đồ SQLite Động Nguyên Tử (Atomic SQLite Schema Migrations Engine - Issue #105)**:
+  - Bổ sung module `src/db/migrations.js` quản lý lược đồ dữ liệu tự động dựa trên `PRAGMA user_version` ([Issue #105](https://github.com/tamld/tuneflow/issues/105)).
+  - Thay thế cơ chế đọc tệp `schema.sql` thô bằng pipeline di trú tự động bọc trong giao dịch `db.transaction()` bảo đảm tính toàn vẹn ACID.
+  - Di trú v1: Khởi tạo toàn bộ bảng cốt lõi (`users`, `sessions`, `guest_quotas`, `user_favorites`).
+  - Di trú v2: Tự động đánh chỉ mục hiệu năng cao (`idx_sessions_expires_at`, `idx_sessions_user_id`, `idx_user_favorites_video`).
+- **Đóng Gói & Phát Hành Đa Nền Tảng Khách Quan (Objective Multi-Host Deployment & Remote CI/CD Alignment - Issue #101)**:
+  - Rà soát và chuẩn hóa tài liệu `README.md`, `README.vi.md`, `USER_GUIDE.md` loại bỏ các hướng dẫn chủ quan, mở rộng hỗ trợ triển khai linh hoạt (Docker, Podman, Compose, VPS, Cloud, Local) ([Issue #101](https://github.com/tamld/tuneflow/issues/101)).
+  - Cố định phiên bản Gradle 8.6 trong `release.yml` và `gradle-wrapper.properties` tương thích hoàn hảo với Android Gradle Plugin 8.2.2, giải quyết triệt để lỗi biên dịch APK trên GitHub Actions runners.
+  - Bổ sung cơ chế sinh thẻ kép `type=semver,pattern={{version}}` và `pattern=v{{version}}` cho Docker metadata action đẩy lên GHCR.
+- **Tối Ưu Hóa Thiết Kế Hệ Thống & Token Pipeline (System Design & Token Optimization - Issue #97)**:
+  - Tách biệt ranh giới trách nhiệm kiến trúc (Separation of Concerns) giữa tầng Router, Controller, Service và Repository ([Issue #97](https://github.com/tamld/tuneflow/issues/97)).
+  - Tối ưu hóa chuỗi xử lý token và nâng cao hiệu suất phản hồi cho các API tìm kiếm và tải nhạc.
+
+### Đã Sửa (Fixed)
+- **Khắc Phục Vấn Đề Chuyển Trang & Modal Đổi Mật Khẩu Khi Đang Phát Nhạc (Issue #99)**:
+  - Khắc phục lỗi xung đột trạng thái giữa bộ phát nhạc và modal tự phục vụ đổi mật khẩu ([Issue #99](https://github.com/tamld/tuneflow/issues/99)).
+  - Bổ sung bộ kiểm thử tự động hóa toàn diện bao phủ các ca kiểm thử xác thực, trạng thái modal và luồng phát nhạc.
+- **Đồng Bộ Phiên Bản Toàn Diện v2.4.3 (Version Synchronization - Issue #107)**:
+  - Đồng bộ mã phiên bản `2.4.3` (`versionCode 243`) trên toàn bộ các tệp cấu hình cốt lõi (`package.json`, `manifest.json`, `build.gradle`, `sw.js`, `README.md`, `release.yml`) ([Issue #107](https://github.com/tamld/tuneflow/issues/107)).
+
+### Kiểm Thử & Đảm Bảo Chất Lượng
+- Nâng tổng số ca kiểm thử tự động hóa lên **257/257 bài test chạy xanh 100%** (81 test suites, 0 lỗi linter ESLint).
+
+---
+
 ## [2.4.2] - 2026-09-10
 
 ### Đã Thêm (Added)

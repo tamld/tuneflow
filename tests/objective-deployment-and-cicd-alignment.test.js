@@ -1,4 +1,4 @@
-﻿const { describe, it } = require('node:test');
+const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
@@ -31,8 +31,8 @@ describe('Issue #101: Objective Deployment & CI/CD Alignment Suite', () => {
     const readmeEn = fs.readFileSync(readmeEnPath, 'utf8');
     const readmeVi = fs.readFileSync(readmeViPath, 'utf8');
 
-    assert.match(readmeEn, /ghcr\.io\/tamld\/tuneflow:2\.4\.2/, 'English README must use valid GHCR image tag 2.4.2');
-    assert.match(readmeVi, /ghcr\.io\/tamld\/tuneflow:2\.4\.2/, 'Vietnamese README must use valid GHCR image tag 2.4.2');
+    assert.match(readmeEn, /ghcr\.io\/tamld\/tuneflow:2\.4\.3/, 'English README must use valid GHCR image tag 2.4.3');
+    assert.match(readmeVi, /ghcr\.io\/tamld\/tuneflow:2\.4\.3/, 'Vietnamese README must use valid GHCR image tag 2.4.3');
   });
 
   it('should verify release.yml publishes both semver and v-prefixed container tags to GHCR', () => {
@@ -54,15 +54,15 @@ describe('Issue #101: Objective Deployment & CI/CD Alignment Suite', () => {
     assert.match(wrapper, /gradle-8\.6-bin\.zip/, 'gradle wrapper must reference gradle 8.6');
   });
 
-  it('should verify version 2.4.2 synchronization across all project descriptors', () => {
+  it('should verify version 2.4.3 synchronization across all project descriptors', () => {
     const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
     const manifest = JSON.parse(fs.readFileSync(manifestJsonPath, 'utf8'));
     const gradle = fs.readFileSync(appBuildGradlePath, 'utf8');
 
-    assert.strictEqual(pkg.version, '2.4.2', 'package.json version must be 2.4.2');
-    assert.strictEqual(manifest.version, '2.4.2', 'manifest.json version must be 2.4.2');
-    assert.match(gradle, /versionName\s+["']2\.4\.2["']/, 'build.gradle versionName must be 2.4.2');
-    assert.match(gradle, /versionCode\s+242/, 'build.gradle versionCode must be 242');
+    assert.strictEqual(pkg.version, '2.4.3', 'package.json version must be 2.4.3');
+    assert.strictEqual(manifest.version, '2.4.3', 'manifest.json version must be 2.4.3');
+    assert.match(gradle, /versionName\s+["']2\.4\.3["']/, 'build.gradle versionName must be 2.4.3');
+    assert.match(gradle, /versionCode\s+243/, 'build.gradle versionCode must be 243');
   });
 
   it('should verify Dockerfile uses least privilege security terminology', () => {

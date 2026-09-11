@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "name": "TuneFlow",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "tagline": "An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted & container-ready (Docker, Podman, VPS, Cloud).",
   "license": "MIT",
   "repository": "https://github.com/tamld/tuneflow",
