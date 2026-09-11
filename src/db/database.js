@@ -16,13 +16,8 @@ function initDatabase(dbPath = path.join(process.cwd(), 'data', 'tuneflow.db')) 
     db.exec('PRAGMA foreign_keys = ON;');
   } catch (_e) {}
 
-  const schemaPath = path.join(__dirname, 'schema.sql');
-  if (fs.existsSync(schemaPath)) {
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    try {
-      db.exec(schemaSql);
-    } catch (_e) {}
-  }
+  const { applyMigrations } = require('./migrations');
+  applyMigrations(db);
 
   return db;
 }
