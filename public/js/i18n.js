@@ -49,7 +49,13 @@
       sort_relevance: '⭐ Phù Hợp',
       sort_views: '👁️ Nhiều Lượt Nghe',
       sort_date: '🆕 Mới Nhất',
-      open_playlist: '📂 Mở Tuyển Tập'
+      open_playlist: '📂 Mở Tuyển Tập',
+      playlist_play_all: '▶️ Phát Danh Sách',
+      playlist_pause: '⏸️ Tạm Dừng Tuyển Tập',
+      playlist_resume: '▶️ Tiếp Tục Phát',
+      playlist_select_all: 'Đánh Dấu Tất Cả',
+      playlist_deselect_all: 'Bỏ Chọn Tất Cả',
+      playlist_download_selected: '⬇️ Tải Các Bài Đã Chọn'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -96,7 +102,13 @@
       sort_relevance: '⭐ Relevance',
       sort_views: '👁️ Most Viewed',
       sort_date: '🆕 Latest',
-      open_playlist: '📂 Open Playlist'
+      open_playlist: '📂 Open Playlist',
+      playlist_play_all: '▶️ Play Playlist',
+      playlist_pause: '⏸️ Pause Playlist',
+      playlist_resume: '▶️ Resume Playlist',
+      playlist_select_all: 'Select All',
+      playlist_deselect_all: 'Deselect All',
+      playlist_download_selected: '⬇️ Download Selected'
     }
   };
 

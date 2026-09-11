@@ -178,6 +178,8 @@ if (typeof document !== 'undefined') {
   const playlistPanelMeta = document.getElementById('playlist-panel-meta');
   const playlistItemsList = document.getElementById('playlist-items-list');
   const btnSelectAll = document.getElementById('btn-select-all');
+  const btnPlayPlaylist = document.getElementById('btn-play-playlist');
+  const batchPlayCountEl = document.getElementById('batch-play-count');
   const btnDownloadBatch = document.getElementById('btn-download-batch');
   const batchSelectedCountEl = document.getElementById('batch-selected-count');
 
@@ -594,7 +596,16 @@ if (typeof document !== 'undefined') {
       const playItemHandler = (e) => {
         if (e) e.stopPropagation();
         if (window.previewPlayer) {
+          const checked = Array.from(playlistItemsList.querySelectorAll('.playlist-checkbox:checked'));
+          const selectedIds = new Set(checked.map(cb => cb.getAttribute('data-id')));
+          const selectedTracks = currentPlaylistTracks.filter(t => selectedIds.has(t.id));
+          if (selectedTracks.some(t => t.id === item.id)) {
+            activeTrackList = selectedTracks;
+          } else {
+            activeTrackList = currentPlaylistTracks;
+          }
           window.previewPlayer.playTrack(item);
+          updatePlaylistPlayButtonState();
         }
       };
 
@@ -638,9 +649,39 @@ if (typeof document !== 'undefined') {
     activeTrackList = items;
   }
 
+  function updatePlaylistPlayButtonState() {
+    if (!btnPlayPlaylist) return;
+    const checkedCount = playlistItemsList ? playlistItemsList.querySelectorAll('.playlist-checkbox:checked').length : 0;
+    if (batchPlayCountEl) {
+      batchPlayCountEl.textContent = checkedCount;
+    }
+
+    const current = window.previewPlayer ? window.previewPlayer.currentTrack : null;
+    const isCurrentInPlaylist = Boolean(current && currentPlaylistTracks && currentPlaylistTracks.some(t => t.id === current.id));
+
+    if (isCurrentInPlaylist && window.previewPlayer && window.previewPlayer.isPlaying) {
+      btnPlayPlaylist.classList.add('playing');
+      btnPlayPlaylist.innerHTML = '⏸️ Tạm Dừng Tuyển Tập';
+      btnPlayPlaylist.title = 'Bấm để tạm dừng phát tuyển tập này';
+      btnPlayPlaylist.setAttribute('aria-label', 'Tạm dừng phát tuyển tập');
+    } else if (isCurrentInPlaylist && window.previewPlayer && !window.previewPlayer.isPlaying) {
+      btnPlayPlaylist.classList.remove('playing');
+      btnPlayPlaylist.innerHTML = `▶️ Tiếp Tục Phát (<span id="batch-play-count">${checkedCount}</span>)`;
+      btnPlayPlaylist.title = 'Bấm để tiếp tục nghe tuyển tập này';
+      btnPlayPlaylist.setAttribute('aria-label', 'Tiếp tục phát tuyển tập');
+    } else {
+      btnPlayPlaylist.classList.remove('playing');
+      btnPlayPlaylist.innerHTML = `▶️ Phát Danh Sách (<span id="batch-play-count">${checkedCount}</span>)`;
+      btnPlayPlaylist.title = 'Bấm để phát liên tục các bài đã chọn trong tuyển tập';
+      btnPlayPlaylist.setAttribute('aria-label', 'Phát liên tục các bài đã chọn');
+    }
+  }
+
   function updateSelectedBatchCount() {
     const checked = playlistItemsList.querySelectorAll('.playlist-checkbox:checked');
-    batchSelectedCountEl.textContent = checked.length;
+    if (batchSelectedCountEl) batchSelectedCountEl.textContent = checked.length;
+    if (batchPlayCountEl) batchPlayCountEl.textContent = checked.length;
+    updatePlaylistPlayButtonState();
   }
 
   btnSelectAll.addEventListener('click', () => {
@@ -650,6 +691,40 @@ if (typeof document !== 'undefined') {
     btnSelectAll.textContent = anyUnchecked ? 'Bỏ Chọn Tất Cả' : 'Đánh Dấu Tất Cả';
     updateSelectedBatchCount();
   });
+
+  if (btnPlayPlaylist) {
+    btnPlayPlaylist.addEventListener('click', () => {
+      const checked = Array.from(playlistItemsList.querySelectorAll('.playlist-checkbox:checked'));
+      if (checked.length === 0) {
+        showToast('⚠️ Bố Mẹ hãy tích chọn ít nhất 1 bài hát để phát nhé!', 'warn');
+        return;
+      }
+
+      const selectedIds = new Set(checked.map(cb => cb.getAttribute('data-id')));
+      const selectedTracks = currentPlaylistTracks.filter(t => selectedIds.has(t.id));
+
+      if (selectedTracks.length === 0) {
+        showToast('⚠️ Không tìm thấy bài hát hợp lệ để phát!', 'warn');
+        return;
+      }
+
+      const current = window.previewPlayer ? window.previewPlayer.currentTrack : null;
+      const isCurrentInPlaylist = Boolean(current && selectedTracks.some(t => t.id === current.id));
+
+      if (isCurrentInPlaylist && window.previewPlayer) {
+        window.previewPlayer.togglePlay();
+        updatePlaylistPlayButtonState();
+        return;
+      }
+
+      activeTrackList = selectedTracks;
+      if (window.previewPlayer) {
+        showToast(`▶️ Đang phát tuyển tập: "${selectedTracks[0].title}"`, 'info');
+        window.previewPlayer.playTrack(selectedTracks[0]);
+      }
+      updatePlaylistPlayButtonState();
+    });
+  }
 
   btnDownloadBatch.addEventListener('click', async () => {
     const checked = Array.from(playlistItemsList.querySelectorAll('.playlist-checkbox:checked'));
@@ -1244,6 +1319,7 @@ if (typeof document !== 'undefined') {
     } else {
       showToast('🎵 Đã phát hết danh sách bài hát!', 'info');
     }
+    updatePlaylistPlayButtonState();
   };
 
   window.playPreviousTrack = () => {
@@ -1256,6 +1332,7 @@ if (typeof document !== 'undefined') {
       showToast(`⏮️ Đang phát bài trước: "${prevTrack.title}"`, 'info');
       window.previewPlayer.playTrack(prevTrack);
     }
+    updatePlaylistPlayButtonState();
   };
 
   // 13. Toast Helper (Safe Text Rendering & Global Exposure)
@@ -1270,12 +1347,14 @@ if (typeof document !== 'undefined') {
     toastContainer.appendChild(toast);
 
     setTimeout(() => {
-      toast.style.opacity = '0';
-      setTimeout(() => toast.remove(), 300);
-    }, 4500);
+      toast.style.animation = 'fadeOut 0.3s forwards';
+      setTimeout(() => {
+        if (toast.parentElement) toast.parentElement.removeChild(toast);
+      }, 300);
+    }, 4000);
   }
 
-  // 14. PWA In-App Install Prompt Handler (Phase 1)
+  // PWA A2HS (Add to Home Screen)
   let deferredInstallPrompt = null;
   const btnInstallPwa = document.getElementById('btn-install-pwa');
 
@@ -1311,6 +1390,7 @@ if (typeof document !== 'undefined') {
   window.showToast = showToast;
   window.renderResults = renderResults;
   window.renderPlaylistBatch = renderPlaylistBatch;
+  window.updatePlaylistPlayButtonState = updatePlaylistPlayButtonState;
 });
 }
 
