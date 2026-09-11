@@ -30,6 +30,8 @@
 
 | Nền tảng | Dạng ứng dụng | Tải về / Sử dụng | Nghe nền khi tắt màn hình |
 | :--- | :--- | :--- | :---: |
+| **Windows Desktop** | Bộ cài Wizard Inno Setup 6 (Zero-Admin) | [Tải Setup.exe](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
+| **Linux Desktop** | Ứng dụng độc lập & Chuẩn FreeDesktop | [Tải bộ cài Linux](https://github.com/tamld/tuneflow/releases/latest) | ✅ |
 | **Trình duyệt Web** | Máy tính (Chrome, Safari, Edge, Firefox) | `http://<ip-máy-chủ>:3000` | ✅ |
 | **iOS / iPadOS** | Standalone PWA | Safari Thêm vào MH chính | ✅ (Giữ luồng phần cứng) |
 | **Android Mobile** | Ứng dụng gốc / PWA | [Tải file APK Mobile](https://github.com/tamld/tuneflow/releases/latest) | ✅ |

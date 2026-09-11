@@ -90,4 +90,24 @@ describe('SPEC-0010: Desktop Packaging & Branding Verification Suite', () => {
       assert.match(content, /release-assets\/\*\.exe/);
     });
   });
+
+  describe('Anti-Stale Documentation Verification (README & CHANGELOG)', () => {
+    it('should verify README.md and README.vi.md document Windows and Linux desktop platforms', () => {
+      const readmeEn = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf-8');
+      const readmeVi = fs.readFileSync(path.join(repoRoot, 'README.vi.md'), 'utf-8');
+      
+      assert.match(readmeEn, /Windows Desktop.*Setup\.exe/);
+      assert.match(readmeEn, /Linux Desktop/);
+      assert.match(readmeVi, /Windows Desktop.*Setup\.exe/);
+      assert.match(readmeVi, /Linux Desktop/);
+    });
+
+    it('should verify CHANGELOG.md documents Phase 13 desktop packaging deliverables', () => {
+      const changelog = fs.readFileSync(path.join(repoRoot, 'CHANGELOG.md'), 'utf-8');
+      assert.match(changelog, /## \[2\.5\.0-alpha\]/);
+      assert.match(changelog, /setup\.iss/);
+      assert.match(changelog, /generate_icons\.py/);
+      assert.match(changelog, /binary_guard\.js/);
+    });
+  });
 });

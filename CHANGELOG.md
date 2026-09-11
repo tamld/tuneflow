@@ -1,6 +1,31 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.5.0-alpha] - Unreleased
+
+### Đã Thêm (Added)
+- **Đóng Gói Cài Đặt Desktop Bản Địa & Wizard Inno Setup (Desktop Packaging Suite - SPEC-0010, ADR-0014)**:
+  - Bản thiết kế cài đặt Windows Inno Setup 6 `installer/windows/setup.iss` cài đặt vào `%LOCALAPPDATA%\Programs\TuneFlow` không đòi quyền Administrator (Zero-Admin, né còi báo động UAC).
+  - Bản đăng ký FreeDesktop chuẩn Linux `installer/linux/tuneflow.desktop`.
+  - Tích hợp Stage 3 `windows-desktop-build` vào `.github/workflows/release.yml` biên dịch trực tiếp file `.exe` trên GitHub Actions runner.
+- **Bộ Công Cụ Nhận Diện Thương Hiệu & Sinh Icon Đa Tầng (Authoritative Icon Generator Suite - Issue #113)**:
+  - Script tự động hóa `scripts/generate_icons.py` sinh file `favicon.ico` đa tầng gồm 7 độ phân giải (`16x16` đến `256x256`) từ ảnh gốc `512x512`.
+  - Thiết lập kho lưu trữ thương hiệu SSoT tại `assets/branding/` (`icon.ico`, `icon-512.png`, `icon-192.png`, `README.md`).
+- **Phòng Thủ Nhị Phân Chủ Động & Tránh False Positive Antivirus (Binary Guard & CAS - SPEC-0008, Issue #109)**:
+  - Module `src/security/binary_guard.js` thực hiện Content-Addressable Storage (CAS) đối soát SHA-256 trước khi thực thi `yt-dlp` và `ffmpeg`.
+  - Lọc sạch biến môi trường độc hại (`NODE_OPTIONS`, `PYTHONPATH`) ngăn ngừa inject subprocess.
+  - Cơ chế tráo file nguyên tử `atomicSwapExecutable()` né lỗi khóa file Windows File Lock.
+- **Quy Chuẩn Vận Hành Superpowers Bắt Buộc (Superpowers 8 Mandatory Steps Governance - Issue #115)**:
+  - Ban hành `docs/superpowers/plans/2026-09-11-superpowers-tuneflow-mandatory-steps.md` quy định 8 bước bắt buộc và cơ chế chống stale docs.
+
+### Đã Sửa (Fixed)
+- **Chuẩn Hóa Đường Dẫn Đa Nền Tảng Trên Linux & Windows (Cross-Platform Path Determinism - Issue #115)**:
+  - Ép buộc sử dụng `path.win32` cho Windows và `path.posix` cho POSIX trong `binary_guard.js` và `tests/portable-binary-security.test.js`, khắc phục triệt để lỗi gãy CI trên Ubuntu runner.
+  - Tối ưu hóa `scripts/generate_icons.py` sử dụng Lazy Import thư viện Pillow, cho phép cờ `--check` chạy mượt mà trên môi trường headless container.
+  - Nới lỏng regex phụ thuộc trong `tests/ci-cd-unified-pipeline.test.js` tương thích với quy trình release đa giai đoạn.
+
+---
+
 ## [2.4.3] - 2026-09-11
 
 ### Đã Thêm (Added)
