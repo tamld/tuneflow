@@ -188,8 +188,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func loadTuneFlowUI() {
-        let url = URL(string: "http://localhost:\(targetPort)")!
-        webView.load(URLRequest(url: url))
+        let websiteDataTypes = Set([
+            WKWebsiteDataTypeDiskCache,
+            WKWebsiteDataTypeMemoryCache,
+            WKWebsiteDataTypeServiceWorkerRegistrations,
+            WKWebsiteDataTypeOfflineWebApplicationCache
+        ])
+        WKWebsiteDataStore.default().removeData(ofTypes: websiteDataTypes, modifiedSince: Date(timeIntervalSince1970: 0)) { [weak self] in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                let url = URL(string: "http://localhost:\(self.targetPort)")!
+                var req = URLRequest(url: url)
+                req.cachePolicy = .reloadIgnoringLocalCacheData
+                self.webView.load(req)
+            }
+        }
     }
 
     func showErrorAlert(title: String, message: String) {

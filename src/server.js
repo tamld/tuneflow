@@ -23,9 +23,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static assets for the Elderly-friendly Frontend with 1-day client cache & ETag
+// Serve static assets: aggressive revalidation for scripts/html, cached images/fonts
 app.use(express.static(path.join(ROOT_DIR, 'public'), {
-  maxAge: '1d',
+  maxAge: 0,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.endsWith('sw.js')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
+  },
   etag: true
 }));
 

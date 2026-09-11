@@ -96,6 +96,7 @@ hdiutil create \
     -format UDZO \
     "$DMG_FILE"
 
+rm -rf "$DMG_STAGING"
 echo "✅ DMG built: $DMG_FILE ($(du -h "$DMG_FILE" | cut -f1))"
 
 # 5. Create Portable tar.gz archive

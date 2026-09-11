@@ -4,11 +4,12 @@
  */
 class PreviewPlayer {
   constructor() {
-    this.audio = new Audio();
+    this.audio = (typeof document !== 'undefined' && document.getElementById('preview-audio')) || new Audio();
     this.audio.crossOrigin = 'anonymous';
     this.currentTrack = null;
     this.isPlaying = false;
     this.isLoading = false;
+    this.connectionTimeoutTimer = null;
 
     // Audio Control State
     this.volumeLevels = [1.0, 0.6, 0.3];
@@ -181,7 +182,41 @@ class PreviewPlayer {
       });
     }
 
+    this.audio.addEventListener('playing', () => {
+      if (this.connectionTimeoutTimer) {
+        clearTimeout(this.connectionTimeoutTimer);
+        this.connectionTimeoutTimer = null;
+      }
+      this.isLoading = false;
+      this.isPlaying = true;
+      if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_streaming_live') : '🟢 Đang nghe thử trực tiếp...';
+      this.updatePlayPauseIcon();
+      this.updateCardState();
+      this.startVisualizer();
+      if (this.isPipActive) this.renderPipCanvas();
+    });
+
+    this.audio.addEventListener('waiting', () => {
+      this.isLoading = true;
+      if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_stream_connecting') : '⏳ Đang kết nối luồng nhạc...';
+      this.updateCardState();
+    });
+
+    this.audio.addEventListener('pause', () => {
+      if (!this.isLoading) {
+        this.isPlaying = false;
+        this.stopVisualizer();
+        this.updatePlayPauseIcon();
+        this.updateCardState();
+        this.updateMediaSessionPlaybackState();
+      }
+    });
+
     this.audio.addEventListener('ended', () => {
+      if (this.connectionTimeoutTimer) {
+        clearTimeout(this.connectionTimeoutTimer);
+        this.connectionTimeoutTimer = null;
+      }
       if (this.isLooping) {
         this.audio.currentTime = 0;
         this.audio.play();
@@ -201,6 +236,11 @@ class PreviewPlayer {
     });
 
     this.audio.addEventListener('error', () => {
+      if (this.connectionTimeoutTimer) {
+        clearTimeout(this.connectionTimeoutTimer);
+        this.connectionTimeoutTimer = null;
+      }
+      this.isLoading = false;
       this.isPlaying = false;
       this.stopVisualizer();
       this.updatePlayPauseIcon();
@@ -488,21 +528,50 @@ class PreviewPlayer {
       this.pipThumbnailImg = null;
     }
 
+    // Safety timeout: 25s max to connect to stream
+    if (this.connectionTimeoutTimer) {
+      clearTimeout(this.connectionTimeoutTimer);
+      this.connectionTimeoutTimer = null;
+    }
+    this.connectionTimeoutTimer = setTimeout(() => {
+      if (this.isLoading) {
+        this.isLoading = false;
+        this.isPlaying = false;
+        this.stopVisualizer();
+        if (this.trackStatus) {
+          this.trackStatus.textContent = window.TuneFlowI18n
+            ? window.TuneFlowI18n.t('player_error')
+            : 'Dạ bài này đang bị giới hạn hoặc kết nối chậm, Bố Mẹ thử chọn bài khác nhé!';
+        }
+        this.updatePlayPauseIcon();
+        this.updateCardState();
+      }
+    }, 25000);
+
     // Load stream from backend preview route (HTML5 audio auto-loads on src assignment)
     this.audio.src = `/api/preview/${track.id}`;
 
     this.audio.play().then(() => {
+      if (this.connectionTimeoutTimer) {
+        clearTimeout(this.connectionTimeoutTimer);
+        this.connectionTimeoutTimer = null;
+      }
       this.isLoading = false;
       this.isPlaying = true;
-      this.initWebAudio(false);
-      this.resumeAudioContext();
-      this.startVisualizer();
+      if (this.audioCtx) {
+        this.resumeAudioContext();
+        this.startVisualizer();
+      }
       if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_streaming_live') : '🟢 Đang nghe thử trực tiếp...';
       this.updatePlayPauseIcon();
       this.updateCardState();
       this.setupMediaSession(track);
       if (this.isPipActive) this.renderPipCanvas();
     }).catch((err) => {
+      if (this.connectionTimeoutTimer) {
+        clearTimeout(this.connectionTimeoutTimer);
+        this.connectionTimeoutTimer = null;
+      }
       this.isLoading = false;
       if (err && err.name === 'AbortError') {
         return;
@@ -528,12 +597,12 @@ class PreviewPlayer {
         this.audio.currentTime = 0;
       }
       this.audio.play().then(() => {
-        this.initWebAudio(false);
-        this.resumeAudioContext();
-        this.startVisualizer();
+        if (this.audioCtx) {
+          this.resumeAudioContext();
+          this.startVisualizer();
+        }
       }).catch(() => {});
       this.isPlaying = true;
-      this.resumeAudioContext();
       if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_streaming_live') : '🟢 Đang nghe thử trực tiếp...';
     }
     this.updatePlayPauseIcon();

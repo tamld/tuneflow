@@ -45,22 +45,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for static shell assets with network fallback
+  // Network-first with offline cache fallback for scripts, styles, and shell
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
+    fetch(event.request).then((networkResponse) => {
+      if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
       }
-      return fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+      return networkResponse;
+    }).catch(() => {
+      return caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-        return networkResponse;
-      }).catch(() => {
-        // Fallback to offline index page
         if (event.request.mode === 'navigate') {
           return caches.match('/');
         }
