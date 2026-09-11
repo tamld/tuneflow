@@ -12,7 +12,22 @@
 
 [English](README.md) · [Tiếng Việt](README.vi.md) · [User Guide](docs/USER_GUIDE.md) · [Roadmap](docs/ROADMAP.md)
 
+<br />
+
+<img src="docs/assets/screenshots/desktop-player.png" alt="TuneFlow Desktop Music Player & Downloader" width="100%" />
+
+*✨ SilverMelody Senior-First UX: Large Touch Targets, Real-time Web Audio DSP Equalizer & In-App Preview*
+
 </div>
+
+---
+
+## 🖼️ Interface Showcase
+
+| 📱 Mobile PWA (iOS / Android) | 📺 10-Foot Android TV Leanback |
+| :---: | :---: |
+| <img src="docs/assets/screenshots/mobile-pwa.png" alt="TuneFlow Mobile PWA UI" width="300" /> | <img src="docs/assets/screenshots/tv-leanback.png" alt="TuneFlow Android TV Leanback UI" width="520" /> |
+| *Pocket audio preview, offline PWA, lock screen media controls* | *Sofa viewing, D-pad spatial navigation, high-contrast gold focus* |
 
 ---
 

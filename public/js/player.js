@@ -5,6 +5,7 @@
 class PreviewPlayer {
   constructor() {
     this.audio = new Audio();
+    this.audio.crossOrigin = 'anonymous';
     this.currentTrack = null;
     this.isPlaying = false;
     this.isLoading = false;
@@ -191,7 +192,7 @@ class PreviewPlayer {
       this.stopVisualizer();
       this.updatePlayPauseIcon();
       this.updateCardState();
-      this.trackStatus.textContent = 'Đã nghe hết bài';
+      this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_ended') : 'Đã nghe hết bài';
 
       // Continuous Playback: Advance to next track if hook exists
       if (typeof window.playNextTrack === 'function') {
@@ -204,8 +205,18 @@ class PreviewPlayer {
       this.stopVisualizer();
       this.updatePlayPauseIcon();
       this.updateCardState();
-      this.trackStatus.textContent = 'Dạ bài này đang bị giới hạn, Bố Mẹ thử chọn bài khác nhé!';
+      this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_error') : 'Dạ bài này đang bị giới hạn, Bố Mẹ thử chọn bài khác nhé!';
     });
+  }
+
+  /**
+   * Initialize Web Audio API node graph lazily on first audio interaction
+   * @param {boolean} force - Force initialization even on iOS (e.g. on explicit user EQ adjustment)
+   */
+  resumeAudioContext() {
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume().catch(() => {});
+    }
   }
 
   /**
@@ -220,9 +231,7 @@ class PreviewPlayer {
     }
 
     if (this.audioCtx) {
-      if (this.audioCtx.state === 'suspended') {
-        this.audioCtx.resume();
-      }
+      this.resumeAudioContext();
       return;
     }
 
@@ -231,6 +240,9 @@ class PreviewPlayer {
       if (!AudioContextClass) return;
 
       this.audioCtx = new AudioContextClass();
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume().catch(() => {});
+      }
       this.sourceNode = this.audioCtx.createMediaElementSource(this.audio);
 
       // 3-Band Biquad Filter Equalizer
@@ -282,6 +294,28 @@ class PreviewPlayer {
     }
   }
 
+  getEqInfo(presetKey) {
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
+    const labels = {
+      standard: {
+        icon: '🎛️',
+        name: isEn ? 'Standard' : 'Chuẩn',
+        desc: isEn ? 'Natural balanced audio' : 'Âm thanh cân bằng tự nhiên'
+      },
+      clarity: {
+        icon: '🗣️',
+        name: isEn ? 'Voice Clarity' : 'Trong Rõ',
+        desc: isEn ? 'Enhanced vocals, reduced rumble' : 'Tăng cường giọng ca, giảm ù rè'
+      },
+      warm: {
+        icon: '☕',
+        name: isEn ? 'Warm Relax' : 'Trầm Ấm',
+        desc: isEn ? 'Rich bass for Bolero & Relaxation' : 'Dày dặn, êm ái cho Bolero & Thư giãn'
+      }
+    };
+    return labels[presetKey] || labels.standard;
+  }
+
   applyEq() {
     if (!this.lowFilter || !this.midFilter || !this.highFilter) return;
     const current = this.eqPresets[this.eqIndex];
@@ -306,24 +340,27 @@ class PreviewPlayer {
 
   cycleEq() {
     this.initWebAudio(true);
+    this.resumeAudioContext();
     this.eqIndex = (this.eqIndex + 1) % this.eqPresets.length;
     const presetKey = this.eqPresets[this.eqIndex];
-    const info = this.eqLabels[presetKey];
+    const info = this.getEqInfo(presetKey);
     this.applyEq();
 
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
     if (this.btnEq) {
       this.btnEq.textContent = info.icon;
-      this.btnEq.title = `Bộ chỉnh âm: ${info.name} (${info.desc})`;
+      this.btnEq.title = `${isEn ? 'Equalizer' : 'Bộ chỉnh âm'}: ${info.name} (${info.desc})`;
       this.btnEq.classList.toggle('active', presetKey !== 'standard');
     }
 
     if (typeof window.showToast === 'function') {
-      window.showToast(`${info.icon} Chỉnh âm: ${info.name} — ${info.desc}`, 'info');
+      window.showToast(`${info.icon} ${isEn ? 'Equalizer' : 'Chỉnh âm'}: ${info.name} — ${info.desc}`, 'info');
     }
   }
 
   cycleBoost() {
     this.initWebAudio(true);
+    this.resumeAudioContext();
     this.boostIndex = (this.boostIndex + 1) % this.boostLevels.length;
     const level = this.boostLevels[this.boostIndex];
     const pct = Math.round(level * 100);
@@ -332,14 +369,16 @@ class PreviewPlayer {
       this.gainNode.gain.value = level;
     }
 
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
     if (this.btnBoost) {
       this.btnBoost.classList.toggle('boosted', level > 1.0);
-      this.btnBoost.title = `Khuếch đại âm lượng: ${pct}% (Bấm để đổi)`;
+      this.btnBoost.title = `${isEn ? 'Volume Boost' : 'Khuếch đại âm lượng'}: ${pct}% (${isEn ? 'Click to change' : 'Bấm để đổi'})`;
       this.btnBoost.textContent = level > 1.0 ? `⚡${pct}%` : '⚡';
     }
 
     if (typeof window.showToast === 'function') {
-      window.showToast(`⚡ Khuếch đại âm thanh: ${pct}%${level > 1.0 ? ' (Đã bật chống rè loa)' : ''}`, 'info');
+      const antiClip = level > 1.0 ? (isEn ? ' (Anti-clipping active)' : ' (Đã bật chống rè loa)') : '';
+      window.showToast(`⚡ ${isEn ? 'Volume Boost' : 'Khuếch đại âm thanh'}: ${pct}%${antiClip}`, 'info');
     }
   }
 
@@ -403,7 +442,7 @@ class PreviewPlayer {
 
     if (this.playerContainer) this.playerContainer.classList.add('visible');
     if (this.trackTitle) this.trackTitle.textContent = `${track.title} - ${track.uploader || ''}`;
-    if (this.trackStatus) this.trackStatus.textContent = '⏳ Đang kết nối luồng nhạc...';
+    if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_stream_connecting') : '⏳ Đang kết nối luồng nhạc...';
 
     // Highlight loading card on UI & reset other cards immediately
     this.resetAllCards();
@@ -431,8 +470,9 @@ class PreviewPlayer {
       this.isLoading = false;
       this.isPlaying = true;
       this.initWebAudio(false);
+      this.resumeAudioContext();
       this.startVisualizer();
-      if (this.trackStatus) this.trackStatus.textContent = '🟢 Đang nghe thử trực tiếp...';
+      if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_streaming_live') : '🟢 Đang nghe thử trực tiếp...';
       this.updatePlayPauseIcon();
       this.updateCardState();
       this.setupMediaSession(track);
@@ -444,7 +484,7 @@ class PreviewPlayer {
       }
       this.isPlaying = false;
       this.stopVisualizer();
-      if (this.trackStatus) this.trackStatus.textContent = 'Bấm nút Play để bắt đầu nghe thử';
+      if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_ready') : 'Bấm nút Play để bắt đầu nghe thử';
       this.updatePlayPauseIcon();
       this.updateCardState();
       this.updateMediaSessionPlaybackState();
@@ -457,17 +497,19 @@ class PreviewPlayer {
       this.audio.pause();
       this.isPlaying = false;
       this.stopVisualizer();
-      if (this.trackStatus) this.trackStatus.textContent = 'Tạm dừng nghe thử';
+      if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_paused') : 'Tạm dừng nghe thử';
     } else {
       if (this.audio.ended) {
         this.audio.currentTime = 0;
       }
       this.audio.play().then(() => {
         this.initWebAudio(false);
+        this.resumeAudioContext();
         this.startVisualizer();
       }).catch(() => {});
       this.isPlaying = true;
-      if (this.trackStatus) this.trackStatus.textContent = '🟢 Đang nghe thử trực tiếp...';
+      this.resumeAudioContext();
+      if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_streaming_live') : '🟢 Đang nghe thử trực tiếp...';
     }
     this.updatePlayPauseIcon();
     this.updateCardState();
@@ -476,11 +518,13 @@ class PreviewPlayer {
   }
 
   resetAllCards() {
+    const previewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶️ Nghe Thử Trước';
+    const previewShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_preview_short') : '▶️ Nghe';
     document.querySelectorAll('.song-card').forEach(card => {
       card.classList.remove('playing');
       card.classList.remove('loading');
       const btn = card.querySelector('.btn-preview');
-      if (btn) btn.innerHTML = '▶️ Nghe Thử Trước';
+      if (btn) btn.innerHTML = previewText;
       const icon = card.querySelector('.play-icon-overlay');
       if (icon) icon.textContent = '▶';
     });
@@ -488,7 +532,7 @@ class PreviewPlayer {
       row.classList.remove('playing');
       row.classList.remove('loading');
       const btn = row.querySelector('.btn-preview');
-      if (btn) btn.innerHTML = '▶️ Nghe';
+      if (btn) btn.innerHTML = previewShort;
       const icon = row.querySelector('.playlist-play-icon-overlay');
       if (icon) icon.textContent = '▶';
     });
@@ -498,6 +542,12 @@ class PreviewPlayer {
   }
 
   highlightCard(trackId, isPlaying, isLoading = false) {
+    const loadingText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_loading') : '⏳ Đang tải...';
+    const pauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause') : '⏸️ Tạm Dừng';
+    const resumeText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_resume') : '▶️ Tiếp Tục Nghe';
+    const pauseShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause_short') : '⏸️ Dừng';
+    const previewShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_preview_short') : '▶️ Nghe';
+
     const card = document.getElementById(`card-${trackId}`);
     if (card) {
       card.classList.toggle('playing', isPlaying);
@@ -505,9 +555,9 @@ class PreviewPlayer {
       const btn = card.querySelector('.btn-preview');
       if (btn) {
         if (isLoading) {
-          btn.innerHTML = '⏳ Đang tải...';
+          btn.innerHTML = loadingText;
         } else {
-          btn.innerHTML = isPlaying ? '⏸️ Tạm Dừng' : '▶️ Tiếp Tục Nghe';
+          btn.innerHTML = isPlaying ? pauseText : resumeText;
         }
       }
       const icon = card.querySelector('.play-icon-overlay');
@@ -523,9 +573,9 @@ class PreviewPlayer {
       const btn = plRow.querySelector('.btn-preview');
       if (btn) {
         if (isLoading) {
-          btn.innerHTML = '⏳ Đang tải...';
+          btn.innerHTML = loadingText;
         } else {
-          btn.innerHTML = isPlaying ? '⏸️ Dừng' : '▶️ Nghe';
+          btn.innerHTML = isPlaying ? pauseShort : previewShort;
         }
       }
       const icon = plRow.querySelector('.playlist-play-icon-overlay');
@@ -950,23 +1000,78 @@ class PreviewPlayer {
 
   updatePipBtnState() {
     if (this.btnPip) {
+      const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
       this.btnPip.classList.toggle('pip-active', this.isPipActive);
       this.btnPip.title = this.isPipActive
-        ? 'Chế độ cửa sổ nổi PiP: Đang BẬT (Bấm để tắt)'
-        : 'Chế độ cửa sổ nổi (Picture-in-Picture) / PiP Mode';
+        ? (isEn ? 'Picture-in-Picture: ON (Click to turn off)' : 'Chế độ cửa sổ nổi PiP: Đang BẬT (Bấm để tắt)')
+        : (isEn ? 'Picture-in-Picture (PiP) Mode' : 'Chế độ cửa sổ nổi (Picture-in-Picture) / PiP Mode');
     }
   }
 
   updatePlayPauseIcon() {
     if (this.btnPlayPause) {
+      const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
       if (this.isLoading) {
         this.btnPlayPause.innerHTML = '⏳';
-        this.btnPlayPause.title = 'Đang kết nối luồng nhạc...';
+        this.btnPlayPause.title = isEn ? 'Connecting audio stream...' : 'Đang kết nối luồng nhạc...';
       } else {
         this.btnPlayPause.innerHTML = this.isPlaying ? '⏸️' : '▶️';
-        this.btnPlayPause.title = this.isPlaying ? 'Tạm dừng nghe thử' : 'Tiếp tục nghe thử';
+        this.btnPlayPause.title = this.isPlaying 
+          ? (isEn ? 'Pause preview' : 'Tạm dừng nghe thử') 
+          : (isEn ? 'Continue preview' : 'Tiếp tục nghe thử');
       }
     }
+  }
+
+  updateLanguage() {
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
+    const t = (k, fallback) => (window.TuneFlowI18n ? window.TuneFlowI18n.t(k) : fallback);
+
+    if (this.trackStatus) {
+      if (this.isLoading) {
+        this.trackStatus.textContent = t('player_stream_connecting', '⏳ Đang kết nối luồng nhạc...');
+      } else if (this.isPlaying) {
+        this.trackStatus.textContent = t('player_streaming_live', '🟢 Đang nghe thử trực tiếp...');
+      } else if (this.currentTrack) {
+        this.trackStatus.textContent = t('player_paused', 'Tạm dừng nghe thử');
+      }
+    }
+
+    if (this.btnPlayPause) {
+      this.btnPlayPause.title = this.isPlaying ? t('player_title_pause', 'Tạm dừng') : t('player_title_play', 'Phát nhạc');
+      this.btnPlayPause.setAttribute('aria-label', this.btnPlayPause.title);
+    }
+    if (this.btnEq) {
+      const presetKey = this.eqPresets[this.eqIndex];
+      const info = this.getEqInfo(presetKey);
+      this.btnEq.title = `${isEn ? 'Equalizer' : 'Bộ chỉnh âm'}: ${info.name} (${info.desc})`;
+    }
+    if (this.btnBoost) {
+      const level = this.boostLevels[this.boostIndex];
+      const pct = Math.round(level * 100);
+      this.btnBoost.title = `${isEn ? 'Volume Boost' : 'Khuếch đại âm lượng'}: ${pct}%`;
+    }
+    if (this.btnRepeat) {
+      this.btnRepeat.title = `${t('player_title_repeat', 'Lặp lại bài hát')}: ${this.isLooping ? (isEn ? 'On' : 'Đang bật') : (isEn ? 'Off' : 'Đang tắt')}`;
+    }
+    if (this.btnVolume) {
+      const volPct = Math.round(this.volumeLevels[this.volumeIndex] * 100);
+      this.btnVolume.title = `${t('player_title_volume', 'Âm lượng')}: ${volPct}%`;
+    }
+    if (this.btnSleep) {
+      this.btnSleep.title = `${t('player_title_sleep', 'Hẹn giờ tắt')}: ${this.sleepMinutes > 0 ? `${this.sleepMinutes} min` : (isEn ? 'Off' : 'Đang tắt')}`;
+    }
+    const ambientBtn = document.getElementById('btn-ambient-toggle');
+    if (ambientBtn) {
+      ambientBtn.title = t('player_title_ambient', 'Toàn màn hình tĩnh dưỡng');
+      ambientBtn.setAttribute('aria-label', ambientBtn.title);
+    }
+    if (this.btnPip) {
+      this.btnPip.title = t('player_title_pip', 'Chế độ cửa sổ nổi (PiP)');
+      this.btnPip.setAttribute('aria-label', this.btnPip.title);
+    }
+
+    this.updateCardState();
   }
 
   formatTime(seconds) {

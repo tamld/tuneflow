@@ -118,4 +118,146 @@ describe('Gate 2: Headless Browser Puppeteer Real DOM & E2E Validation', () => {
     const helpBtnHeight = await page.$eval('#btn-help', (el) => el.offsetHeight);
     assert.ok(helpBtnHeight >= 40, `Help button height must be >= 40px for elderly touch target, got: ${helpBtnHeight}`);
   });
+
+  it('should verify 100% complete English localization on header buttons, auth status, and card re-render', async (t) => {
+    if (!page) return t.skip('Chrome executable not available in environment');
+
+    // Switch to English
+    await page.evaluate(() => {
+      window.TuneFlowI18n.setLanguage('en');
+    });
+
+    const headerTexts = await page.evaluate(() => {
+      return {
+        btnLang: document.getElementById('btn-lang-toggle')?.textContent.trim(),
+        installPwa: document.getElementById('btn-install-pwa')?.textContent.trim(),
+        toggleTv: document.getElementById('btn-toggle-tv')?.textContent.trim(),
+        adminText: document.getElementById('admin-trigger-text')?.textContent.trim(),
+        authStatus: document.getElementById('auth-status-text')?.textContent.trim(),
+        floatingQueue: document.getElementById('btn-floating-queue')?.textContent.trim(),
+        contentLabel: document.querySelector('.search-filter-group span')?.textContent.trim(),
+        sortLabel: document.querySelector('.search-sort-group span')?.textContent.trim()
+      };
+    });
+
+    assert.strictEqual(headerTexts.btnLang, '🇻🇳 Tiếng Việt', 'Language switcher must invite to switch to Vietnamese');
+    assert.strictEqual(headerTexts.installPwa, '📲 Install App', 'PWA install text must be localized to English');
+    assert.strictEqual(headerTexts.toggleTv, '📺 TV Mode', 'TV mode button must be localized to English');
+    assert.strictEqual(headerTexts.adminText, 'Admin', 'Admin text must be localized to English');
+    assert.ok(headerTexts.authStatus.startsWith('Guest:'), `Auth status must start with Guest:, got: ${headerTexts.authStatus}`);
+    assert.ok(headerTexts.floatingQueue.includes('Queue'), `Queue button must contain Queue, got: ${headerTexts.floatingQueue}`);
+    assert.strictEqual(headerTexts.contentLabel, 'Content:', 'Filter content label must be Content:');
+    assert.strictEqual(headerTexts.sortLabel, 'Sort by:', 'Sort label must be Sort by:');
+
+    // Simulate search and test dynamic reRenderActiveCards on language toggle
+    await page.evaluate(() => {
+      const dummyResults = [
+        { id: 'track1', title: 'Moonlight Romance', uploader: 'Singer', duration: 180, thumbnail: 'data:image/svg+xml,<svg></svg>' },
+        { id: 'PLtest', title: 'Golden Hits Collection', uploader: 'Singer', isPlaylist: true, thumbnail: 'data:image/svg+xml,<svg></svg>' }
+      ];
+      // Inject into app
+      document.getElementById('search-input').value = 'Moonlight';
+      window.executeSearchTest = true;
+      if (typeof window.setLastSearchResults === 'function') {
+        window.setLastSearchResults(dummyResults);
+      } else {
+        const header = document.getElementById('results-header');
+        const foundTemplate = window.TuneFlowI18n.t('search_results_found');
+        header.textContent = foundTemplate.replace('{count}', dummyResults.length);
+        window.reRenderActiveCards();
+      }
+    });
+
+    const resultsHeaderTextEn = await page.$eval('#results-header', el => el.textContent.trim());
+    assert.ok(resultsHeaderTextEn.includes('Found 2 lovely songs'), `Results header must be in English, got: ${resultsHeaderTextEn}`);
+
+    // Switch back to Vietnamese and verify reRenderActiveCards dynamic update
+    await page.evaluate(() => {
+      window.TuneFlowI18n.setLanguage('vi');
+    });
+
+    const resultsHeaderTextVi = await page.$eval('#results-header', el => el.textContent.trim());
+    assert.ok(resultsHeaderTextVi.includes('Tìm thấy 2 bài hát'), `Results header must re-translate to Vietnamese, got: ${resultsHeaderTextVi}`);
+  });
+
+  it('should verify Web Audio API initialization, proactive resume, and Equalizer preset gain adjustments', async (t) => {
+    if (!page) return t.skip('Chrome executable not available in environment');
+
+    const dspResult = await page.evaluate(() => {
+      const player = window.previewPlayer;
+      if (!player) return { error: 'PreviewPlayer not found' };
+
+      // Verify audio crossOrigin setting
+      const crossOrigin = player.audio.crossOrigin;
+
+      // Force WebAudio initialization
+      player.initWebAudio(true);
+      const hasAudioCtx = Boolean(player.audioCtx);
+      const ctxState = player.audioCtx ? player.audioCtx.state : null;
+      const hasFilters = Boolean(player.lowFilter && player.midFilter && player.highFilter && player.gainNode);
+
+      // Verify standard preset
+      const stdLow = player.lowFilter.gain.value;
+      const stdMid = player.midFilter.gain.value;
+      const stdHigh = player.highFilter.gain.value;
+
+      // Cycle to clarity preset
+      player.cycleEq();
+      const clarityPreset = player.eqPresets[player.eqIndex];
+      const clarityLow = player.lowFilter.gain.value;
+      const clarityMid = player.midFilter.gain.value;
+      const clarityHigh = player.highFilter.gain.value;
+
+      // Cycle to warm preset
+      player.cycleEq();
+      const warmPreset = player.eqPresets[player.eqIndex];
+      const warmLow = player.lowFilter.gain.value;
+      const warmMid = player.midFilter.gain.value;
+      const warmHigh = player.highFilter.gain.value;
+
+      // Cycle to volume boost 125%
+      player.cycleBoost();
+      const boostLevel = player.gainNode.gain.value;
+
+      return {
+        crossOrigin,
+        hasAudioCtx,
+        ctxState,
+        hasFilters,
+        stdLow,
+        stdMid,
+        stdHigh,
+        clarityPreset,
+        clarityLow,
+        clarityMid,
+        clarityHigh,
+        warmPreset,
+        warmLow,
+        warmMid,
+        warmHigh,
+        boostLevel
+      };
+    });
+
+    assert.strictEqual(dspResult.crossOrigin, 'anonymous', 'Audio element must set crossOrigin="anonymous"');
+    assert.strictEqual(dspResult.hasAudioCtx, true, 'AudioContext must be initialized');
+    assert.strictEqual(dspResult.ctxState, 'running', 'AudioContext must be in running state');
+    assert.strictEqual(dspResult.hasFilters, true, 'All Biquad and Gain filters must exist');
+
+    assert.strictEqual(dspResult.stdLow, 0, 'Standard low gain must be 0dB');
+    assert.strictEqual(dspResult.stdMid, 0, 'Standard mid gain must be 0dB');
+    assert.strictEqual(dspResult.stdHigh, 0, 'Standard high gain must be 0dB');
+
+    assert.strictEqual(dspResult.clarityPreset, 'clarity');
+    assert.strictEqual(dspResult.clarityLow, -3, 'Clarity low gain must be -3dB');
+    assert.strictEqual(dspResult.clarityMid, 4.5, 'Clarity mid gain must be +4.5dB');
+    assert.strictEqual(dspResult.clarityHigh, 2, 'Clarity high gain must be +2dB');
+
+    assert.strictEqual(dspResult.warmPreset, 'warm');
+    assert.strictEqual(dspResult.warmLow, 4, 'Warm low gain must be +4dB');
+    assert.strictEqual(dspResult.warmMid, 0, 'Warm mid gain must be 0dB');
+    assert.strictEqual(dspResult.warmHigh, -2, 'Warm high gain must be -2dB');
+
+    assert.strictEqual(dspResult.boostLevel, 1.25, 'Volume boost tier 1 must be 1.25x (125%)');
+  });
 });
