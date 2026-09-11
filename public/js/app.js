@@ -645,8 +645,9 @@ if (typeof document !== 'undefined') {
       playlistItemsList.appendChild(row);
     });
 
-    updateSelectedBatchCount();
+    currentPlaylistTracks = items;
     activeTrackList = items;
+    updateSelectedBatchCount();
   }
 
   function updatePlaylistPlayButtonState() {
@@ -701,7 +702,8 @@ if (typeof document !== 'undefined') {
       }
 
       const selectedIds = new Set(checked.map(cb => cb.getAttribute('data-id')));
-      const selectedTracks = currentPlaylistTracks.filter(t => selectedIds.has(t.id));
+      const sourceTracks = (currentPlaylistTracks && currentPlaylistTracks.length > 0) ? currentPlaylistTracks : activeTrackList;
+      const selectedTracks = sourceTracks.filter(t => selectedIds.has(t.id));
 
       if (selectedTracks.length === 0) {
         showToast('⚠️ Không tìm thấy bài hát hợp lệ để phát!', 'warn');
