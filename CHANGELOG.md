@@ -40,6 +40,12 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Ban hành `docs/superpowers/plans/2026-09-11-superpowers-tuneflow-mandatory-steps.md` quy định 8 bước bắt buộc và cơ chế chống stale docs.
 
 ### Đã Sửa (Fixed)
+- **Chống Vỡ Tỉ Lệ & Tràn Chữ Cho Nút Khuếch Đại Âm Lượng Dạng Viên Thuốc (Volume Boost Capsule Pill Geometry & Zero Text Overflow - Issue #129)**:
+  - Khắc phục lỗi vỡ khung tròn 1:1 khi bật chế độ khuếch đại âm thanh 125% ([Issue #129](https://github.com/tamld/tuneflow/issues/129)): nút chuyển sang hình dáng viên thuốc (capsule pill) thanh lịch (`min-width: 66px`, `height: 44px`, `max-height: 44px`, `border-radius: 22px`, `padding: 0 10px`, `font-size: 13px`, `font-weight: 800`, `white-space: nowrap`) trên máy tính để bàn, và co giãn mượt mà trên thiết bị di động (`min-width: 58px`, `height: 42px`, `max-height: 42px`, `border-radius: 21px`, `padding: 0 8px`, `font-size: 12px`).
+  - Bổ sung cấu trúc HTML tách biệt `<span class="boost-icon">⚡</span><span class="boost-pct">${pct}%</span>` và khóa `line-height: 1` loại bỏ triệt để hiện tượng co giật subpixel do phông chữ biểu tượng cảm xúc gây ra.
+  - Cung cấp hàm điều khiển lập trình `setBoostPreset(idx)` và `setEqPreset(presetKey)` trong `public/js/player.js` giúp đồng bộ hóa trực tiếp trạng thái phát và tái sử dụng cho các kịch bản chụp ảnh màn hình / kiểm thử tự động.
+  - Cập nhật bộ ảnh chụp giao diện `desktop-player.png` và `mobile-pwa.png` phản ánh chính xác thiết kế viên thuốc vàng hổ phách sáng bóng.
+  - Bổ sung bài kiểm thử E2E tự động trong `tests/puppeteer-e2e.test.js` kiểm định kích thước hình học, viền bo tròn và chống tràn văn bản tuyệt đối trên cả hai chế độ màn hình.
 - **Bản Địa Hóa Tiếng Anh Toàn Diện 100% & Gia Cố Luồng Xử Lý Web Audio DSP (Complete 100% English Localization & Web Audio Pipeline Hardening - Issue #126)**:
   - Bản địa hóa toàn bộ các thành phần còn sót lại trong giao diện khi chuyển sang tiếng Anh ([Issue #126](https://github.com/tamld/tuneflow/issues/126)): nút Cài App (`Install App`), Chế độ TV (`TV Mode`), Quản trị (`Admin`), trạng thái khách (`Guest: mm:ss`, `Guest: Disconnected`), nút Hàng Đợi (`Queue (N)`), nhãn đổi mật khẩu, công cụ chỉnh cỡ chữ, nhãn tác vụ danh sách phát và các thông báo nổi (Toasts).
   - Cung cấp hàm `window.setLastSearchResults()` và cập nhật `window.reRenderActiveCards()` đồng bộ động cả tiêu đề kết quả tìm kiếm và các thẻ bài hát khi đổi ngôn ngữ.

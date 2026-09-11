@@ -338,11 +338,12 @@ class PreviewPlayer {
     }
   }
 
-  cycleEq() {
+  setEqPreset(presetKey) {
+    const idx = this.eqPresets.indexOf(presetKey);
+    if (idx === -1) return;
     this.initWebAudio(true);
     this.resumeAudioContext();
-    this.eqIndex = (this.eqIndex + 1) % this.eqPresets.length;
-    const presetKey = this.eqPresets[this.eqIndex];
+    this.eqIndex = idx;
     const info = this.getEqInfo(presetKey);
     this.applyEq();
 
@@ -352,16 +353,27 @@ class PreviewPlayer {
       this.btnEq.title = `${isEn ? 'Equalizer' : 'Bộ chỉnh âm'}: ${info.name} (${info.desc})`;
       this.btnEq.classList.toggle('active', presetKey !== 'standard');
     }
+  }
 
+  cycleEq() {
+    this.initWebAudio(true);
+    this.resumeAudioContext();
+    this.eqIndex = (this.eqIndex + 1) % this.eqPresets.length;
+    const presetKey = this.eqPresets[this.eqIndex];
+    this.setEqPreset(presetKey);
+
+    const info = this.getEqInfo(presetKey);
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
     if (typeof window.showToast === 'function') {
       window.showToast(`${info.icon} ${isEn ? 'Equalizer' : 'Chỉnh âm'}: ${info.name} — ${info.desc}`, 'info');
     }
   }
 
-  cycleBoost() {
+  setBoostPreset(idx) {
+    if (idx < 0 || idx >= this.boostLevels.length) return;
     this.initWebAudio(true);
     this.resumeAudioContext();
-    this.boostIndex = (this.boostIndex + 1) % this.boostLevels.length;
+    this.boostIndex = idx;
     const level = this.boostLevels[this.boostIndex];
     const pct = Math.round(level * 100);
 
@@ -373,9 +385,21 @@ class PreviewPlayer {
     if (this.btnBoost) {
       this.btnBoost.classList.toggle('boosted', level > 1.0);
       this.btnBoost.title = `${isEn ? 'Volume Boost' : 'Khuếch đại âm lượng'}: ${pct}% (${isEn ? 'Click to change' : 'Bấm để đổi'})`;
-      this.btnBoost.textContent = level > 1.0 ? `⚡${pct}%` : '⚡';
+      this.btnBoost.innerHTML = level > 1.0
+        ? `<span class="boost-icon">⚡</span><span class="boost-pct">${pct}%</span>`
+        : '⚡';
     }
+  }
 
+  cycleBoost() {
+    this.initWebAudio(true);
+    this.resumeAudioContext();
+    const nextIdx = (this.boostIndex + 1) % this.boostLevels.length;
+    this.setBoostPreset(nextIdx);
+
+    const level = this.boostLevels[this.boostIndex];
+    const pct = Math.round(level * 100);
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
     if (typeof window.showToast === 'function') {
       const antiClip = level > 1.0 ? (isEn ? ' (Anti-clipping active)' : ' (Đã bật chống rè loa)') : '';
       window.showToast(`⚡ ${isEn ? 'Volume Boost' : 'Khuếch đại âm thanh'}: ${pct}%${antiClip}`, 'info');
