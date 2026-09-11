@@ -1,11 +1,13 @@
 const path = require('path');
 const fs = require('fs');
+const { resolveStoragePaths } = require('./security/binary_guard');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
-const DOWNLOADS_DIR = process.env.DOWNLOADS_DIR || path.join(ROOT_DIR, 'downloads');
+const storage = resolveStoragePaths(process.platform);
+const DOWNLOADS_DIR = process.env.DOWNLOADS_DIR || storage.downloadsDir;
 const TEMP_DIR = process.env.TEMP_DIR || path.join(DOWNLOADS_DIR, 'temp');
 
-const DATA_DIR = process.env.DATA_DIR || path.join(ROOT_DIR, 'data');
+const DATA_DIR = process.env.DATA_DIR || storage.dataDir;
 
 // Ensure directories exist
 if (!fs.existsSync(DOWNLOADS_DIR)) {

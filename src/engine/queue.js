@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const { TEMP_DIR, DOWNLOADS_DIR, MAX_DOWNLOADS, MAX_RETRIES, DOWNLOAD_TTL_HOURS, MAX_STORAGE_MB, YTDLP_COOKIES_PATH, YTDLP_PROXY, YTDLP_EXTRACTOR_ARGS } = require('../config');
 const { convertToMp3 } = require('./ffmpeg');
 const { supportsJsRuntimes } = require('./ytdlp');
+const { resolveSidecarBinary, getSanitizedEnv } = require('../security/binary_guard');
 
 /**
  * Sanitize titles for all operating systems (Windows, Linux, macOS)
@@ -370,7 +371,11 @@ class DownloadQueue {
           item.url
         );
 
-        const proc = spawn('yt-dlp', args, { windowsHide: true });
+        const ytdlpBin = resolveSidecarBinary('yt-dlp');
+        const proc = spawn(ytdlpBin, args, {
+          windowsHide: true,
+          env: getSanitizedEnv(process.env)
+        });
         this.activeProcesses.set(item.id, proc);
 
         proc.stdout.on('data', (data) => {
