@@ -55,9 +55,14 @@ mkdir -p "$MACOS_APP/Contents/Resources/app"
 cp "$REPO_ROOT/installer/macos/Info.plist" "$MACOS_APP/Contents/Info.plist"
 echo -n "APPL????" > "$MACOS_APP/Contents/PkgInfo"
 
-# Executable bootstrap
-cp "$REPO_ROOT/installer/macos/tuneflow-launcher.sh" "$MACOS_APP/Contents/MacOS/TuneFlow"
-chmod +x "$MACOS_APP/Contents/MacOS/TuneFlow"
+# Executable bootstrap: compile native Swift Cocoa window if swiftc is available, else fallback to launcher script
+if command -v swiftc >/dev/null 2>&1 && [ -f "$REPO_ROOT/src/desktop/macos/main.swift" ]; then
+    echo "⚡ Compiling native macOS Cocoa WebKit binary via swiftc..."
+    swiftc -O "$REPO_ROOT/src/desktop/macos/main.swift" -framework Cocoa -framework WebKit -o "$MACOS_APP/Contents/MacOS/TuneFlow"
+else
+    cp "$REPO_ROOT/installer/macos/tuneflow-launcher.sh" "$MACOS_APP/Contents/MacOS/TuneFlow"
+    chmod +x "$MACOS_APP/Contents/MacOS/TuneFlow"
+fi
 
 # Icon
 cp "$ICNS_PATH" "$MACOS_APP/Contents/Resources/icon.icns"
