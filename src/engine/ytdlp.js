@@ -224,7 +224,7 @@ async function getPreviewStreamUrl(url) {
   try {
     const streamOutput = await runYtDlp([
       '-g',
-      '-f', 'bestaudio[ext=m4a]/140/bestaudio[ext=webm]/251/bestaudio/ba/b',
+      '-f', '251/140/ba/b',
       '--no-playlist',
       '--no-warnings',
       '--',
