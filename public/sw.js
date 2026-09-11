@@ -3,7 +3,7 @@
  * Strategy: Cache-first for UI shell & static assets; Network-only for /api/ streaming and downloads.
  */
 
-const CACHE_NAME = 'tuneflow-v2.4.3';
+const CACHE_NAME = 'tuneflow-v2.5.0-alpha';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
