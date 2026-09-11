@@ -491,6 +491,9 @@ class PreviewPlayer {
       const icon = row.querySelector('.playlist-play-icon-overlay');
       if (icon) icon.textContent = '▶';
     });
+    if (typeof window.updatePlaylistPlayButtonState === 'function') {
+      window.updatePlaylistPlayButtonState();
+    }
   }
 
   highlightCard(trackId, isPlaying, isLoading = false) {
@@ -534,6 +537,9 @@ class PreviewPlayer {
   updateCardState() {
     if (!this.currentTrack) return;
     this.highlightCard(this.currentTrack.id, this.isPlaying, this.isLoading);
+    if (typeof window.updatePlaylistPlayButtonState === 'function') {
+      window.updatePlaylistPlayButtonState();
+    }
   }
 
   toggleRepeat() {

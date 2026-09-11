@@ -4,6 +4,11 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 ## [2.5.0-alpha] - Unreleased
 
 ### Đã Thêm (Added)
+- **Phát Tuyển Tập / Playlist Liên Tục & Nút Phát Hành Động Header (Continuous Playlist Playback & Header Play Action - Issue #119)**:
+  - Bổ sung nút `▶️ Phát Danh Sách` (`#btn-play-playlist`) và huy hiệu số lượng bài (`#batch-play-count`) trên thanh tác vụ của `#playlist-panel`.
+  - Hỗ trợ chuyển đổi trạng thái động giữa `▶️ Phát Danh Sách`, `⏸️ Tạm Dừng Tuyển Tập`, và `▶️ Tiếp Tục Phát`.
+  - Cơ chế tự động chuyển bài thông minh (`playNextTrack` / `playPreviousTrack`): chỉ phát tuần tự các bài được tích chọn trong danh sách.
+  - Chuẩn hóa giao diện `btn-panel-play` SilverMelody Design (nút bấm lớn $\ge 48\text{px}$, tương phản WCAG AAA, hỗ trợ phím bấm và ARIA).
 - **Đóng Gói Cài Đặt Desktop Bản Địa & Wizard Inno Setup (Desktop Packaging Suite - SPEC-0010, ADR-0014)**:
   - Bản thiết kế cài đặt Windows Inno Setup 6 `installer/windows/setup.iss` cài đặt vào `%LOCALAPPDATA%\Programs\TuneFlow` không đòi quyền Administrator (Zero-Admin, né còi báo động UAC).
   - Bản đăng ký FreeDesktop chuẩn Linux `installer/linux/tuneflow.desktop`.
