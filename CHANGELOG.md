@@ -4,6 +4,15 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 ## [2.5.0] - 2026-09-11
 
 ### Đã Thêm (Added)
+- **Công Cụ Tương Tác GitHub CLI Đa Nền Tảng Chống Lỗi Escape Ký Tự (Safe GitHub CLI Poster - `scripts/gh_safe_post.py`)**:
+  - Tái cấu trúc và mở rộng toàn diện module `scripts/gh_safe_post.py` hỗ trợ đầy đủ các tác vụ: `issue-create`, `issue-comment`, `issue-edit`, `issue-close`, `issue-reopen`, `issue-view`, `pr-create`, `pr-comment`, `pr-edit`, `pr-close`, `pr-merge`, `pr-view`, và `lint`.
+  - Triệt tiêu 100% lỗi nuốt ký tự, hỏng dấu tiếng Việt UTF-8 và lỗi PowerShell backtick escape trên Windows thông qua cơ chế ghi tệp tạm UTF-8 nguyên tử bắt buộc (`--body-file`).
+  - Hỗ trợ nhập trực tiếp từ `--body`, `--body-file` hoặc luồng dữ liệu stdin pipe (`cat comment.md | python scripts/gh_safe_post.py ...`).
+  - Tự động phát hiện và cảnh báo các chuỗi ký tự bị shell làm biến dạng trước khi gửi lên máy chủ GitHub.
+  - Bổ sung bộ kiểm thử tự động `tests/gh-safe-post.test.js` kiểm định 7 tiêu chí hoạt động cốt lõi.
+- **Giải Quyết Nợ Kỹ Thuật: Hỗ Trợ Đầy Đủ Trình Duyệt Chrome/Edge macOS Cho Puppeteer E2E**:
+  - Mở rộng hàm `getSystemChromePath()` và `resolveChromeExecutable()` trong `tests/puppeteer-e2e.test.js`, `tests/ios-pwa-responsive.test.js`, `tests/e2e.test.js`, và `scripts/capture_screenshots.js` nhận diện tự động Google Chrome và Edge trên macOS (`/Applications/...`).
+  - Kích hoạt toàn bộ 7/7 bài kiểm thử Puppeteer Real DOM E2E chạy trực tiếp trên máy macOS Apple Silicon M4 mà không bị bỏ qua (0 skipped).
 - **Ma Trận Kiểm Thử 7 Chiều & Chốt Chặn Chất Lượng Chống "Diễn Kịch" (Master 7-Dimensional Testing Matrix & Anti-Theater Gates - SPEC-0011)**:
   - Ban hành đặc tả kỹ thuật chuẩn SSoT `docs/spec/SPEC-0011-master-testing-matrix-and-quality-gates.md` xác lập 7 chiều kiểm thử khép kín: (1) Trải nghiệm người cao tuổi & A11y WCAG AAA, (2) User journeys & DSP audio chain, (3) Runtime settings & SQLite schema migrations, (4) Resilience & Chaos/SSRF injection, (5) Defense-in-Depth RBAC & AES-256-GCM authenticated encryption, (6) Context windows & viewports/modals, (7) Cross-platform native packaging (Inno Setup 6 Zero-Admin, FreeDesktop).
   - Triệt tiêu hoàn toàn "test theater" và flaky test leaks: giải phóng 100% SSE keep-alive connection trong `DownloadQueue.shutdown()`, bọc kín hermetic mocks cho hệ điều hành / chẩn đoán / cập nhật nhị phân.

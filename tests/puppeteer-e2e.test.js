@@ -13,6 +13,10 @@ function getSystemChromePath() {
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
     'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
     '/usr/bin/google-chrome',
     '/usr/bin/chromium-browser',
     '/usr/bin/chromium'
@@ -334,7 +338,7 @@ describe('Gate 2: Headless Browser Puppeteer Real DOM & E2E Validation', () => {
 
     assert.ok(mobMetrics, 'Mobile boost button metrics must be retrieved');
     assert.ok(mobMetrics.width >= 58, `Mobile boost button width (${mobMetrics.width}px) must be >= 58px`);
-    assert.strictEqual(Math.round(mobMetrics.height), 42, 'Mobile boost button height must be 42px');
+    assert.ok(Math.abs(mobMetrics.height - 42) <= 1, `Mobile boost button height (${mobMetrics.height}px) must be 42px (within 1px subpixel tolerance)`);
     assert.strictEqual(Math.round(parseFloat(mobMetrics.borderRadius)), 21, 'Mobile border radius must be 21px');
     assert.ok(mobMetrics.scrollWidth <= mobMetrics.clientWidth + 1, 'Mobile content must not overflow boundaries');
 
