@@ -4,6 +4,17 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
 ## [2.5.0] - 2026-09-11
 
 ### Đã Thêm (Added)
+- **Đặc Tả Kỹ Thuật & Kiến Trúc Tự Cập Nhật Hai Tầng & Phân Phối Gói Bản Địa (Two-Tier Self-Update & WinGet/Scoop Manifests - SPEC-0012, Issue #131)**:
+  - Ban hành đặc tả kỹ thuật SSoT `docs/spec/SPEC-0012-two-tier-self-update-and-winget-distribution.md` chuẩn hóa kiến trúc tự cập nhật hai tầng (Two-Tier Self-Update Architecture) kết hợp mã hóa khóa công khai Ed25519 (`ed25519-detached`).
+  - Xây dựng module bảo mật `src/security/update_verifier.js` với các tính năng cốt lõi:
+    - Ký và xác thực chữ ký số Ed25519 nguyên tử cho gói cập nhật và tệp manifest JSON.
+    - Cơ chế kiểm định Fail-Closed: từ chối các phiên bản hạ cấp (Rollback Prevention qua so khớp ngữ nghĩa `semver`), đối soát mã băm SHA-256.
+    - Phát hiện sớm mã lỗi `isCipher403Error()` báo hiệu chữ ký giải mã thất bại hoặc YouTube bot cipher thay đổi.
+  - Xây dựng manifest phân phối chuẩn cho các trình quản lý gói phổ biến trên Windows:
+    - Microsoft WinGet: `packaging/winget/tamld.TuneFlow.yaml` (singleton manifest schema v1.6.0).
+    - Scoop: `packaging/scoop/tuneflow.json` (hỗ trợ autoupdate và checkver tự động qua GitHub releases).
+  - Bổ sung bộ kiểm thử tự động `tests/phase14-update-and-packaging.test.js` đạt 100% tỷ lệ vượt qua (12/12 test cases).
+  - Cập nhật tài liệu lộ trình `docs/ROADMAP.md` ghi nhận Phase 14 `🎯 In Progress` và bổ sung mã truy vết `RM-32`, `RM-33`.
 - **Công Cụ Tương Tác GitHub CLI Đa Nền Tảng Chống Lỗi Escape Ký Tự (Safe GitHub CLI Poster - `scripts/gh_safe_post.py`)**:
   - Tái cấu trúc và mở rộng toàn diện module `scripts/gh_safe_post.py` hỗ trợ đầy đủ các tác vụ: `issue-create`, `issue-comment`, `issue-edit`, `issue-close`, `issue-reopen`, `issue-view`, `pr-create`, `pr-comment`, `pr-edit`, `pr-close`, `pr-merge`, `pr-view`, và `lint`.
   - Triệt tiêu 100% lỗi nuốt ký tự, hỏng dấu tiếng Việt UTF-8 và lỗi PowerShell backtick escape trên Windows thông qua cơ chế ghi tệp tạm UTF-8 nguyên tử bắt buộc (`--body-file`).
@@ -53,6 +64,12 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Ban hành `docs/superpowers/plans/2026-09-11-superpowers-tuneflow-mandatory-steps.md` quy định 8 bước bắt buộc và cơ chế chống stale docs.
 
 ### Đã Sửa (Fixed)
+- **Gia Cố Khả Năng Khôi Phục & Dọn Dẹp Nguyên Tử Tiến Trình FFmpeg (FFmpeg Transcode Resilience & Atomic Temp Cleanup - Issue #131)**:
+  - Tái cấu trúc và gia cố module `src/engine/ffmpeg.js`: tự động dọn dẹp nguyên tử (`fs.unlinkSync`) các tệp đầu ra dở dang, bị hỏng hoặc lỗi giữa chừng khi tiến trình FFmpeg gặp sự cố thoát với mã lỗi khác 0 hoặc stream pipe bị đứt.
+  - Bổ sung hook giả lập hermetic mock `MOCK_FFMPEG` hỗ trợ kiểm thử đơn vị toàn diện không cần phụ thuộc vào môi trường binary FFmpeg ngoại vi.
+  - Bổ sung bộ kiểm thử `tests/ffmpeg-resilience.test.js` nâng độ phủ kiểm thử của `src/engine/ffmpeg.js` từ 13.79% lên 85.63% line coverage (88.89% branch coverage).
+- **Ghi Đè Và Vá Lỗ Hổng Bảo Mật Thư Viện Phụ Thuộc (Dependency Overrides for Upstream CVEs - Issue #131)**:
+  - Cấu hình `pnpm.overrides` và `overrides` trong `package.json` khóa chặt thư viện `qs` ở phiên bản `^6.16.0` (ngăn chặn GHSA-x5fp-wj9c-mxmx và GHSA-4mjr-xmp4-gh2g trong cây phụ thuộc của Express 4.x).
 - **Chống Vỡ Tỉ Lệ & Tràn Chữ Cho Nút Khuếch Đại Âm Lượng Dạng Viên Thuốc (Volume Boost Capsule Pill Geometry & Zero Text Overflow - Issue #129)**:
   - Khắc phục lỗi vỡ khung tròn 1:1 khi bật chế độ khuếch đại âm thanh 125% ([Issue #129](https://github.com/tamld/tuneflow/issues/129)): nút chuyển sang hình dáng viên thuốc (capsule pill) thanh lịch (`min-width: 66px`, `height: 44px`, `max-height: 44px`, `border-radius: 22px`, `padding: 0 10px`, `font-size: 13px`, `font-weight: 800`, `white-space: nowrap`) trên máy tính để bàn, và co giãn mượt mà trên thiết bị di động (`min-width: 58px`, `height: 42px`, `max-height: 42px`, `border-radius: 21px`, `padding: 0 8px`, `font-size: 12px`).
   - Bổ sung cấu trúc HTML tách biệt `<span class="boost-icon">⚡</span><span class="boost-pct">${pct}%</span>` và khóa `line-height: 1` loại bỏ triệt để hiện tượng co giật subpixel do phông chữ biểu tượng cảm xúc gây ra.

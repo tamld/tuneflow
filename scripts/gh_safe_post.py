@@ -103,12 +103,12 @@ def execute_safe_post(
                 pass
 
 
-def resolve_body_content(args, required: bool = True) -> str:
+def resolve_body_content(args, required=True):
     """
-    Deterministically extracts body content from:
-    1. --body-file <path>
+    Resolve Markdown body from:
+    1. --body-file <path> (highest priority, recommended)
     2. --body <string>
-    3. Piped stdin (non-interactive)
+    3. Piped stdin (when required=True and not sys.stdin.isatty())
     Returns None if optional and none provided.
     """
     if getattr(args, 'body_file', None):
@@ -116,10 +116,13 @@ def resolve_body_content(args, required: bool = True) -> str:
             return f.read()
     elif getattr(args, 'body', None) is not None:
         return args.body
-    elif not sys.stdin.isatty():
-        content = sys.stdin.read()
-        if content:
-            return content
+    elif required and not sys.stdin.isatty():
+        try:
+            content = sys.stdin.read()
+            if content:
+                return content
+        except Exception:
+            pass
 
     if required:
         sys.stderr.write(

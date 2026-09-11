@@ -1,0 +1,29 @@
+{
+  "version": "2.5.0",
+  "description": "TuneFlow - An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player.",
+  "homepage": "https://github.com/tamld/tuneflow",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/tamld/tuneflow/releases/download/v2.5.0/TuneFlow-Setup-2.5.0.exe",
+      "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "innosetup": true,
+  "shortcuts": [
+    [
+      "TuneFlow.exe",
+      "TuneFlow"
+    ]
+  ],
+  "checkver": {
+    "github": "https://github.com/tamld/tuneflow"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/tamld/tuneflow/releases/download/v$version/TuneFlow-Setup-$version.exe"
+      }
+    }
+  }
+}

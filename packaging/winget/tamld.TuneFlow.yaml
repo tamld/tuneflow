@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.singleton.1.6.0.schema.json
+PackageIdentifier: tamld.TuneFlow
+PackageVersion: 2.5.0
+PackageName: TuneFlow
+Publisher: Tam Le Duc
+PublisherUrl: https://github.com/tamld
+PublisherSupportUrl: https://github.com/tamld/tuneflow/issues
+Author: Tam Le Duc
+ShortDescription: An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player.
+Description: |
+  TuneFlow is an elegant, senior-first YouTube audio streamer and downloader designed
+  for elderly family members with 1-touch discovery, SilverMelody high-contrast WCAG AAA UI,
+  in-app preview player, and lossless 320kbps MP3 conversion.
+Moniker: tuneflow
+Tags:
+  - youtube
+  - mp3
+  - downloader
+  - elderly-friendly
+  - audio-player
+  - music
+PackageUrl: https://github.com/tamld/tuneflow
+License: MIT
+LicenseUrl: https://github.com/tamld/tuneflow/blob/master/LICENSE
+Copyright: Copyright (c) 2026 Tam Le Duc
+Installers:
+  - Architecture: x64
+    InstallerType: inno
+    Scope: user
+    InstallerUrl: https://github.com/tamld/tuneflow/releases/download/v2.5.0/TuneFlow-Setup-2.5.0.exe
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
+    InstallerSwitches:
+      Silent: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+      SilentWithProgress: /SILENT /SUPPRESSMSGBOXES /NORESTART
+      InstallLocation: "{localappdata}\\Programs\\TuneFlow"
+    UpgradeBehavior: install
+ManifestType: singleton
+ManifestVersion: 1.6.0
