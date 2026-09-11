@@ -55,7 +55,25 @@
       playlist_resume: '▶️ Tiếp Tục Phát',
       playlist_select_all: 'Đánh Dấu Tất Cả',
       playlist_deselect_all: 'Bỏ Chọn Tất Cả',
-      playlist_download_selected: '⬇️ Tải Các Bài Đã Chọn'
+      playlist_download_selected: '⬇️ Tải Các Bài Đã Chọn',
+      filter_content_label: 'Nội dung:',
+      filter_sort_label: 'Sắp xếp:',
+      filter_all_type: 'Tất Cả',
+      filter_song_type: '🎵 Bài Hát',
+      filter_playlist_type: '📻 Tuyển Tập / Album',
+      search_searching: '⏳ Đang tìm kiếm những giai điệu êm dịu nhất...',
+      search_results_found: '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):',
+      search_no_results: 'Dạ không tìm thấy bài hát nào phù hợp. Bố Mẹ thử tìm tên bài khác nhé!',
+      search_enter_query: '⚠️ Bố Mẹ hãy gõ tên bài hát hoặc ca sĩ vào ô tìm kiếm nhé!',
+      artist_default: 'Nghệ sĩ',
+      playlist_type_badge: '📻 Tuyển Tập / Album',
+      playlist_duration_badge: '📁 Tuyển tập',
+      btn_open_playlist: '📂 Mở Tuyển Tập Nghe & Tải',
+      playlist_panel_title: '📻 Danh Sách Phát Tuyển Tập',
+      playlist_panel_meta: 'Tích chọn các bài Bố Mẹ ưng ý để tải về máy nhé!',
+      playlist_loading: '⏳ Đang đọc danh sách tuyển tập...',
+      playlist_loading_btn: '⏳ Đang mở tuyển tập...',
+      playlist_display_all: '✨ Đã hiển thị toàn bộ tuyển tập gồm {count} bài hát.'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -108,7 +126,25 @@
       playlist_resume: '▶️ Resume Playlist',
       playlist_select_all: 'Select All',
       playlist_deselect_all: 'Deselect All',
-      playlist_download_selected: '⬇️ Download Selected'
+      playlist_download_selected: '⬇️ Download Selected',
+      filter_content_label: 'Content:',
+      filter_sort_label: 'Sort by:',
+      filter_all_type: 'All',
+      filter_song_type: '🎵 Songs',
+      filter_playlist_type: '📻 Playlists / Albums',
+      search_searching: '⏳ Searching for the best melodies...',
+      search_results_found: '🎵 Found {count} lovely songs (Listen preview then download!):',
+      search_no_results: 'No songs found matching your search. Please try another title!',
+      search_enter_query: '⚠️ Please type a song or artist name to search!',
+      artist_default: 'Artist',
+      playlist_type_badge: '📻 Playlist / Album',
+      playlist_duration_badge: '📁 Playlist',
+      btn_open_playlist: '📂 Open Playlist to Listen & Download',
+      playlist_panel_title: '📻 Playlist Collection',
+      playlist_panel_meta: 'Check the songs you love to download or play on your device!',
+      playlist_loading: '⏳ Loading playlist tracks...',
+      playlist_loading_btn: '⏳ Opening playlist...',
+      playlist_display_all: '✨ Displayed all {count} tracks from the playlist.'
     }
   };
 
@@ -256,16 +292,55 @@
     const drawerClearBtn = document.getElementById('btn-drawer-clear-done');
     if (drawerClearBtn) drawerClearBtn.textContent = getTranslation('drawerClear');
 
-    // Language Toggle Button UI
-    const langBtn = document.getElementById('btn-lang-toggle');
-    if (langBtn) {
-      langBtn.textContent = currentLang === 'vi' ? '🇻🇳 Tiếng Việt' : '🇬🇧 English';
-      langBtn.title = currentLang === 'vi' ? 'Chuyển sang Tiếng Anh (English)' : 'Switch to Vietnamese (Tiếng Việt)';
+    // Search Filter Section Labels
+    const contentLabel = document.querySelector('.search-filter-group span');
+    if (contentLabel) contentLabel.textContent = getTranslation('filter_content_label');
+
+    const sortLabel = document.querySelector('.search-sort-group span');
+    if (sortLabel) sortLabel.textContent = getTranslation('filter_sort_label');
+
+    // Search Type Filter Chips
+    const typeChips = document.querySelectorAll('[data-search-type]');
+    typeChips.forEach(chip => {
+      const st = chip.getAttribute('data-search-type');
+      if (st === 'all') chip.textContent = getTranslation('filter_all_type');
+      if (st === 'video') chip.textContent = getTranslation('filter_song_type');
+      if (st === 'playlist') chip.textContent = getTranslation('filter_playlist_type');
+    });
+
+    // Search Sort Filter Chips
+    const sortChips = document.querySelectorAll('[data-search-sort]');
+    sortChips.forEach(chip => {
+      const ss = chip.getAttribute('data-search-sort');
+      if (ss === 'relevance') chip.textContent = getTranslation('sort_relevance');
+      if (ss === 'views') chip.textContent = getTranslation('sort_views');
+      if (ss === 'date') chip.textContent = getTranslation('sort_date');
+    });
+
+    // Playlist Panel Static Labels
+    const plTitle = document.getElementById('playlist-panel-title');
+    if (plTitle && !plTitle.textContent.includes('...')) {
+      plTitle.textContent = getTranslation('playlist_panel_title');
+    }
+    const plMeta = document.getElementById('playlist-panel-meta');
+    if (plMeta && !plMeta.textContent.includes('Tuyển tập gồm') && !plMeta.textContent.includes('chờ')) {
+      plMeta.textContent = getTranslation('playlist_panel_meta');
+    }
+
+    // Default Results Header
+    const resultsHeader = document.getElementById('results-header');
+    if (resultsHeader && resultsHeader.textContent.includes('✨ Bấm chọn') || (resultsHeader && resultsHeader.textContent.includes('✨ Tap a genre'))) {
+      resultsHeader.textContent = getTranslation('resultsDefault');
     }
 
     // Trigger persona reload if active
     if (typeof window.refreshCurrentPersonaPresets === 'function') {
       window.refreshCurrentPersonaPresets();
+    }
+
+    // Re-render active cards in current language
+    if (typeof window.reRenderActiveCards === 'function') {
+      window.reRenderActiveCards();
     }
   }
 

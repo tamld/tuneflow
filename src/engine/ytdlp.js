@@ -138,14 +138,14 @@ function runYtDlp(args, options = {}) {
     fullArgs.push(...args);
 
     const ytdlpBin = resolveSidecarBinary('yt-dlp');
-    const process = spawn(ytdlpBin, fullArgs, {
+    const proc = spawn(ytdlpBin, fullArgs, {
       windowsHide: true,
       env: getSanitizedEnv(process.env)
     });
 
     if (timeoutMs > 0) {
       timer = setTimeout(() => {
-        try { process.kill('SIGKILL'); } catch (_e) {}
+        try { proc.kill('SIGKILL'); } catch (_e) {}
         reject(new Error(`yt-dlp timed out after ${timeoutMs}ms`));
       }, timeoutMs);
       if (timer.unref) timer.unref();
@@ -154,15 +154,15 @@ function runYtDlp(args, options = {}) {
     let stdout = '';
     let stderr = '';
 
-    process.stdout.on('data', (data) => {
+    proc.stdout.on('data', (data) => {
       stdout += data.toString('utf8');
     });
 
-    process.stderr.on('data', (data) => {
+    proc.stderr.on('data', (data) => {
       stderr += data.toString('utf8');
     });
 
-    process.on('close', (code) => {
+    proc.on('close', (code) => {
       if (timer) clearTimeout(timer);
       if (code === 0) {
         resolve(stdout.trim());
@@ -171,7 +171,7 @@ function runYtDlp(args, options = {}) {
       }
     });
 
-    process.on('error', (err) => {
+    proc.on('error', (err) => {
       if (timer) clearTimeout(timer);
       reject(err);
     });
@@ -479,6 +479,100 @@ async function searchYouTube(query, options = {}) {
 }
 
 /**
+ * Tier-1 Zero-Subprocess Fast YouTube Innertube Playlist Parser (Issue #122)
+ */
+async function parsePlaylistInnertube(url, limit = 50) {
+  const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  if (!match) return null;
+  const playlistId = match[1];
+  const browseId = playlistId.startsWith('VL') ? playlistId : 'VL' + playlistId;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const res = await fetch('https://www.youtube.com/youtubei/v1/browse', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+      },
+      body: JSON.stringify({
+        context: {
+          client: {
+            clientName: 'WEB',
+            clientVersion: '2.20240101.00.00',
+            hl: 'vi',
+            gl: 'VN'
+          }
+        },
+        browseId
+      }),
+      signal: controller.signal
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const title = data.metadata?.playlistMetadataRenderer?.title || data.header?.playlistHeaderRenderer?.title?.simpleText || 'Tuyển tập';
+    const uploader = data.header?.playlistHeaderRenderer?.ownerText?.runs?.[0]?.text || 'Nghệ sĩ';
+
+    const tabs = data.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
+    const entries = [];
+
+    for (const t of tabs) {
+      const secList = t.tabRenderer?.content?.sectionListRenderer?.contents || [];
+      for (const sec of secList) {
+        const items = sec.itemSectionRenderer?.contents || [];
+        for (const it of items) {
+          if (it.lockupViewModel) {
+            const lm = it.lockupViewModel;
+            const id = lm.contentId;
+            if (!id) continue;
+            const itemTitle = lm.metadata?.lockupMetadataViewModel?.title?.content || 'Bài hát';
+            const itemUploader = lm.metadata?.lockupMetadataViewModel?.metadata?.metadataRows?.[0]?.metadataParts?.[0]?.text?.content || uploader;
+            const sources = lm.contentImage?.thumbnailViewModel?.image?.sources || [];
+            const thumb = sources.length > 0 ? sources[sources.length - 1].url : 'assets/default-thumbnail.jpg';
+            entries.push({
+              id,
+              title: itemTitle,
+              uploader: itemUploader,
+              duration: 0,
+              duration_string: '00:00',
+              thumbnail: thumb,
+              url: `https://www.youtube.com/watch?v=${id}`
+            });
+          } else if (it.playlistVideoRenderer) {
+            const pvr = it.playlistVideoRenderer;
+            const id = pvr.videoId;
+            if (!id) continue;
+            const itemTitle = pvr.title?.runs?.map(r => r.text).join('') || pvr.title?.simpleText || 'Bài hát';
+            const itemUploader = pvr.shortBylineText?.runs?.map(r => r.text).join('') || uploader;
+            const thumbs = pvr.thumbnail?.thumbnails || [];
+            const thumb = thumbs.length > 0 ? thumbs[thumbs.length - 1].url : 'assets/default-thumbnail.jpg';
+            const duration_string = pvr.lengthText?.simpleText || '00:00';
+            entries.push({
+              id,
+              title: itemTitle,
+              uploader: itemUploader,
+              duration: 0,
+              duration_string,
+              thumbnail: thumb,
+              url: `https://www.youtube.com/watch?v=${id}`
+            });
+          }
+          if (entries.length >= limit) break;
+        }
+        if (entries.length >= limit) break;
+      }
+    }
+
+    return entries.length > 0 ? { title, uploader, count: entries.length, entries } : null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
  * Extract tracks from a YouTube Playlist URL (up to limit)
  */
 async function parsePlaylist(url, limit = 50) {
@@ -492,6 +586,18 @@ async function parsePlaylist(url, limit = 50) {
     return cached;
   }
 
+  // Tier 1: Fast zero-subprocess Innertube browse (<400ms)
+  try {
+    const fastResult = await parsePlaylistInnertube(url.trim(), limit);
+    if (fastResult && fastResult.entries && fastResult.entries.length > 0) {
+      playlistCache.set(cacheKey, fastResult);
+      return fastResult;
+    }
+  } catch (_innertubeErr) {
+    // Graceful fallback to Tier 2 subprocess
+  }
+
+  // Tier 2: Subprocess fallback with yt-dlp
   const args = [
     '--flat-playlist',
     '--dump-single-json',
@@ -670,6 +776,7 @@ module.exports = {
   searchYouTube,
   searchInnertube,
   parsePlaylist,
+  parsePlaylistInnertube,
   formatDuration,
   parseDurationString,
   supportsJsRuntimes,
