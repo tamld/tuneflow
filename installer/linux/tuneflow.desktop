@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=TuneFlow
+GenericName=Music Downloader & Audio Player
+Comment=An elegant, elderly-friendly YouTube music downloader and preview player
+Exec=tuneflow %U
+Icon=tuneflow
+Terminal=false
+Categories=AudioVideo;Audio;Player;Network;
+Keywords=youtube;music;mp3;audio;stream;download;
+StartupWMClass=tuneflow
+MimeType=x-scheme-handler/tuneflow;
