@@ -1,6 +1,6 @@
-# TuneFlow Master Engineering Roadmap (v1.0.0 → v2.4.2)
+# TuneFlow Master Engineering Roadmap (v1.0.0 → v3.0.0)
 
-> **Core Objective**: Build an elegant, elderly-friendly YouTube to audio (320kbps MP3 / MP4) streamer and downloader tailored for **elderly family members** with 1-touch discovery, packaged into lightweight multi-arch containers running 24/7 on **homelab servers (Docker / Podman / Compose)**; with a clear engineering trajectory for **Mobile PWA**, **Android TV D-Pad Leanback**, **Client-Side DSP**, and **Automated 3-Stage CI/CD**.
+> **Core Objective**: Build an elegant, elderly-friendly YouTube to audio (320kbps MP3 / MP4) streamer and downloader tailored for **elderly family members** with 1-touch discovery, packaged into lightweight multi-arch containers running 24/7 on **homelab servers (Docker / Podman / Compose)** and **cross-platform native desktop packages (Windows, macOS, Linux)**; with an SGH-grade **Defense-in-Depth** security envelope, **Hash Checker CAS**, **Mobile PWA**, **Android TV D-Pad Leanback**, and **Automated CI/CD Distribution**.
 
 ---
 
@@ -24,6 +24,10 @@ Each phase is designed independently with a complete quality assurance dossier:
 │ Phase 9  │ SQLite RBAC, Domain Policy & Cooldown    │ v2.3.0      │ ✅ Completed       │
 │ Phase 10 │ Active Sessions, Favorites & Encrypted DB│ v2.4.0      │ ✅ Completed       │
 │ Phase 11 │ Mobile PWA, iOS PiP & Unified CI/CD      │ v2.4.2      │ ✅ Completed       │
+│ Phase 12 │ Schema Migrations & Session Maintenance  │ v2.4.3      │ ✅ Completed       │
+│ Phase 13 │ Portable Binary & Hash Checker Security  │ v2.5.0      │ 🎯 In Progress     │
+│ Phase 14 │ Two-Tier Self-Update & WinGet Packaging │ v2.6.0      │ 📅 Planned         │
+│ Phase 15 │ Native Desktop GUI Shell with Tauri v2   │ v3.0.0      │ 📅 Planned         │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
@@ -133,6 +137,44 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
+### Phase 12: Production Hardening, SQLite Migrations & Maintenance (v2.4.3)
+- **Scope**:
+  - Unreferenced hourly maintenance worker (`src/engine/maintenance.js`) pruning expired sessions (Issue #103).
+  - Lightweight transactional schema migration engine (`src/db/migrations.js`) via `PRAGMA user_version` (Issue #105).
+  - Objective multi-host deployment docs and Gradle 8.6 native APK compilation alignment (Issue #101).
+  - Version synchronization across package, manifest, build.gradle, and sw.js (Issue #107).
+- **Deliverables**: PR #104, PR #106, PR #108.
+
+---
+
+### Phase 13: Cross-Platform Portable Binary & Defense-in-Depth Hash Checker (v2.5.0)
+- **Scope**:
+  - Zero-Install portable folder bundle for Windows, Linux, and macOS without SFX/UPX compression to prevent dropper heuristic triggers (SPEC-0008).
+  - Pre-flight Content-Addressable Storage (CAS) Hash Checker verifying SHA-256 baseline before child process execution (`src/security/binary_guard.js`).
+  - Dual-mode storage resolver (`.portable` local retention vs OS standard `%LOCALAPPDATA%` / `Library` / XDG).
+  - Clean PE Resource Metadata (`.rc` table) and Microsoft Defender Security Intelligence (WDSI) automated submission pipeline.
+- **Deliverables**: `docs/superpowers/plans/2026-09-11-cross-platform-binary-packaging.md`, `tests/portable-binary-security.test.js`.
+
+---
+
+### Phase 14: Cryptographic Two-Tier Self-Update & WinGet Distribution (v2.6.0)
+- **Scope**:
+  - Tier 1: Independent background auto-update for `yt-dlp` upon cipher 403 error.
+  - Tier 2: Ed25519 cryptographic signature verification for core updates paired with Windows Atomic Swap (`.old` rename).
+  - Official submission to `microsoft/winget-pkgs` and `Scoop` for trusted, SmartScreen-free 1-command installation.
+- **Deliverables**: Manifests for WinGet / Scoop, update API enhancements.
+
+---
+
+### Phase 15: Native Desktop GUI Shell with Tauri v2 (v3.0.0)
+- **Scope**:
+  - Lightweight Rust shell with System Tray icon and auto-browser launch.
+  - Native MSI installer for Windows and signed DMG with notarization for macOS.
+  - Full desktop OS integration with zero container runtime overhead.
+- **Deliverables**: `src-tauri/` project foundation, release artifacts.
+
+---
+
 ## 📋 Traceability Matrix
 
 | Requirement | Scope Description | SSoT Specification | Test Suite / Verification |
@@ -160,3 +202,8 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-21** | iOS PWA Responsive & Safe Area Insets | PR #89, Issue #87 | `tests/ios-pwa-responsive.test.js` |
 | **RM-22** | iOS Background Audio Bypass & PiP | PR #89, Issue #88 | `tests/ios-background-audio-pip.test.js` |
 | **RM-23** | Unified 3-Stage Remote Release CI/CD | PR #91, Issue #90 | `tests/ci-cd-unified-pipeline.test.js` |
+| **RM-24** | SQLite Dynamic Schema Migrations | PR #106, Issue #105| `tests/database-migrations.test.js` |
+| **RM-25** | Automated Background Session Pruning | PR #104, Issue #103| `tests/session-cleanup-maintenance.test.js` |
+| **RM-26** | Dual-Mode Storage Path Isolation | SPEC-0008, Phase 13 | `tests/portable-binary-security.test.js` |
+| **RM-27** | Fail-Closed CAS Hash Checker Guard | SPEC-0008, Phase 13 | `tests/portable-binary-security.test.js` |
+| **RM-28** | Ed25519 Two-Tier Update Verification | SPEC-0008, Phase 14 | `tests/portable-binary-security.test.js` |

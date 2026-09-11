@@ -2,6 +2,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { YTDLP_COOKIES_PATH, YTDLP_PROXY, YTDLP_EXTRACTOR_ARGS } = require('../config');
+const { resolveSidecarBinary, getSanitizedEnv } = require('../security/binary_guard');
 
 /**
  * In-memory LRU/TTL Cache to avoid repeated child process spawns
@@ -136,8 +137,10 @@ function runYtDlp(args, options = {}) {
     }
     fullArgs.push(...args);
 
-    const process = spawn('yt-dlp', fullArgs, {
-      windowsHide: true
+    const ytdlpBin = resolveSidecarBinary('yt-dlp');
+    const process = spawn(ytdlpBin, fullArgs, {
+      windowsHide: true,
+      env: getSanitizedEnv(process.env)
     });
 
     if (timeoutMs > 0) {
@@ -567,7 +570,11 @@ async function getYtDlpVersion() {
 function getFFmpegVersion() {
   return new Promise((resolve) => {
     try {
-      const proc = spawn('ffmpeg', ['-version'], { windowsHide: true });
+      const ffmpegBin = resolveSidecarBinary('ffmpeg');
+      const proc = spawn(ffmpegBin, ['-version'], {
+        windowsHide: true,
+        env: getSanitizedEnv(process.env)
+      });
       let output = '';
       proc.stdout.on('data', (d) => { output += d.toString('utf8'); });
       proc.on('close', (code) => {

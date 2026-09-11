@@ -1,5 +1,6 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
+const { resolveSidecarBinary, getSanitizedEnv } = require('../security/binary_guard');
 
 /**
  * Convert any media file to pristine 320kbps MP3 with embedded metadata
@@ -28,8 +29,10 @@ function convertToMp3(inputPath, outputPath, metadata = {}) {
 
     args.push(outputPath);
 
-    const process = spawn('ffmpeg', args, {
-      windowsHide: true
+    const ffmpegBin = resolveSidecarBinary('ffmpeg');
+    const process = spawn(ffmpegBin, args, {
+      windowsHide: true,
+      env: getSanitizedEnv(process.env)
     });
 
     let stderr = '';
@@ -75,9 +78,11 @@ function pipeToMp3(inputStream, outputPath, metadata = {}) {
 
     args.push(outputPath);
 
-    const proc = spawn('ffmpeg', args, {
+    const ffmpegBin = resolveSidecarBinary('ffmpeg');
+    const proc = spawn(ffmpegBin, args, {
       windowsHide: true,
-      stdio: ['pipe', 'ignore', 'pipe']
+      stdio: ['pipe', 'ignore', 'pipe'],
+      env: getSanitizedEnv(process.env)
     });
 
     let stderr = '';
