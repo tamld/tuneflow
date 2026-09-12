@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { PORT, ROOT_DIR } = require('./config');
+const { PORT, HOST, ROOT_DIR } = require('./config');
 const apiRoutes = require('./routes/api');
 
 const app = express();
@@ -56,8 +56,8 @@ if (require.main === module) {
     console.error('💥 Unhandled Rejection caught by TuneFlow server shield:', reason);
   });
 
-  server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎶 TuneFlow Server is running on http://localhost:${PORT}`);
+  server = app.listen(PORT, HOST, () => {
+    console.log(`🎶 TuneFlow Server is running on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
     console.log(`📂 Ready for parents to search, preview, and download music!`);
 
     // Start background maintenance engine (Issue #103)

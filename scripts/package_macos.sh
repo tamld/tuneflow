@@ -12,7 +12,28 @@ cd "$REPO_ROOT"
 VERSION="$(node -p "require('./package.json').version")"
 ARCH="$(uname -m)"
 
-echo "📦 Packaging TuneFlow v${VERSION} for macOS (${ARCH})..."
+MODE="standalone"
+for arg in "$@"; do
+    case "$arg" in
+        --thin-client)
+            MODE="thin-client"
+            ;;
+        --help|-h)
+            echo "Usage: $0 [--thin-client]"
+            exit 0
+            ;;
+    esac
+done
+
+if [ "$MODE" = "thin-client" ]; then
+    echo "📦 Packaging TuneFlow Thin Client v${VERSION} for macOS (${ARCH})..."
+    PKG_NAME="TuneFlow-Client"
+    VOL_NAME="TuneFlow Client"
+else
+    echo "📦 Packaging TuneFlow Full Standalone v${VERSION} for macOS (${ARCH})..."
+    PKG_NAME="TuneFlow"
+    VOL_NAME="TuneFlow"
+fi
 
 DIST_DIR="$REPO_ROOT/dist"
 MACOS_APP="$DIST_DIR/macos/TuneFlow.app"
@@ -56,25 +77,39 @@ cp "$REPO_ROOT/installer/macos/Info.plist" "$MACOS_APP/Contents/Info.plist"
 echo -n "APPL????" > "$MACOS_APP/Contents/PkgInfo"
 
 # Executable bootstrap: compile native Swift Cocoa window if swiftc is available, else fallback to launcher script
-if command -v swiftc >/dev/null 2>&1 && [ -f "$REPO_ROOT/src/desktop/macos/main.swift" ]; then
-    echo "⚡ Compiling native macOS Cocoa WebKit binary via swiftc..."
+if [ "$MODE" = "thin-client" ]; then
+    if ! command -v swiftc >/dev/null 2>&1; then
+        echo "❌ Error: swiftc compiler is required to build TuneFlow Thin Client."
+        exit 1
+    fi
+    echo "⚡ Compiling native macOS Cocoa Thin Client binary via swiftc..."
     swiftc -O "$REPO_ROOT/src/desktop/macos/main.swift" -framework Cocoa -framework WebKit -o "$MACOS_APP/Contents/MacOS/TuneFlow"
 else
-    cp "$REPO_ROOT/installer/macos/tuneflow-launcher.sh" "$MACOS_APP/Contents/MacOS/TuneFlow"
-    chmod +x "$MACOS_APP/Contents/MacOS/TuneFlow"
+    if command -v swiftc >/dev/null 2>&1 && [ -f "$REPO_ROOT/src/desktop/macos/main.swift" ]; then
+        echo "⚡ Compiling native macOS Cocoa WebKit binary via swiftc..."
+        swiftc -O "$REPO_ROOT/src/desktop/macos/main.swift" -framework Cocoa -framework WebKit -o "$MACOS_APP/Contents/MacOS/TuneFlow"
+    else
+        cp "$REPO_ROOT/installer/macos/tuneflow-launcher.sh" "$MACOS_APP/Contents/MacOS/TuneFlow"
+        chmod +x "$MACOS_APP/Contents/MacOS/TuneFlow"
+    fi
 fi
 
 # Icon
 cp "$ICNS_PATH" "$MACOS_APP/Contents/Resources/icon.icns"
 
-# Application Payload
-cp "$REPO_ROOT/package.json" "$MACOS_APP/Contents/Resources/app/"
-cp -R "$REPO_ROOT/src" "$MACOS_APP/Contents/Resources/app/"
-cp -R "$REPO_ROOT/public" "$MACOS_APP/Contents/Resources/app/"
-cp -R "$REPO_ROOT/bin" "$MACOS_APP/Contents/Resources/app/"
-chmod +x "$MACOS_APP/Contents/Resources/app/bin/tuneflow.js"
-if [ -d "$REPO_ROOT/node_modules" ]; then
-    cp -R "$REPO_ROOT/node_modules" "$MACOS_APP/Contents/Resources/app/"
+# Application Payload (Only included in Full Standalone mode)
+if [ "$MODE" != "thin-client" ]; then
+    echo "📦 Bundling Node.js application payload into standalone .app..."
+    cp "$REPO_ROOT/package.json" "$MACOS_APP/Contents/Resources/app/"
+    cp -R "$REPO_ROOT/src" "$MACOS_APP/Contents/Resources/app/"
+    cp -R "$REPO_ROOT/public" "$MACOS_APP/Contents/Resources/app/"
+    cp -R "$REPO_ROOT/bin" "$MACOS_APP/Contents/Resources/app/"
+    chmod +x "$MACOS_APP/Contents/Resources/app/bin/tuneflow.js"
+    if [ -d "$REPO_ROOT/node_modules" ]; then
+        cp -R "$REPO_ROOT/node_modules" "$MACOS_APP/Contents/Resources/app/"
+    fi
+else
+    echo "🪶 Thin Client mode: Omitting Node.js backend bundle (~0 MB payload)..."
 fi
 
 echo "✅ TuneFlow.app successfully assembled at: $MACOS_APP"
@@ -85,12 +120,12 @@ cp -R "$MACOS_APP" "$DMG_STAGING/TuneFlow.app"
 ln -s /Applications "$DMG_STAGING/Applications"
 
 # 4. Create DMG via hdiutil
-DMG_FILE="$INSTALLER_DIR/TuneFlow-${VERSION}-macos-${ARCH}.dmg"
+DMG_FILE="$INSTALLER_DIR/${PKG_NAME}-${VERSION}-macos-${ARCH}.dmg"
 rm -f "$DMG_FILE"
 
 echo "💿 Creating compressed UDZO disk image..."
 hdiutil create \
-    -volname "TuneFlow" \
+    -volname "$VOL_NAME" \
     -srcfolder "$DMG_STAGING" \
     -ov \
     -format UDZO \
@@ -100,7 +135,7 @@ rm -rf "$DMG_STAGING"
 echo "✅ DMG built: $DMG_FILE ($(du -h "$DMG_FILE" | cut -f1))"
 
 # 5. Create Portable tar.gz archive
-TAR_FILE="$INSTALLER_DIR/TuneFlow-${VERSION}-macos-${ARCH}.tar.gz"
+TAR_FILE="$INSTALLER_DIR/${PKG_NAME}-${VERSION}-macos-${ARCH}.tar.gz"
 echo "📦 Creating portable tar.gz bundle..."
 tar -czf "$TAR_FILE" -C "$DIST_DIR/macos" TuneFlow.app
 echo "✅ Tarball built: $TAR_FILE ($(du -h "$TAR_FILE" | cut -f1))"
@@ -108,8 +143,9 @@ echo "✅ Tarball built: $TAR_FILE ($(du -h "$TAR_FILE" | cut -f1))"
 # 6. Generate SHA-256 Manifest
 echo "🔒 Computing SHA-256 checksums..."
 cd "$INSTALLER_DIR"
-shasum -a 256 "TuneFlow-${VERSION}-macos-${ARCH}.dmg" > "SHA256SUMS-macos-${ARCH}.txt"
-shasum -a 256 "TuneFlow-${VERSION}-macos-${ARCH}.tar.gz" >> "SHA256SUMS-macos-${ARCH}.txt"
+SUMS_FILE="SHA256SUMS-macos-${ARCH}.txt"
+shasum -a 256 "${PKG_NAME}-${VERSION}-macos-${ARCH}.dmg" >> "$SUMS_FILE"
+shasum -a 256 "${PKG_NAME}-${VERSION}-macos-${ARCH}.tar.gz" >> "$SUMS_FILE"
 
 echo "🎉 macOS packaging complete!"
 cat "SHA256SUMS-macos-${ARCH}.txt"

@@ -46,6 +46,7 @@ const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'tuneflow.db');
 
 module.exports = {
   PORT: parseInt(process.env.PORT || '3000', 10),
+  HOST: process.env.HOST || '0.0.0.0',
   ROOT_DIR,
   DOWNLOADS_DIR,
   TEMP_DIR,

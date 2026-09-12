@@ -26,8 +26,9 @@ Each phase is designed independently with a complete quality assurance dossier:
 │ Phase 11 │ Mobile PWA, iOS PiP & Unified CI/CD      │ v2.4.2      │ ✅ Completed       │
 │ Phase 12 │ Schema Migrations & Session Maintenance  │ v2.4.3      │ ✅ Completed       │
 │ Phase 13 │ Portable Binary & Hash Checker Security  │ v2.5.0      │ ✅ Completed (SSoT)│
-│ Phase 14 │ Two-Tier Self-Update & WinGet Packaging │ v2.6.0      │ 🎯 In Progress     │
-│ Phase 15 │ Native Desktop GUI Shell with Tauri v2   │ v3.0.0      │ 📅 Planned         │
+│ Phase 14 │ Two-Tier Self-Update & WinGet Packaging │ v2.6.0      │ ✅ Completed (SSoT)│
+│ Phase 15 │ Tri-Mode Deployment & Decoupled Client   │ v2.7.0      │ ✅ Completed (SSoT)│
+│ Phase 16 │ Native Desktop GUI Shell with Tauri v2   │ v3.0.0      │ 📅 Planned         │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
@@ -167,7 +168,18 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 15: Native Desktop GUI Shell with Tauri v2 (v3.0.0)
+### Phase 15: Tri-Mode Deployment & Decoupled Client-Server Topology (v2.7.0)
+- **Scope**:
+  - Tri-Mode Deployment: Mode 1 (Full Standalone + Native Window), Mode 2 (Dedicated Headless Server), Mode 3 (Dedicated Thin Client).
+  - Storage-Agnostic Headless Linux Server: turnkey installer (`installer/server/install.sh`), systemd service unit (`tuneflow.service`), and POSIX environment template (`tuneflow.env.example`).
+  - Decoupled Native Desktop Client: Swift Cocoa AppKit shell (`main.swift`), multi-host config (`client-config.json`), Preferences dialog (`Cmd + ,`), and zero-node thin packaging (`--thin-client`).
+  - Connection State Machine (FSM): automatic reconnect with exponential backoff, latency degradation detection (>500ms), and fallback to standalone.
+- **SSoT Deliverables**: `docs/spec/SPEC-0013-tri-mode-deployment-and-remote-client-architecture.md`, `docs/adr/ADR-0015-tri-mode-deployment-and-decoupled-client-topology.md`.
+- **Verification**: 17/17 tests passing in `tests/tri-mode-connectivity-matrix.test.js`, 12/12 tests passing in `tests/headless-server-and-launcher.test.js` (total test suite reaches 421/421 passed).
+
+---
+
+### Phase 16: Native Desktop GUI Shell with Tauri v2 (v3.0.0)
 - **Scope**:
   - Lightweight Rust shell with System Tray icon and auto-browser launch.
   - Native MSI installer for Windows and signed DMG with notarization for macOS.
@@ -213,3 +225,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-31** | Master 7-Dimensional Testing Matrix & Anti-Theater Gates | SPEC-0011, Phase 13 | `tests/master-testing-matrix-gates.test.js` |
 | **RM-32** | FFmpeg Transcoding Atomic Resilience & Partial Cleanup | Issue #131 | `tests/ffmpeg-resilience.test.js` |
 | **RM-33** | Two-Tier Self-Update & Windows Package Manifests | SPEC-0012, Phase 14 | `tests/phase14-update-and-packaging.test.js` |
+| **RM-34** | Tri-Mode Deployment Selection (Standalone / Headless / Thin) | SPEC-0013, ADR-0015 | `tests/tri-mode-connectivity-matrix.test.js` |
+| **RM-35** | Decoupled Client Multi-Host FQDN & Universal Transport Medium | SPEC-0013, ADR-0015 | `tests/tri-mode-connectivity-matrix.test.js` |
+| **RM-36** | Headless Linux Server Turnkey Installer & POSIX Storage Parity | SPEC-0013, ADR-0015 | `installer/server/install.sh`, `tests/headless-server-and-launcher.test.js` |
+| **RM-37** | Thin-Client macOS Native Cocoa AppKit Shell & Preferences | SPEC-0013, ADR-0015 | `src/desktop/macos/main.swift`, `scripts/package_macos.sh`, `tests/headless-server-and-launcher.test.js` |

@@ -1,0 +1,34 @@
+[Unit]
+Description=TuneFlow Headless Media Server
+Documentation=https://github.com/tamld/tuneflow
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tuneflow
+Group=tuneflow
+WorkingDirectory=/opt/tuneflow
+EnvironmentFile=-/etc/tuneflow/tuneflow.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/env node src/server.js
+Restart=always
+RestartSec=5s
+LimitNOFILE=65536
+KillMode=mixed
+TimeoutStopSec=15s
+
+# Standard output and logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tuneflow
+
+# Security Sandboxing & Hardening
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+NoNewPrivileges=true
+ReadWritePaths=/var/lib/tuneflow
+
+[Install]
+WantedBy=multi-user.target

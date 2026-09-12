@@ -7,9 +7,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var serverProcess: Process?
     var healthCheckTimer: Timer?
     var healthAttempts = 0
-    let targetPort = 3000
+    var currentServerUrl = "http://127.0.0.1:3000"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        setupMenuBar()
+
         let screenRect = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
         let windowWidth: CGFloat = min(1200, screenRect.width * 0.85)
         let windowHeight: CGFloat = min(800, screenRect.height * 0.85)
@@ -53,28 +55,174 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
-        // Ensure backend server is running, then load UI
+        // Resolve active target server URL (Env > client-config.json > UserDefaults > 127.0.0.1:3000)
+        currentServerUrl = resolveTargetServerUrl()
+
+        // Bootstrap backend / connect remote server
         bootstrapAndLoad()
     }
 
+    func setupMenuBar() {
+        let mainMenu = NSMenu()
+
+        // 1. Application Menu
+        let appMenuItem = NSMenuItem()
+        mainMenu.addItem(appMenuItem)
+        let appMenu = NSMenu()
+        appMenuItem.submenu = appMenu
+
+        let aboutItem = NSMenuItem(title: "Giới thiệu TuneFlow", action: #selector(showAbout), keyEquivalent: "")
+        appMenu.addItem(aboutItem)
+        appMenu.addItem(NSMenuItem.separator())
+
+        let prefItem = NSMenuItem(title: "Cài đặt máy chủ (Preferences)...", action: #selector(openPreferences), keyEquivalent: ",")
+        appMenu.addItem(prefItem)
+        appMenu.addItem(NSMenuItem.separator())
+
+        appMenu.addItem(withTitle: "Ẩn TuneFlow", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        let hideOthersItem = NSMenuItem(title: "Ẩn các ứng dụng khác", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
+        hideOthersItem.keyEquivalentModifierMask = [.command, .option]
+        appMenu.addItem(hideOthersItem)
+        appMenu.addItem(withTitle: "Hiện tất cả", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: "")
+        appMenu.addItem(NSMenuItem.separator())
+
+        appMenu.addItem(withTitle: "Thoát TuneFlow", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+
+        // 2. Edit Menu (Standard macOS Copy, Cut, Paste, Select All for WebKit text inputs)
+        let editMenuItem = NSMenuItem()
+        mainMenu.addItem(editMenuItem)
+        let editMenu = NSMenu(title: "Edit")
+        editMenuItem.submenu = editMenu
+        editMenu.addItem(withTitle: "Undo", action: #selector(UndoManager.undo), keyEquivalent: "z")
+        editMenu.addItem(withTitle: "Redo", action: #selector(UndoManager.redo), keyEquivalent: "Z")
+        editMenu.addItem(NSMenuItem.separator())
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+
+        // 3. View Menu
+        let viewMenuItem = NSMenuItem()
+        mainMenu.addItem(viewMenuItem)
+        let viewMenu = NSMenu(title: "View")
+        viewMenuItem.submenu = viewMenu
+        let reloadItem = NSMenuItem(title: "Tải lại giao diện", action: #selector(reloadUI), keyEquivalent: "r")
+        viewMenu.addItem(reloadItem)
+
+        NSApp.mainMenu = mainMenu
+    }
+
+    func normalizeUrl(_ str: String) -> String {
+        var s = str.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !s.lowercased().hasPrefix("http://") && !s.lowercased().hasPrefix("https://") {
+            s = "http://\(s)"
+        }
+        if s.hasSuffix("/") {
+            s = String(s.dropLast())
+        }
+        return s
+    }
+
+    func isRemoteServer(_ urlStr: String) -> Bool {
+        guard let url = URL(string: urlStr), let host = url.host?.lowercased() else { return false }
+        return host != "localhost" && host != "127.0.0.1" && host != "::1"
+    }
+
+    func resolveTargetServerUrl() -> String {
+        // Priority 1: Environment variable
+        if let env = ProcessInfo.processInfo.environment["TUNEFLOW_SERVER_URL"], !env.isEmpty {
+            return normalizeUrl(env)
+        }
+
+        // Priority 2: client-config.json
+        let configPath = (NSHomeDirectory() as NSString).appendingPathComponent("Library/Application Support/TuneFlow/client-config.json")
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let profiles = json["profiles"] as? [String: Any] {
+            let activeKey = (json["activeProfile"] as? String) ?? "default"
+            if let activeProfile = profiles[activeKey] as? [String: Any],
+               let profileUrl = activeProfile["url"] as? String, !profileUrl.isEmpty {
+                return normalizeUrl(profileUrl)
+            }
+        }
+
+        // Priority 3: UserDefaults
+        if let saved = UserDefaults.standard.string(forKey: "serverUrl"), !saved.isEmpty {
+            return normalizeUrl(saved)
+        }
+
+        // Priority 4: Default local server
+        return "http://127.0.0.1:3000"
+    }
+
+    func saveServerConfig(urlStr: String) {
+        let normalized = normalizeUrl(urlStr)
+        UserDefaults.standard.set(normalized, forKey: "serverUrl")
+
+        // Persist to client-config.json
+        let supportDir = (NSHomeDirectory() as NSString).appendingPathComponent("Library/Application Support/TuneFlow")
+        let configPath = (supportDir as NSString).appendingPathComponent("client-config.json")
+        try? FileManager.default.createDirectory(atPath: supportDir, withIntermediateDirectories: true, attributes: nil)
+
+        let isRemote = isRemoteServer(normalized)
+        let configDict: [String: Any] = [
+            "version": "1.0.0",
+            "activeProfile": isRemote ? "remote" : "default",
+            "profiles": [
+                "default": [
+                    "name": "Local Standalone",
+                    "url": "http://127.0.0.1:3000",
+                    "isLocalDaemon": true
+                ],
+                "remote": [
+                    "name": "Dedicated Remote Server",
+                    "url": normalized,
+                    "isLocalDaemon": false
+                ]
+            ],
+            "behavior": [
+                "autoReconnect": true,
+                "maxReconnectAttempts": 3,
+                "fallbackToStandalone": false
+            ]
+        ]
+
+        if let jsonData = try? JSONSerialization.data(withJSONObject: configDict, options: [.prettyPrinted]) {
+            try? jsonData.write(to: URL(fileURLWithPath: configPath))
+        }
+    }
+
     func bootstrapAndLoad() {
-        checkServerHealth { [weak self] isRunning in
-            guard let self = self else { return }
-            if isRunning {
-                self.loadTuneFlowUI()
-            } else {
-                self.startLocalServer()
+        if isRemoteServer(currentServerUrl) {
+            // Thin Client Mode: Check remote health directly without local node process
+            checkServerHealth(targetUrl: currentServerUrl) { [weak self] isRunning in
+                guard let self = self else { return }
+                if isRunning {
+                    self.loadTuneFlowUI(urlStr: self.currentServerUrl)
+                } else {
+                    self.showRemoteConnectionFailureAlert()
+                }
+            }
+        } else {
+            // Local Standalone Mode: Ensure local backend server is running
+            checkServerHealth(targetUrl: currentServerUrl) { [weak self] isRunning in
+                guard let self = self else { return }
+                if isRunning {
+                    self.loadTuneFlowUI(urlStr: self.currentServerUrl)
+                } else {
+                    self.startLocalServer()
+                }
             }
         }
     }
 
-    func checkServerHealth(completion: @escaping (Bool) -> Void) {
-        guard let url = URL(string: "http://localhost:\(targetPort)/api/health") else {
+    func checkServerHealth(targetUrl: String, completion: @escaping (Bool) -> Void) {
+        guard let url = URL(string: "\(targetUrl)/api/health") else {
             completion(false)
             return
         }
         var req = URLRequest(url: url)
-        req.timeoutInterval = 1.0
+        req.timeoutInterval = 2.0
         let task = URLSession.shared.dataTask(with: req) { _, response, error in
             DispatchQueue.main.async {
                 if let http = response as? HTTPURLResponse, http.statusCode == 200 {
@@ -98,7 +246,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 return path
             }
         }
-        // Fallback to checking which node
         let pipe = Pipe()
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: "/usr/bin/which")
@@ -115,15 +262,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func startLocalServer() {
-        guard let nodePath = resolveNodePath() else {
-            showErrorAlert(
-                title: "Yêu cầu cài đặt Node.js",
-                message: "TuneFlow cần Node.js (>= 20.0.0) để khởi chạy máy chủ âm nhạc nội bộ.\nVui lòng cài đặt từ https://nodejs.org hoặc thông qua 'brew install node'."
-            )
-            return
-        }
-
-        // Determine app root
         var appDir = FileManager.default.currentDirectoryPath
         if let resourcePath = Bundle.main.resourcePath {
             let bundleAppDir = "\(resourcePath)/app"
@@ -133,17 +271,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
 
         let scriptPath = "\(appDir)/bin/tuneflow.js"
-        guard FileManager.default.fileExists(atPath: scriptPath) else {
+        if !FileManager.default.fileExists(atPath: scriptPath) {
+            let alert = NSAlert()
+            alert.messageText = "Chưa kết nối máy chủ TuneFlow"
+            alert.informativeText = "Ứng dụng đang hoạt động ở chế độ Thin Client hoặc chưa cài đặt máy chủ nội bộ.\nVui lòng nhập địa chỉ máy chủ TuneFlow từ xa (IP mạng nội bộ hoặc Tên miền) để bắt đầu thưởng thức âm nhạc."
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "Cài đặt máy chủ (Preferences)")
+            alert.addButton(withTitle: "Đóng")
+            let resp = alert.runModal()
+            if resp == .alertFirstButtonReturn {
+                openPreferences()
+            }
+            return
+        }
+
+        guard let nodePath = resolveNodePath() else {
             showErrorAlert(
-                title: "Không tìm thấy tệp mã nguồn",
-                message: "Không thể định vị \(scriptPath)."
+                title: "Yêu cầu cài đặt Node.js",
+                message: "TuneFlow cần Node.js (>= 20.0.0) để chạy máy chủ nội bộ trong chế độ Standalone.\nVui lòng cài đặt từ https://nodejs.org hoặc thông qua 'brew install node', hoặc cấu hình kết nối tới máy chủ từ xa."
             )
             return
         }
 
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: nodePath)
-        proc.arguments = [scriptPath, "--no-browser", "--port", "\(targetPort)"]
+        proc.arguments = [scriptPath, "--no-browser", "--port", "3000"]
         proc.currentDirectoryURL = URL(fileURLWithPath: appDir)
         proc.standardInput = Pipe()
 
@@ -170,24 +322,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         healthCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] timer in
             guard let self = self else { return }
             self.healthAttempts += 1
-            self.checkServerHealth { isRunning in
+            self.checkServerHealth(targetUrl: self.currentServerUrl) { isRunning in
                 if isRunning {
                     timer.invalidate()
                     self.healthCheckTimer = nil
-                    self.loadTuneFlowUI()
-                } else if self.healthAttempts > 40 { // 10 seconds timeout
+                    self.loadTuneFlowUI(urlStr: self.currentServerUrl)
+                } else if self.healthAttempts > 40 {
                     timer.invalidate()
                     self.healthCheckTimer = nil
                     self.showErrorAlert(
                         title: "Quá thời gian khởi động",
-                        message: "Máy chủ TuneFlow không phản hồi trong 10 giây. Vui lòng kiểm tra lại cấu hình hệ thống."
+                        message: "Máy chủ TuneFlow cục bộ không phản hồi trong 10 giây. Vui lòng kiểm tra lại cấu hình."
                     )
                 }
             }
         }
     }
 
-    func loadTuneFlowUI() {
+    func loadTuneFlowUI(urlStr: String) {
+        guard let url = URL(string: urlStr) else { return }
         let websiteDataTypes = Set([
             WKWebsiteDataTypeDiskCache,
             WKWebsiteDataTypeMemoryCache,
@@ -197,11 +350,72 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         WKWebsiteDataStore.default().removeData(ofTypes: websiteDataTypes, modifiedSince: Date(timeIntervalSince1970: 0)) { [weak self] in
             DispatchQueue.main.async {
                 guard let self = self else { return }
-                let url = URL(string: "http://localhost:\(self.targetPort)")!
                 var req = URLRequest(url: url)
                 req.cachePolicy = .reloadIgnoringLocalCacheData
                 self.webView.load(req)
             }
+        }
+    }
+
+    func showRemoteConnectionFailureAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Không thể kết nối máy chủ TuneFlow"
+        alert.informativeText = "Không nhận được phản hồi từ máy chủ tại địa chỉ:\n\(currentServerUrl)\n\nVui lòng kiểm tra kết nối mạng, địa chỉ IP/Tên miền, hoặc chuyển về chế độ Standalone."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Thử lại")
+        alert.addButton(withTitle: "Cài đặt máy chủ...")
+        alert.addButton(withTitle: "Dùng Standalone Cục bộ")
+
+        let resp = alert.runModal()
+        if resp == .alertFirstButtonReturn {
+            bootstrapAndLoad()
+        } else if resp == .alertSecondButtonReturn {
+            openPreferences()
+        } else if resp == .alertThirdButtonReturn {
+            currentServerUrl = "http://127.0.0.1:3000"
+            saveServerConfig(urlStr: currentServerUrl)
+            bootstrapAndLoad()
+        }
+    }
+
+    @objc func showAbout() {
+        let alert = NSAlert()
+        alert.messageText = "TuneFlow v2.5.0"
+        alert.informativeText = "Trình phát và tải nhạc YouTube chất lượng cao cho người cao tuổi và gia đình.\nChế độ hiện tại: \(isRemoteServer(currentServerUrl) ? "Remote Thin Client" : "Standalone Local Engine")\nMáy chủ mục tiêu: \(currentServerUrl)"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Đóng")
+        alert.runModal()
+    }
+
+    @objc func reloadUI() {
+        loadTuneFlowUI(urlStr: currentServerUrl)
+    }
+
+    @objc func openPreferences() {
+        let alert = NSAlert()
+        alert.messageText = "Cài đặt máy chủ TuneFlow"
+        alert.informativeText = "Nhập URL máy chủ (IPv4, Tên miền mDNS hoặc HTTPS FQDN):\nVí dụ: http://192.168.1.100:3000 hoặc https://music.example.com"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Lưu & Kết nối")
+        alert.addButton(withTitle: "Hủy")
+        alert.addButton(withTitle: "Chuyển về Local Standalone")
+
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 340, height: 24))
+        input.stringValue = currentServerUrl
+        alert.accessoryView = input
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            let text = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !text.isEmpty {
+                currentServerUrl = normalizeUrl(text)
+                saveServerConfig(urlStr: currentServerUrl)
+                bootstrapAndLoad()
+            }
+        } else if response == .alertThirdButtonReturn {
+            currentServerUrl = "http://127.0.0.1:3000"
+            saveServerConfig(urlStr: currentServerUrl)
+            bootstrapAndLoad()
         }
     }
 

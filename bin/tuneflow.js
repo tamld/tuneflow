@@ -30,6 +30,7 @@ Usage:
 Options:
   --port <number>     Port to bind (default: 3000, auto-increments if busy)
   --no-browser        Do not automatically open default browser on start
+  --daemon            Run as background/system service daemon (detach stdin lifeline)
   --version, -v       Print current version and exit
   --help, -h          Show this help message and exit
 `);
@@ -52,9 +53,10 @@ if (portIdx !== -1 && args[portIdx + 1]) {
 }
 
 const autoOpenBrowser = !args.includes('--no-browser');
+const isDaemon = args.includes('--daemon') || process.env.TUNEFLOW_DAEMON === '1';
 
-// Sidecar lifeline: Auto-exit cleanly if parent process pipe terminates
-if (!autoOpenBrowser) {
+// Sidecar lifeline: Auto-exit cleanly if parent desktop UI process pipe terminates
+if (!autoOpenBrowser && !isDaemon) {
   process.stdin.resume();
   process.stdin.on('end', () => {
     process.exit(0);
