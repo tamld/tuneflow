@@ -110,7 +110,14 @@
       player_title_ambient: 'Toàn màn hình tĩnh dưỡng / Ambient Leanback Mode',
       player_title_pip: 'Chế độ cửa sổ nổi (Picture-in-Picture) / PiP Mode',
       lang_switch_label: '🇬🇧 English',
-      lang_switch_title: 'Chuyển đổi sang Tiếng Anh / Switch to English'
+      lang_switch_title: 'Chuyển đổi sang Tiếng Anh / Switch to English',
+      settings_btn_text: 'Cài Đặt',
+      settings_title: 'Mở Cài Đặt Hệ Thống',
+      settings_modal_title: '⚙️ Cài Đặt Hệ Thống',
+      theme_day: 'Ngày Dịu',
+      theme_night: 'Đêm Ấm',
+      theme_toggle_title_day: 'Chuyển sang chế độ Ngày Dịu (Giảm mỏi mắt)',
+      theme_toggle_title_night: 'Chuyển sang chế độ Đêm Ấm (Tương phản cao)'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -218,7 +225,14 @@
       player_title_ambient: 'Ambient Leanback Mode',
       player_title_pip: 'Picture-in-Picture (PiP) Mode',
       lang_switch_label: '🇻🇳 Tiếng Việt',
-      lang_switch_title: 'Chuyển sang Tiếng Việt / Switch to Vietnamese'
+      lang_switch_title: 'Chuyển sang Tiếng Việt / Switch to Vietnamese',
+      settings_btn_text: 'Settings',
+      settings_title: 'Open System Settings',
+      settings_modal_title: '⚙️ System Settings',
+      theme_day: 'Day Calm',
+      theme_night: 'Night Warm',
+      theme_toggle_title_day: 'Switch to Day Calm Mode (Reduce eye strain)',
+      theme_toggle_title_night: 'Switch to Night Warm Mode (High contrast)'
     }
   };
 
@@ -452,6 +466,25 @@
     if (fontReset) fontReset.title = getTranslation('font_reset_title');
     const fontInc = document.getElementById('btn-font-inc');
     if (fontInc) fontInc.title = getTranslation('font_inc_title');
+
+    // Settings Modal & Triggers (Issue #133)
+    const textSettings = document.getElementById('text-settings');
+    if (textSettings) textSettings.textContent = getTranslation('settings_btn_text');
+    const settingsBtn = document.getElementById('btn-settings-trigger');
+    if (settingsBtn) settingsBtn.title = getTranslation('settings_title');
+    const settingsModalTitle = document.getElementById('settings-modal-title');
+    if (settingsModalTitle) settingsModalTitle.textContent = getTranslation('settings_modal_title');
+
+    // Theme Toggle labels (Issue #133)
+    const isCream = document.body && document.body.classList.contains('theme-cream');
+    const themeToggleText = document.getElementById('theme-toggle-text');
+    const themeToggleBtn = document.getElementById('btn-theme-toggle');
+    if (themeToggleText) {
+      themeToggleText.textContent = isCream ? getTranslation('theme_night') : getTranslation('theme_day');
+    }
+    if (themeToggleBtn) {
+      themeToggleBtn.title = isCream ? getTranslation('theme_toggle_title_night') : getTranslation('theme_toggle_title_day');
+    }
 
     // Playlist Panel Action Buttons
     const btnPlayPl = document.getElementById('btn-play-playlist');

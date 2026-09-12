@@ -145,6 +145,14 @@ if (typeof document !== 'undefined') {
   const drawerQueueList = document.getElementById('drawer-queue-list');
   const btnDrawerClearDone = document.getElementById('btn-drawer-clear-done');
 
+  // Settings Modal & Theme Controls (Issue #133)
+  const btnSettingsTrigger = document.getElementById('btn-settings-trigger');
+  const modalSettings = document.getElementById('modal-settings');
+  const btnSettingsClose = document.getElementById('btn-settings-close');
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+  const themeToggleIcon = document.getElementById('theme-toggle-icon');
+  const themeToggleText = document.getElementById('theme-toggle-text');
+
   // Font Scaler Buttons
   const btnFontDec = document.getElementById('btn-font-dec');
   const btnFontReset = document.getElementById('btn-font-reset');
@@ -460,13 +468,70 @@ if (typeof document !== 'undefined') {
     });
   }
 
+  // 5b. Unified Settings Modal (Issue #133)
+  function openSettingsModal() {
+    if (modalSettings) modalSettings.style.display = 'flex';
+  }
+  function closeSettingsModal() {
+    if (modalSettings) modalSettings.style.display = 'none';
+  }
+  if (btnSettingsTrigger) btnSettingsTrigger.addEventListener('click', openSettingsModal);
+  if (btnSettingsClose) btnSettingsClose.addEventListener('click', closeSettingsModal);
+  if (modalSettings) {
+    modalSettings.addEventListener('click', (e) => {
+      if (e.target === modalSettings) closeSettingsModal();
+    });
+  }
+
   // Global Keyboard Shortcuts (Escape to close modals)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeHelpModal();
       closeQueueDrawer();
+      closeSettingsModal();
     }
   });
+
+  // 5c. Senior High-Contrast Warm Cream Day Mode (Issue #133)
+  function applyTheme(theme) {
+    const isCream = theme === 'cream';
+    document.documentElement.setAttribute('data-theme', isCream ? 'cream' : 'dark');
+    document.body.classList.toggle('theme-cream', isCream);
+    const dayLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_day') : 'Ngày Dịu';
+    const nightLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_night') : 'Đêm Ấm';
+    if (themeToggleIcon) themeToggleIcon.textContent = isCream ? '🌙' : '☀️';
+    if (themeToggleText) themeToggleText.textContent = isCream ? nightLabel : dayLabel;
+    if (btnThemeToggle) {
+      const titleDay = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_day') : 'Chuyển sang chế độ Ngày Dịu (Giảm mỏi mắt)';
+      const titleNight = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_night') : 'Chuyển sang chế độ Đêm Ấm (Tương phản cao)';
+      const currentTitle = isCream ? titleNight : titleDay;
+      btnThemeToggle.setAttribute('title', currentTitle);
+      btnThemeToggle.setAttribute('aria-label', currentTitle);
+    }
+  }
+
+  function initTheme() {
+    let savedTheme = 'dark';
+    try {
+      savedTheme = localStorage.getItem('tuneflow_theme') || 'dark';
+    } catch (_e) {}
+    applyTheme(savedTheme);
+
+    if (btnThemeToggle) {
+      btnThemeToggle.addEventListener('click', () => {
+        const isCurrentCream = document.body.classList.contains('theme-cream');
+        const nextTheme = isCurrentCream ? 'dark' : 'cream';
+        try {
+          localStorage.setItem('tuneflow_theme', nextTheme);
+        } catch (_e) {}
+        applyTheme(nextTheme);
+        if (typeof showToast === 'function') {
+          showToast(nextTheme === 'cream' ? '☀️ Đã bật giao diện Ngày Dịu (Nền kem chống lóa)' : '🌙 Đã bật giao diện Đêm Ấm (Tương phản cao)', 'info');
+        }
+      });
+    }
+  }
+  initTheme();
 
   // 6. Font Size Scaling (Issue #12 & Issue #49: Dynamic Typography Scaling)
   const fontScales = [
@@ -925,7 +990,10 @@ if (typeof document !== 'undefined') {
             <h3 class="song-title" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">${escapeHtml(song.title)}</h3>
             <button class="btn-fav" id="btn-fav-${escapeHtml(song.id)}" title="Lưu bài hát yêu thích">${isFav ? '❤️' : '🤍'}</button>
           </div>
-          <p class="song-uploader">🎙️ ${escapeHtml(song.uploader || artistDefault)}</p>
+          <p class="song-uploader" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+            <span>🎙️ ${escapeHtml(song.uploader || artistDefault)}</span>
+            <span class="song-duration-badge" style="font-weight: 700; color: var(--accent-gold); background: rgba(245, 158, 11, 0.12); padding: 2px 8px; border-radius: 6px; font-size: 15px; display: inline-flex; align-items: center; gap: 4px;">⏱️ ${escapeHtml(song.duration_string || '00:00')}</span>
+          </p>
           <div class="song-status-badge" id="status-${escapeHtml(song.id)}" style="margin-top: 8px; font-size: 16px; font-weight: 600; color: var(--accent-gold); display: none;"></div>
         </div>
         <div class="song-actions">

@@ -246,3 +246,4 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-39** | Cross-Platform Static CI Gate & Pre-Push Protection | Issue #132 | `tests/ci-preflight-gate.test.js`, `.git/hooks/pre-push` |
 | **RM-40** | Tauri v2 Native GUI Architecture, IPC Contract & Tray Lifecycle | SPEC-0014, ADR-0016 | `tests/tauri-architecture-matrix.test.js` |
 | **RM-41** | Desktop In-App Auto-Update, Self-Healing Diagnostics & Multi-Arch Distribution | SPEC-0015, ADR-0017 | `tests/phase17-desktop-updater-and-distribution.test.js` |
+| **RM-42** | Senior Visual Ergonomics, Header Declutter, Warm Cream Day Mode & Unified Settings | Issue #133 | `tests/elderly-visual-theme-and-settings.test.js` |

@@ -28,21 +28,9 @@
         </div>
       </div>
       <div class="header-actions">
-        <!-- PWA Install Prompt Button (Phase 1) -->
-        <button id="btn-install-pwa" class="font-scale-btn" style="display: none; min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--accent-gold); border-radius: var(--radius-pill); background: rgba(243, 156, 18, 0.15); color: var(--accent-gold); font-weight: 600;" title="Cài đặt ứng dụng lên màn hình chính / Install App">
-          📲 <span id="text-install-pwa">Cài App</span>
-        </button>
-        <!-- Remote Server Endpoint Switcher Trigger (SPEC-0013) -->
-        <button id="btn-server-endpoint-trigger" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); display: inline-flex; align-items: center; gap: 6px;" title="Cài đặt máy chủ TuneFlow (Mặc định: Cùng máy chủ)">
-          🌐 <span style="font-size: 13px;">Máy Chủ</span>
-        </button>
-        <!-- Language Switcher (Issue #19) -->
-        <button id="btn-lang-toggle" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Chuyển đổi ngôn ngữ / Switch Language">
-          🇻🇳 Tiếng Việt
-        </button>
-        <!-- Android TV Leanback Mode Toggle (Issue #43) -->
-        <button id="btn-toggle-tv" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Bật/Tắt chế độ điều khiển TV / Android TV Leanback Mode" aria-pressed="false">
-          📺 Chế Độ TV
+        <!-- Theme Quick Toggle (Cream Day / Dark Warm) (Issue #133) -->
+        <button id="btn-theme-toggle" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="Chuyển chế độ Ngày / Đêm">
+          <span id="theme-toggle-icon">☀️</span> <span id="theme-toggle-text">Ngày Dịu</span>
         </button>
         <!-- Font Size Scaler (Issue #12) -->
         <div class="font-scale-group" title="Chỉnh cỡ chữ hiển thị cho Bố Mẹ dễ đọc">
@@ -50,20 +38,6 @@
           <button id="btn-font-reset" class="font-scale-btn" title="Cỡ chữ chuẩn">A</button>
           <button id="btn-font-inc" class="font-scale-btn" title="Chữ to rõ hơn">A+</button>
         </div>
-        <!-- Dedicated Admin Management Entrypoint (Issue #76) -->
-        <button id="btn-admin-panel-trigger" class="font-scale-btn admin-panel-trigger-btn" title="Bảng Điều Khiển Quản Trị Hệ Thống">
-          <span id="admin-trigger-icon">👑</span>
-          <span id="admin-trigger-text">Quản Trị</span>
-        </button>
-        <!-- User / Guest Auth Status & Login Trigger (Issue #52) -->
-        <button id="btn-auth-status" class="font-scale-btn auth-status-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" title="Tài khoản truy cập / Thời gian nghe thử">
-          <span id="auth-status-icon">⏱️</span>
-          <span id="auth-status-text">Khách: 30:00</span>
-        </button>
-        <!-- User Change Password Trigger (Issue #81) -->
-        <button id="btn-change-password-trigger" class="font-scale-btn" style="display: none; min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Đổi mật khẩu tài khoản">
-          🔑 Đổi MK
-        </button>
         <!-- Persistent Queue Trigger (Issue #9) -->
         <button id="btn-floating-queue" class="floating-queue-btn" title="Mở danh sách các bài hát đang tải">
           📥 Hàng Đợi (<span id="queue-badge-count">0</span>)
@@ -71,6 +45,10 @@
         <!-- Accessible Guidance Modal Trigger (Issue #10) -->
         <button id="btn-help" class="help-btn" title="Bấm để xem hướng dẫn sử dụng">
           ❓ Hướng Dẫn Dễ Hiểu
+        </button>
+        <!-- Unified Settings Trigger (Issue #133) -->
+        <button id="btn-settings-trigger" class="font-scale-btn settings-trigger-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="Mở Cài Đặt Hệ Thống">
+          ⚙️ <span id="text-settings">Cài Đặt</span>
         </button>
       </div>
     </header>
@@ -539,6 +517,64 @@
               </button>
             </div>
             <div id="admin-ytdlp-update-msg" style="display: none; margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 13px; background: var(--bg-card);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unified Settings Modal (Issue #133) -->
+  <div id="modal-settings" class="modal-overlay modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+    <div class="modal-card" style="max-width: 660px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h2 id="settings-modal-title" style="margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; color: var(--accent-gold);">
+          ⚙️ Cài Đặt Hệ Thống
+        </h2>
+        <button id="btn-settings-close" class="modal-close-btn" aria-label="Đóng cài đặt">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 0; display: flex; flex-direction: column; gap: 16px;">
+        <!-- Group 1: Hiển Thị & Thiết Bị -->
+        <div class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
+          <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px; color: var(--accent-gold);">🎨 Hiển Thị & Thiết Bị</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <button id="btn-lang-toggle" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Chuyển đổi ngôn ngữ / Switch Language">
+              🇻🇳 Tiếng Việt
+            </button>
+            <button id="btn-toggle-tv" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Bật/Tắt chế độ điều khiển TV / Android TV Leanback Mode" aria-pressed="false">
+              📺 Chế Độ TV
+            </button>
+            <button id="btn-install-pwa" class="font-scale-btn" style="display: none; min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--accent-gold); border-radius: var(--radius-pill); background: rgba(243, 156, 18, 0.15); color: var(--accent-gold); font-weight: 600;" title="Cài đặt ứng dụng lên màn hình chính / Install App">
+              📲 <span id="text-install-pwa">Cài App</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 2: Máy Chủ & Kết Nối -->
+        <div class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
+          <div style="font-weight: 700; font-size: 15px; margin-bottom: 8px; color: var(--accent-blue);">🌐 Máy Chủ & Đường Truyền</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span style="font-size: 14px; color: var(--text-sub);">Máy chủ phát nhạc & tải về (Homelab / LAN / VPS):</span>
+            <button id="btn-server-endpoint-trigger" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 16px; border: 1px solid var(--accent-blue); border-radius: var(--radius-pill); background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" title="Cài đặt máy chủ TuneFlow">
+              🌐 <span style="font-size: 14px;">Cấu Hình Máy Chủ</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 3: Tài Khoản & Quản Trị -->
+        <div class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
+          <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px; color: var(--accent-green);">👤 Tài Khoản & Quản Trị Hệ Thống</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <button id="btn-auth-status" class="font-scale-btn auth-status-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" title="Tài khoản truy cập / Thời gian nghe thử">
+              <span id="auth-status-icon">⏱️</span>
+              <span id="auth-status-text">Khách: 30:00</span>
+            </button>
+            <button id="btn-change-password-trigger" class="font-scale-btn" style="display: none; min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Đổi mật khẩu tài khoản">
+              🔑 Đổi MK
+            </button>
+            <button id="btn-admin-panel-trigger" class="font-scale-btn admin-panel-trigger-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--accent-gold); border-radius: var(--radius-pill); background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); font-weight: 700;" title="Bảng Điều Khiển Quản Trị Hệ Thống">
+              <span id="admin-trigger-icon">👑</span>
+              <span id="admin-trigger-text">Quản Trị</span>
+            </button>
           </div>
         </div>
       </div>
