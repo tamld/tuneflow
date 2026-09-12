@@ -145,8 +145,8 @@ describe('SPEC-0013: Tri-Mode Deployment & Remote Connectivity Proving Suite', (
     it('should save client-config.json atomically with restricted permissions (chmod 600)', () => {
       const config = getDefaultClientConfig();
       setProfile(config, 'homelab', {
-        name: 'Proxmox CT122',
-        url: 'http://192.168.10.52:3000',
+        name: 'Dedicated Home Server',
+        url: 'http://192.168.1.100:3000',
         authToken: 'secret-token-123'
       });
       config.activeProfile = 'homelab';
@@ -162,7 +162,7 @@ describe('SPEC-0013: Tri-Mode Deployment & Remote Connectivity Proving Suite', (
 
       const loaded = loadClientConfig(tempConfigFile);
       assert.strictEqual(loaded.activeProfile, 'homelab');
-      assert.strictEqual(loaded.profiles.homelab.url, 'http://192.168.10.52:3000');
+      assert.strictEqual(loaded.profiles.homelab.url, 'http://192.168.1.100:3000');
       assert.strictEqual(loaded.profiles.homelab.authToken, 'secret-token-123');
     });
 
@@ -249,19 +249,19 @@ describe('SPEC-0013: Tri-Mode Deployment & Remote Connectivity Proving Suite', (
   });
 
   describe('Pillar 4: 4-Quadrant Operational Parity Verification', () => {
-    it('should prove Q1 (S1 Binary LXC + C1 Native App): Direct IP stream contract', () => {
-      const q1Server = { mode: 'binary', host: '192.168.10.52', port: 3000 };
-      const q1Client = { type: 'native_macos', runtime: 'swift_cocoa' };
+    it('should prove Q1 (S1 Binary Service + C1 Native App): Direct IP stream contract', () => {
+      const q1Server = { mode: 'binary', host: '192.168.1.100', port: 3000 };
+      const q1Client = { type: 'native_desktop', runtime: 'native_shell' };
 
       const url = `http://${q1Server.host}:${q1Server.port}`;
       const validated = validateServerUrl(url);
       assert.strictEqual(validated.valid, true);
       assert.strictEqual(validated.type, 'ipv4');
-      assert.strictEqual(q1Client.runtime, 'swift_cocoa');
+      assert.strictEqual(q1Client.runtime, 'native_shell');
     });
 
     it('should prove Q2 (S2 Container + C1 Native App): Secure FQDN contract', () => {
-      const q2Server = { mode: 'docker_traefik', fqdn: 'https://music.tamld.com' };
+      const q2Server = { mode: 'container_proxy', fqdn: 'https://music.example.com' };
       const q2Client = { type: 'native_desktop', authRequired: true };
 
       const validated = validateServerUrl(q2Server.fqdn);
@@ -270,15 +270,15 @@ describe('SPEC-0013: Tri-Mode Deployment & Remote Connectivity Proving Suite', (
       assert.strictEqual(validated.isSecure, true);
     });
 
-    it('should prove Q3 (S1 Binary LXC + C2 Web/PWA): Local web client contract', () => {
-      const q3Url = 'http://tuneflow.home.lab:3000';
+    it('should prove Q3 (S1 Binary Service + C2 Web/PWA): Local web client contract', () => {
+      const q3Url = 'http://tuneflow.local:3000';
       const validated = validateServerUrl(q3Url);
       assert.strictEqual(validated.valid, true);
       assert.strictEqual(validated.type, 'mdns');
     });
 
     it('should prove Q4 (S2 Container + C2 Web/PWA): Public mobile PWA contract', () => {
-      const q4Url = 'https://music.tamld.com';
+      const q4Url = 'https://music.example.com';
       const validated = validateServerUrl(q4Url);
       assert.strictEqual(validated.valid, true);
       assert.strictEqual(validated.isSecure, true);
