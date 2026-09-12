@@ -19,7 +19,8 @@
     "package:macos": "bash scripts/package_macos.sh",
     "package:macos:thin": "bash scripts/package_macos.sh --thin-client",
     "install:macos": "bash scripts/install_macos.sh",
-    "install:macos:thin": "bash scripts/install_macos.sh --thin-client"
+    "install:macos:thin": "bash scripts/install_macos.sh --thin-client",
+    "install:linux": "bash scripts/install_linux.sh"
   },
   "keywords": [
     "youtube",

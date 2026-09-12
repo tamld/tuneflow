@@ -133,4 +133,62 @@ describe('Headless Server & Launcher Verification (Mode 2 & Mode 3)', () => {
       }, 'package_linux.sh should pass bash syntax check');
     });
   });
+
+  describe('6. Cross-Platform Desktop Discoverability & Metadata Contracts', () => {
+    test('macOS Info.plist is valid and declares complete metadata for Spotlight & Raycast', () => {
+      const plistPath = path.join(REPO_ROOT, 'installer', 'macos', 'Info.plist');
+      assert.ok(fs.existsSync(plistPath), 'Info.plist must exist');
+
+      assert.doesNotThrow(() => {
+        execSync(`plutil -lint "${plistPath}"`, { stdio: 'pipe' });
+      }, 'Info.plist should pass plutil lint');
+
+      const content = fs.readFileSync(plistPath, 'utf8');
+      assert.ok(content.includes('LSApplicationCategoryType'), 'Must declare LSApplicationCategoryType');
+      assert.ok(content.includes('public.app-category.music'), 'Must classify as music app');
+      assert.ok(content.includes('NSPrincipalClass'), 'Must declare NSPrincipalClass');
+      assert.ok(content.includes('CFBundleURLTypes'), 'Must declare CFBundleURLTypes');
+      assert.ok(content.includes('MDItemKeywords'), 'Must declare MDItemKeywords for Spotlight search');
+    });
+
+    test('Linux tuneflow.desktop declares FreeDesktop categories, localization, and keywords', () => {
+      const desktopPath = path.join(REPO_ROOT, 'installer', 'linux', 'tuneflow.desktop');
+      assert.ok(fs.existsSync(desktopPath), 'tuneflow.desktop must exist');
+
+      const content = fs.readFileSync(desktopPath, 'utf8');
+      assert.ok(content.includes('Categories=AudioVideo;Audio;Player;'), 'Must have audio/player categories');
+      assert.ok(content.includes('GenericName[vi]='), 'Must have Vietnamese generic name');
+      assert.ok(content.includes('Keywords='), 'Must have search keywords');
+      assert.ok(content.includes('nhac'), 'Keywords must include nhac for Vietnamese search');
+      assert.ok(content.includes('StartupWMClass=tuneflow'), 'Must have StartupWMClass for window grouping');
+    });
+
+    test('Windows setup.iss declares App Paths registry, URL protocol, and AppUserModelID', () => {
+      const issPath = path.join(REPO_ROOT, 'installer', 'windows', 'setup.iss');
+      assert.ok(fs.existsSync(issPath), 'setup.iss must exist');
+
+      const content = fs.readFileSync(issPath, 'utf8');
+      assert.ok(content.includes('AppUserModelID: "com.tamld.tuneflow"'), 'Must declare AppUserModelID for Windows 10/11');
+      assert.ok(content.includes('App Paths'), 'Must register App Paths for Run dialog');
+      assert.ok(content.includes('Software\\Classes\\tuneflow'), 'Must register tuneflow:// URL Protocol');
+    });
+
+    test('Desktop installer scripts (scripts/install_macos.sh, scripts/install_linux.sh) are executable and valid', () => {
+      const macInstaller = path.join(REPO_ROOT, 'scripts', 'install_macos.sh');
+      const linuxInstaller = path.join(REPO_ROOT, 'scripts', 'install_linux.sh');
+
+      assert.ok(fs.existsSync(macInstaller), 'install_macos.sh must exist');
+      fs.accessSync(macInstaller, fs.constants.X_OK);
+      assert.doesNotThrow(() => {
+        execSync(`bash -n "${macInstaller}"`, { stdio: 'pipe' });
+      }, 'install_macos.sh should pass bash syntax check');
+
+      assert.ok(fs.existsSync(linuxInstaller), 'install_linux.sh must exist');
+      fs.accessSync(linuxInstaller, fs.constants.X_OK);
+      assert.doesNotThrow(() => {
+        execSync(`bash -n "${linuxInstaller}"`, { stdio: 'pipe' });
+      }, 'install_linux.sh should pass bash syntax check');
+    });
+  });
 });
+

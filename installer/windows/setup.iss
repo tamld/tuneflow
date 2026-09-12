@@ -46,8 +46,20 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "dist\win-unpacked\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "bin\tuneflow.js"; IconFilename: "{app}\public\icons\favicon.ico"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "bin\tuneflow.js"; Tasks: desktopicon; IconFilename: "{app}\public\icons\favicon.ico"
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "bin\tuneflow.js"; IconFilename: "{app}\public\icons\favicon.ico"; AppUserModelID: "com.tamld.tuneflow"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "bin\tuneflow.js"; Tasks: desktopicon; IconFilename: "{app}\public\icons\favicon.ico"; AppUserModelID: "com.tamld.tuneflow"
+
+[Registry]
+; Register App Paths for Windows Run dialog (Win+R) and Command Prompt
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\tuneflow.exe"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletekey
+
+; Register URL Protocol (tuneflow://)
+Root: HKCU; Subkey: "Software\Classes\tuneflow"; ValueType: string; ValueName: ""; ValueData: "URL:TuneFlow Protocol"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\tuneflow"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\tuneflow\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\public\icons\favicon.ico"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\tuneflow\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""bin\tuneflow.js"" ""%1"""; Flags: uninsdeletekey
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Parameters: "bin\tuneflow.js"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
