@@ -175,16 +175,18 @@ Each phase is designed independently with a complete quality assurance dossier:
   - Decoupled Native Desktop Client: Swift Cocoa AppKit shell (`main.swift`), multi-host config (`client-config.json`), Preferences dialog (`Cmd + ,`), and zero-node thin packaging (`--thin-client`).
   - Connection State Machine (FSM): automatic reconnect with exponential backoff, latency degradation detection (>500ms), and fallback to standalone.
 - **SSoT Deliverables**: `docs/spec/SPEC-0013-tri-mode-deployment-and-remote-client-architecture.md`, `docs/adr/ADR-0015-tri-mode-deployment-and-decoupled-client-topology.md`.
-- **Verification**: 17/17 tests passing in `tests/tri-mode-connectivity-matrix.test.js`, 12/12 tests passing in `tests/headless-server-and-launcher.test.js` (total test suite reaches 421/421 passed).
+- **Verification**: 17/17 tests in `tests/tri-mode-connectivity-matrix.test.js`, 16/16 tests in `tests/headless-server-and-launcher.test.js`, 8/8 tests in `tests/remote-client-switcher.test.js` (total test suite reaches 434/434 passed 100% green).
 
 ---
 
 ### Phase 16: Native Desktop GUI Shell with Tauri v2 (v3.0.0)
 - **Scope**:
-  - Lightweight Rust shell with System Tray icon and auto-browser launch.
-  - Native MSI installer for Windows and signed DMG with notarization for macOS.
-  - Full desktop OS integration with zero container runtime overhead.
-- **Deliverables**: `src-tauri/` project foundation, release artifacts.
+  - Ultra-lightweight Rust shell (~15MB memory footprint, zero Node runtime) with native System Tray integration.
+  - Native Webview window management (macOS WKWebView, Windows WebView2, Linux WebKitGTK) with frameless SilverMelody UI.
+  - Safe bidirectional IPC bridge commands (`connect_server`, `check_health`, `get_system_info`, `save_config`).
+  - Native packaging & distribution matrix: Windows MSI installer, macOS DMG with notarization hooks, Linux AppImage/Deb.
+- **SSoT Deliverables**: `docs/spec/SPEC-0014-tauri-desktop-gui-shell.md`, `docs/adr/ADR-0016-tauri-desktop-shell-and-ipc-bridge.md`.
+- **Verification**: `tests/tauri-architecture-matrix.test.js`.
 
 ---
 
@@ -229,3 +231,6 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-35** | Decoupled Client Multi-Host FQDN & Universal Transport Medium | SPEC-0013, ADR-0015 | `tests/tri-mode-connectivity-matrix.test.js` |
 | **RM-36** | Headless Linux Server Turnkey Installer & POSIX Storage Parity | SPEC-0013, ADR-0015 | `installer/server/install.sh`, `tests/headless-server-and-launcher.test.js` |
 | **RM-37** | Thin-Client macOS Native Cocoa AppKit Shell & Preferences | SPEC-0013, ADR-0015 | `src/desktop/macos/main.swift`, `scripts/package_macos.sh`, `tests/headless-server-and-launcher.test.js` |
+| **RM-38** | Web Client Remote Switcher (Q3/Q4) & Multi-Artifact CI/CD Packaging | SPEC-0013, PRD | `tests/remote-client-switcher.test.js` |
+| **RM-39** | Cross-Platform Static CI Gate & Pre-Push Protection | Issue #132 | `tests/ci-preflight-gate.test.js`, `.git/hooks/pre-push` |
+| **RM-40** | Tauri v2 Native GUI Architecture, IPC Contract & Tray Lifecycle | SPEC-0014, ADR-0016 | `tests/tauri-architecture-matrix.test.js` |
