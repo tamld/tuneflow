@@ -40,6 +40,9 @@ pub fn run() {
             commands::save_client_config,
             commands::open_downloads_folder,
             commands::minimize_to_tray,
+            commands::check_for_updates,
+            commands::get_system_diagnostics,
+            commands::self_heal_connectivity,
         ])
         .run(tauri::generate_context!())
         .expect("error while running TuneFlow desktop application");

@@ -105,6 +105,31 @@
   window.TUNEFLOW_SET_SERVER_ENDPOINT = setStoredEndpoint;
   window.TUNEFLOW_TEST_SERVER_CONNECTION = testServerConnection;
 
+  // Desktop Native IPC Bridge Wrappers (when running under Tauri v2)
+  window.TUNEFLOW_DESKTOP = {
+    isDesktop: function() {
+      return !!(window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke);
+    },
+    checkForUpdates: async function() {
+      if (this.isDesktop()) {
+        return window.__TAURI__.core.invoke('check_for_updates');
+      }
+      return { should_update: false, message: 'Web client operates on live server version' };
+    },
+    getDiagnostics: async function() {
+      if (this.isDesktop()) {
+        return window.__TAURI__.core.invoke('get_system_diagnostics');
+      }
+      return null;
+    },
+    selfHeal: async function(preferredEndpoint) {
+      if (this.isDesktop()) {
+        return window.__TAURI__.core.invoke('self_heal_connectivity', { preferredEndpoint });
+      }
+      return null;
+    }
+  };
+
   // 4. UI Bindings
   document.addEventListener('DOMContentLoaded', () => {
     const btnTrigger = document.getElementById('btn-server-endpoint-trigger');

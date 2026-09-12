@@ -137,7 +137,7 @@ describe('SPEC-0013: Remote Client Switcher & CI/CD Multi-Artifact Packaging Sui
 
       assert.match(releaseYml, /\.\/scripts\/package_macos\.sh/, 'release.yml must run package_macos.sh');
       assert.match(releaseYml, /\.\/scripts\/package_macos\.sh --thin-client/, 'release.yml must run package_macos.sh --thin-client');
-      assert.match(releaseYml, /Run Full Test Suite \(449 Tests\)/, 'release.yml must specify 449 Tests');
+      assert.match(releaseYml, /Run Full Test Suite \(460 Tests\)/, 'release.yml must specify 460 Tests');
     });
 
     it('should verify scripts/package_linux.sh builds both Desktop and Headless Server tarballs', () => {

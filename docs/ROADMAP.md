@@ -190,6 +190,17 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
+### Phase 17: Desktop In-App Auto-Update & Self-Healing Distribution (v3.1.0)
+- **Scope**:
+  - In-App Auto-Update with Ed25519 signature verification against tamper and DNS poisoning.
+  - Active System Diagnostics (`get_system_diagnostics`) for filesystem writability and network latency.
+  - Autonomous Self-Healing IPC (`self_heal_connectivity`) with automatic failover to Local Standalone (`127.0.0.1:3000`).
+  - Multi-Arch packaging pipeline definitions (macOS Universal, Windows NSIS/MSI, Linux AppImage/deb).
+- **SSoT Deliverables**: `docs/spec/SPEC-0015-desktop-auto-update-and-multi-arch-distribution.md`, `docs/adr/ADR-0017-tauri-updater-and-self-healing-distribution.md`.
+- **Verification**: 11/11 tests in `tests/phase17-desktop-updater-and-distribution.test.js`, 6/6 Rust unit tests (`cargo test --manifest-path src-tauri/Cargo.toml`), total test suite reaches 460/460 passed 100% green.
+
+---
+
 ## 📋 Traceability Matrix
 
 | Requirement | Scope Description | SSoT Specification | Test Suite / Verification |
@@ -234,3 +245,4 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-38** | Web Client Remote Switcher (Q3/Q4) & Multi-Artifact CI/CD Packaging | SPEC-0013, PRD | `tests/remote-client-switcher.test.js` |
 | **RM-39** | Cross-Platform Static CI Gate & Pre-Push Protection | Issue #132 | `tests/ci-preflight-gate.test.js`, `.git/hooks/pre-push` |
 | **RM-40** | Tauri v2 Native GUI Architecture, IPC Contract & Tray Lifecycle | SPEC-0014, ADR-0016 | `tests/tauri-architecture-matrix.test.js` |
+| **RM-41** | Desktop In-App Auto-Update, Self-Healing Diagnostics & Multi-Arch Distribution | SPEC-0015, ADR-0017 | `tests/phase17-desktop-updater-and-distribution.test.js` |
