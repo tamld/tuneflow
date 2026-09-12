@@ -22,10 +22,33 @@
     <string>icon.icns</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.music</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+    <key>CFBundleSupportedPlatforms</key>
+    <array>
+        <string>MacOSX</string>
+    </array>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>CFBundleURLName</key>
+            <string>com.tamld.tuneflow.url</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>tuneflow</string>
+            </array>
+        </dict>
+    </array>
+    <key>MDItemKeywords</key>
+    <string>TuneFlow, YouTube, Music, Player, Downloader, MP3, MP4, Audio, Nhac, Bolero</string>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 Tam Le Duc. All rights reserved.</string>
     <key>NSAppTransportSecurity</key>

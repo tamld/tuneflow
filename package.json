@@ -15,7 +15,11 @@
     "test:unit": "node --test tests/engine.test.js",
     "test:api": "node --test tests/api.test.js",
     "test:e2e": "node --test tests/e2e.test.js",
-    "lint": "node node_modules/eslint/bin/eslint.js src/ public/js/"
+    "lint": "node node_modules/eslint/bin/eslint.js src/ public/js/",
+    "package:macos": "bash scripts/package_macos.sh",
+    "package:macos:thin": "bash scripts/package_macos.sh --thin-client",
+    "install:macos": "bash scripts/install_macos.sh",
+    "install:macos:thin": "bash scripts/install_macos.sh --thin-client"
   },
   "keywords": [
     "youtube",

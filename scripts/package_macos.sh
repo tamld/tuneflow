@@ -13,13 +13,17 @@ VERSION="$(node -p "require('./package.json').version")"
 ARCH="$(uname -m)"
 
 MODE="standalone"
+INSTALL_LOCAL=false
 for arg in "$@"; do
     case "$arg" in
         --thin-client)
             MODE="thin-client"
             ;;
+        --install)
+            INSTALL_LOCAL=true
+            ;;
         --help|-h)
-            echo "Usage: $0 [--thin-client]"
+            echo "Usage: $0 [--thin-client] [--install]"
             exit 0
             ;;
     esac
@@ -149,3 +153,17 @@ shasum -a 256 "${PKG_NAME}-${VERSION}-macos-${ARCH}.tar.gz" >> "$SUMS_FILE"
 
 echo "🎉 macOS packaging complete!"
 cat "SHA256SUMS-macos-${ARCH}.txt"
+
+# 7. Optional local install to /Applications for instant Finder & Raycast discovery
+if [ "$INSTALL_LOCAL" = true ]; then
+    echo ""
+    echo "🚀 Installing TuneFlow.app into /Applications..."
+    rm -rf "/Applications/TuneFlow.app"
+    cp -R "$MACOS_APP" "/Applications/TuneFlow.app"
+
+    echo "🔍 Registering with macOS LaunchServices & Spotlight..."
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f -R -trusted /Applications/TuneFlow.app
+    mdimport /Applications/TuneFlow.app 2>/dev/null || true
+    echo "✅ TuneFlow.app successfully installed into /Applications!"
+    echo "⚡ Ready to launch via Finder, Spotlight (Cmd+Space) or Raycast."
+fi
