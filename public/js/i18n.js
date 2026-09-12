@@ -116,8 +116,8 @@
       settings_modal_title: '⚙️ Cài Đặt Hệ Thống',
       theme_day: 'Ngày Dịu',
       theme_night: 'Đêm Ấm',
-      theme_toggle_title_day: 'Chuyển sang chế độ Ngày Dịu (Giảm mỏi mắt)',
-      theme_toggle_title_night: 'Chuyển sang chế độ Đêm Ấm (Tương phản cao)'
+      theme_toggle_title_day: 'Chế độ Ngày Dịu — Bấm để chuyển sang Đêm Ấm',
+      theme_toggle_title_night: 'Chế độ Đêm Ấm — Bấm để chuyển sang Ngày Dịu'
     },
     en: {
       tagline: 'High-fidelity music preview & downloader lovingly designed for Parents',
@@ -231,8 +231,8 @@
       settings_modal_title: '⚙️ System Settings',
       theme_day: 'Day Calm',
       theme_night: 'Night Warm',
-      theme_toggle_title_day: 'Switch to Day Calm Mode (Reduce eye strain)',
-      theme_toggle_title_night: 'Switch to Night Warm Mode (High contrast)'
+      theme_toggle_title_day: 'Day Calm Mode — Click to switch to Night Warm',
+      theme_toggle_title_night: 'Night Warm Mode — Click to switch to Day Calm'
     }
   };
 
@@ -477,13 +477,17 @@
 
     // Theme Toggle labels (Issue #133)
     const isCream = document.body && document.body.classList.contains('theme-cream');
+    const themeToggleIcon = document.getElementById('theme-toggle-icon');
     const themeToggleText = document.getElementById('theme-toggle-text');
     const themeToggleBtn = document.getElementById('btn-theme-toggle');
+    if (themeToggleIcon) {
+      themeToggleIcon.textContent = isCream ? '☀️' : '🌙';
+    }
     if (themeToggleText) {
-      themeToggleText.textContent = isCream ? getTranslation('theme_night') : getTranslation('theme_day');
+      themeToggleText.textContent = isCream ? getTranslation('theme_day') : getTranslation('theme_night');
     }
     if (themeToggleBtn) {
-      themeToggleBtn.title = isCream ? getTranslation('theme_toggle_title_night') : getTranslation('theme_toggle_title_day');
+      themeToggleBtn.title = isCream ? getTranslation('theme_toggle_title_day') : getTranslation('theme_toggle_title_night');
     }
 
     // Playlist Panel Action Buttons

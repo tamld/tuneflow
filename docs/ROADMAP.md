@@ -197,7 +197,7 @@ Each phase is designed independently with a complete quality assurance dossier:
   - Autonomous Self-Healing IPC (`self_heal_connectivity`) with automatic failover to Local Standalone (`127.0.0.1:3000`).
   - Multi-Arch packaging pipeline definitions (macOS Universal, Windows NSIS/MSI, Linux AppImage/deb).
 - **SSoT Deliverables**: `docs/spec/SPEC-0015-desktop-auto-update-and-multi-arch-distribution.md`, `docs/adr/ADR-0017-tauri-updater-and-self-healing-distribution.md`.
-- **Verification**: 11/11 tests in `tests/phase17-desktop-updater-and-distribution.test.js`, 6/6 Rust unit tests (`cargo test --manifest-path src-tauri/Cargo.toml`), total test suite reaches 460/460 passed 100% green.
+- **Verification**: 11/11 tests in `tests/phase17-desktop-updater-and-distribution.test.js`, 6/6 Rust unit tests (`cargo test --manifest-path src-tauri/Cargo.toml`), total test suite reaches 466/466 passed 100% green.
 
 ---
 

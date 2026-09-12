@@ -84,4 +84,9 @@ describe('Elderly Visual Ergonomics, Header Declutter & Warm Cream Theme (Issue 
     assert.ok(i18nJs.includes('theme_day'), 'theme_day key must be defined in i18n');
     assert.ok(i18nJs.includes('theme_night'), 'theme_night key must be defined in i18n');
   });
+
+  test('6. Active theme state is directly and unambiguously synchronized with button icon & text', () => {
+    assert.ok(appJs.includes("isCream ? '☀️' : '🌙'"), 'Icon must match active theme (☀️ for Cream Day, 🌙 for Dark Night)');
+    assert.ok(appJs.includes('isCream ? dayLabel : nightLabel'), 'Text label must match active theme (dayLabel for Cream Day, nightLabel for Dark Night)');
+  });
 });

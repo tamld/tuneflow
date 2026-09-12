@@ -499,12 +499,12 @@ if (typeof document !== 'undefined') {
     document.body.classList.toggle('theme-cream', isCream);
     const dayLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_day') : 'Ngày Dịu';
     const nightLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_night') : 'Đêm Ấm';
-    if (themeToggleIcon) themeToggleIcon.textContent = isCream ? '🌙' : '☀️';
-    if (themeToggleText) themeToggleText.textContent = isCream ? nightLabel : dayLabel;
+    if (themeToggleIcon) themeToggleIcon.textContent = isCream ? '☀️' : '🌙';
+    if (themeToggleText) themeToggleText.textContent = isCream ? dayLabel : nightLabel;
     if (btnThemeToggle) {
-      const titleDay = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_day') : 'Chuyển sang chế độ Ngày Dịu (Giảm mỏi mắt)';
-      const titleNight = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_night') : 'Chuyển sang chế độ Đêm Ấm (Tương phản cao)';
-      const currentTitle = isCream ? titleNight : titleDay;
+      const titleDay = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_day') : 'Chế độ Ngày Dịu — Bấm để chuyển sang Đêm Ấm';
+      const titleNight = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_night') : 'Chế độ Đêm Ấm — Bấm để chuyển sang Ngày Dịu';
+      const currentTitle = isCream ? titleDay : titleNight;
       btnThemeToggle.setAttribute('title', currentTitle);
       btnThemeToggle.setAttribute('aria-label', currentTitle);
     }
