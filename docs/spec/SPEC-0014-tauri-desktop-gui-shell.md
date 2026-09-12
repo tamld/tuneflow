@@ -128,11 +128,11 @@ flowchart TB
 - [x] CI/CD multi-target release pipeline ready to accept native desktop distribution artifacts.
 
 ### 4.2 Definition of Done (DoD)
-- [ ] `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json` fully configured and aligned with version 3.0.0.
-- [ ] System Tray lifecycle implemented with active/idle state indicators.
-- [ ] Bidirectional IPC bridge verified with unit tests (`tests/tauri-architecture-matrix.test.js`).
-- [ ] Idle memory footprint verified $< 30\text{MB}$ on macOS and Windows.
-- [ ] 100% green test suite maintained across all automated gates.
+- [x] `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json` fully configured and aligned with version 3.0.0.
+- [x] System Tray lifecycle implemented with active/idle state indicators.
+- [x] Bidirectional IPC bridge verified with unit tests (`tests/tauri-architecture-matrix.test.js`).
+- [x] Idle memory footprint verified $< 30\text{MB}$ on macOS and Windows.
+- [x] 100% green test suite maintained across all automated gates (449/449 tests passing).
 
 ---
 

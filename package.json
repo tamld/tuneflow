@@ -20,7 +20,10 @@
     "package:macos:thin": "bash scripts/package_macos.sh --thin-client",
     "install:macos": "bash scripts/install_macos.sh",
     "install:macos:thin": "bash scripts/install_macos.sh --thin-client",
-    "install:linux": "bash scripts/install_linux.sh"
+    "install:linux": "bash scripts/install_linux.sh",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "keywords": [
     "youtube",
@@ -40,6 +43,8 @@
     "express": "^4.21.2"
   },
   "devDependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/cli": "^2.11.4",
     "eslint": "^10.10.0",
     "puppeteer": "^25.10.0"
   },

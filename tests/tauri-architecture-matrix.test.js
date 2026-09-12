@@ -149,4 +149,85 @@ describe('SPEC-0014 & ADR-0016: Tauri v2 Native Desktop Shell & IPC Verification
       assert.strictEqual(simulateFsmTransition(states.STREAMING_ACTIVE, 'QUIT_COMMAND'), states.TERMINATING);
     });
   });
+
+  describe('4. Native Tauri v2 Codebase & Physical Scaffolding Integrity', () => {
+    const srcTauriDir = path.join(rootDir, 'src-tauri');
+    const cargoTomlPath = path.join(srcTauriDir, 'Cargo.toml');
+    const tauriConfPath = path.join(srcTauriDir, 'tauri.conf.json');
+
+    it('should verify src-tauri/Cargo.toml defines tuneflow-desktop v3.0.0 and required dependencies', () => {
+      assert.strictEqual(fs.existsSync(cargoTomlPath), true, 'Cargo.toml must exist in src-tauri');
+      const cargo = fs.readFileSync(cargoTomlPath, 'utf8');
+
+      assert.match(cargo, /name\s*=\s*"tuneflow-desktop"/, 'Package name must be tuneflow-desktop');
+      assert.match(cargo, /version\s*=\s*"3\.0\.0"/, 'Desktop shell version must be 3.0.0');
+      assert.match(cargo, /name\s*=\s*"tuneflow_lib"/, 'Library name must be tuneflow_lib');
+      assert.match(cargo, /tauri\s*=\s*\{\s*version\s*=\s*"2\./, 'Must depend on Tauri v2');
+      assert.match(cargo, /"tray-icon"/, 'Must enable tray-icon feature');
+      assert.match(cargo, /"image-png"/, 'Must enable image-png feature');
+      assert.match(cargo, /reqwest/, 'Must declare reqwest for IPC HTTP health checks');
+      assert.match(cargo, /dirs/, 'Must declare dirs for OS config/download resolution');
+    });
+
+    it('should verify src-tauri/tauri.conf.json declares valid window ergonomics, tray, and security policy', () => {
+      assert.strictEqual(fs.existsSync(tauriConfPath), true, 'tauri.conf.json must exist in src-tauri');
+      const tauriConf = JSON.parse(fs.readFileSync(tauriConfPath, 'utf8'));
+
+      assert.strictEqual(tauriConf.productName, 'TuneFlow');
+      assert.strictEqual(tauriConf.version, '3.0.0');
+      assert.strictEqual(tauriConf.identifier, 'com.tamld.tuneflow');
+      assert.strictEqual(tauriConf.app.withGlobalTauri, true);
+
+      // Window constraints
+      const win = tauriConf.app.windows[0];
+      assert.ok(win, 'Main window must be defined');
+      assert.ok(win.minWidth >= 860, 'minWidth must be >= 860px to prevent layout stacking');
+      assert.ok(win.minHeight >= 640, 'minHeight must be >= 640px');
+      assert.strictEqual(win.resizable, true);
+
+      // System tray & security
+      assert.ok(tauriConf.app.trayIcon, 'System tray must be configured');
+      assert.strictEqual(tauriConf.app.trayIcon.id, 'tuneflow-tray');
+      assert.ok(tauriConf.app.security.csp, 'CSP must be configured');
+    });
+
+    it('should verify src-tauri Rust modules (commands, config, tray, lib, main) implement required invariants', () => {
+      const srcDir = path.join(srcTauriDir, 'src');
+      const files = ['commands.rs', 'config.rs', 'tray.rs', 'lib.rs', 'main.rs'];
+      for (const file of files) {
+        assert.strictEqual(fs.existsSync(path.join(srcDir, file)), true, `src-tauri/src/${file} must exist`);
+      }
+
+      const commandsContent = fs.readFileSync(path.join(srcDir, 'commands.rs'), 'utf8');
+      assert.match(commandsContent, /pub async fn connect_server/);
+      assert.match(commandsContent, /pub fn get_client_config/);
+      assert.match(commandsContent, /pub fn save_client_config/);
+      assert.match(commandsContent, /pub fn open_downloads_folder/);
+      assert.match(commandsContent, /pub fn minimize_to_tray/);
+
+      const libContent = fs.readFileSync(path.join(srcDir, 'lib.rs'), 'utf8');
+      assert.match(libContent, /WindowEvent::CloseRequested/);
+      assert.match(libContent, /api\.prevent_close\(\)/, 'Must enforce Close-to-Tray');
+      assert.match(libContent, /win_clone\.hide\(\)/, 'Must hide window instead of closing');
+      assert.match(libContent, /commands::connect_server/);
+      assert.match(libContent, /commands::get_client_config/);
+      assert.match(libContent, /commands::save_client_config/);
+      assert.match(libContent, /commands::open_downloads_folder/);
+      assert.match(libContent, /commands::minimize_to_tray/);
+    });
+
+    it('should verify native branding icons exist and package.json exports tauri scripts', () => {
+      const iconsDir = path.join(srcTauriDir, 'icons');
+      assert.strictEqual(fs.existsSync(path.join(iconsDir, 'icon.icns')), true, 'icon.icns must exist');
+      assert.strictEqual(fs.existsSync(path.join(iconsDir, 'icon.ico')), true, 'icon.ico must exist');
+      assert.strictEqual(fs.existsSync(path.join(iconsDir, '32x32.png')), true, '32x32.png must exist');
+      assert.strictEqual(fs.existsSync(path.join(iconsDir, '128x128.png')), true, '128x128.png must exist');
+
+      const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+      assert.ok(pkg.scripts.tauri, 'package.json must declare tauri script');
+      assert.ok(pkg.scripts['tauri:dev'], 'package.json must declare tauri:dev script');
+      assert.ok(pkg.scripts['tauri:build'], 'package.json must declare tauri:build script');
+    });
+  });
 });
+

@@ -1,0 +1,53 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "TuneFlow",
+  "version": "3.0.0",
+  "identifier": "com.tamld.tuneflow",
+  "build": {
+    "frontendDist": "../public",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "pnpm start",
+    "beforeBuildCommand": ""
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "TuneFlow",
+        "label": "main",
+        "width": 1080,
+        "height": 750,
+        "minWidth": 860,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ],
+    "trayIcon": {
+      "id": "tuneflow-tray",
+      "iconPath": "icons/32x32.png",
+      "tooltip": "TuneFlow Music Player",
+      "title": "TuneFlow"
+    },
+    "security": {
+      "csp": "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: ws: wss: data: blob:;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "category": "Music",
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    }
+  }
+}

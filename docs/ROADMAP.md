@@ -183,10 +183,10 @@ Each phase is designed independently with a complete quality assurance dossier:
 - **Scope**:
   - Ultra-lightweight Rust shell (~15MB memory footprint, zero Node runtime) with native System Tray integration.
   - Native Webview window management (macOS WKWebView, Windows WebView2, Linux WebKitGTK) with frameless SilverMelody UI.
-  - Safe bidirectional IPC bridge commands (`connect_server`, `check_health`, `get_system_info`, `save_config`).
+  - Safe bidirectional IPC bridge commands (`connect_server`, `get_client_config`, `save_client_config`, `open_downloads_folder`, `minimize_to_tray`).
   - Native packaging & distribution matrix: Windows MSI installer, macOS DMG with notarization hooks, Linux AppImage/Deb.
 - **SSoT Deliverables**: `docs/spec/SPEC-0014-tauri-desktop-gui-shell.md`, `docs/adr/ADR-0016-tauri-desktop-shell-and-ipc-bridge.md`.
-- **Verification**: `tests/tauri-architecture-matrix.test.js`.
+- **Verification**: 14/14 tests in `tests/tauri-architecture-matrix.test.js`, 3/3 Rust unit tests (`cargo test --manifest-path src-tauri/Cargo.toml`), total test suite reaches 449/449 passed 100% green.
 
 ---
 
