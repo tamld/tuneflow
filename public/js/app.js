@@ -8,8 +8,10 @@
 // Safe thumbnail URL helper that routes through local server proxy with memory cache
 function getThumbnailSrc(url) {
   if (!url || typeof url !== 'string') return '';
-  if (url.startsWith('/') || url.startsWith('data:')) return url;
-  return '/api/thumbnail?url=' + encodeURIComponent(url);
+  if (url.startsWith('data:')) return url;
+  const resolve = (typeof window !== 'undefined' && window.TUNEFLOW_RESOLVE_URL) ? window.TUNEFLOW_RESOLVE_URL : (p => p);
+  if (url.startsWith('/')) return resolve(url);
+  return resolve('/api/thumbnail?url=' + encodeURIComponent(url));
 }
 
 // Resilient thumbnail image fallback with backend proxy guard
@@ -18,7 +20,8 @@ function handleImageFallback(img, originalUrl) {
   const targetUrl = originalUrl || img.dataset.originalThumb || '';
   if (!img.dataset.proxied && targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
     img.dataset.proxied = 'true';
-    img.src = '/api/thumbnail?url=' + encodeURIComponent(targetUrl);
+    const resolve = (typeof window !== 'undefined' && window.TUNEFLOW_RESOLVE_URL) ? window.TUNEFLOW_RESOLVE_URL : (p => p);
+    img.src = resolve('/api/thumbnail?url=' + encodeURIComponent(targetUrl));
     return;
   }
   img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='124' viewBox='0 0 220 124'><rect width='100%' height='100%' fill='%231e222d'/><circle cx='110' cy='62' r='28' fill='%232a3142'/><text x='110' y='70' font-size='24' text-anchor='middle'>🎵</text></svg>";
@@ -1391,9 +1394,10 @@ if (typeof document !== 'undefined') {
   function triggerClientBrowserDownload(item) {
     showToast(`🎉 Đã tải xong bài "${item.title}"! File đang được lưu vào máy tính của Bố Mẹ.`, 'success');
     
+    const resolve = (typeof window !== 'undefined' && window.TUNEFLOW_RESOLVE_URL) ? window.TUNEFLOW_RESOLVE_URL : (p => p);
     const a = document.createElement('a');
     a.style.display = 'none';
-    a.href = `/api/download/${item.id}/file`;
+    a.href = resolve(`/api/download/${item.id}/file`);
     a.setAttribute('download', `${item.sanitizedTitle}.mp3`);
     document.body.appendChild(a);
     a.click();

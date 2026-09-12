@@ -549,7 +549,8 @@ class PreviewPlayer {
     }, 25000);
 
     // Load stream from backend preview route (HTML5 audio auto-loads on src assignment)
-    this.audio.src = `/api/preview/${track.id}`;
+    const resolve = (typeof window !== 'undefined' && window.TUNEFLOW_RESOLVE_URL) ? window.TUNEFLOW_RESOLVE_URL : (p => p);
+    this.audio.src = resolve(`/api/preview/${track.id}`);
 
     this.audio.play().then(() => {
       if (this.connectionTimeoutTimer) {

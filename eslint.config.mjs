@@ -28,7 +28,9 @@ export default [
         Audio: "readonly",
         MediaMetadata: "readonly",
         URL: "readonly",
-        AbortController: "readonly"
+        AbortController: "readonly",
+        Request: "readonly",
+        performance: "readonly"
       }
     },
     rules: {

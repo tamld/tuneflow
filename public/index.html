@@ -32,6 +32,10 @@
         <button id="btn-install-pwa" class="font-scale-btn" style="display: none; min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--accent-gold); border-radius: var(--radius-pill); background: rgba(243, 156, 18, 0.15); color: var(--accent-gold); font-weight: 600;" title="Cài đặt ứng dụng lên màn hình chính / Install App">
           📲 <span id="text-install-pwa">Cài App</span>
         </button>
+        <!-- Remote Server Endpoint Switcher Trigger (SPEC-0013) -->
+        <button id="btn-server-endpoint-trigger" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); display: inline-flex; align-items: center; gap: 6px;" title="Cài đặt máy chủ TuneFlow (Mặc định: Cùng máy chủ)">
+          🌐 <span style="font-size: 13px;">Máy Chủ</span>
+        </button>
         <!-- Language Switcher (Issue #19) -->
         <button id="btn-lang-toggle" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Chuyển đổi ngôn ngữ / Switch Language">
           🇻🇳 Tiếng Việt
@@ -541,6 +545,41 @@
     </div>
   </div>
 
+  <!-- Remote Server Endpoint Configuration Modal (SPEC-0013) -->
+  <div id="modal-server-endpoint" class="modal-overlay modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="server-endpoint-title">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h2 id="server-endpoint-title" style="margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+          🌐 Cấu Hình Máy Chủ TuneFlow
+        </h2>
+        <button id="btn-server-modal-close" class="btn-close" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 0;">
+        <p style="margin-top: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+          Kết nối ứng dụng Web/PWA này tới máy chủ TuneFlow chạy trên mạng LAN (Homelab / Raspberry Pi / Docker) hoặc tên miền HTTPS từ xa.
+        </p>
+        <div style="margin-bottom: 12px; font-size: 13px; color: var(--text-secondary);">
+          <span>Máy chủ hiện tại: </span><strong id="server-current-label" style="color: var(--accent-gold);"></strong>
+        </div>
+        <div style="margin-bottom: 14px;">
+          <label for="server-endpoint-input" style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px;">Địa chỉ máy chủ (URL):</label>
+          <input type="url" id="server-endpoint-input" placeholder="Ví dụ: http://192.168.1.50:3000 hoặc https://music.homelab.local" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; box-sizing: border-box; background: var(--surface-card); color: var(--text-primary);">
+        </div>
+        <div id="server-endpoint-status" style="display: none; font-size: 13px; margin-bottom: 14px; padding: 10px; border-radius: 6px;"></div>
+        <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="btn-server-test" class="secondary-btn" style="padding: 8px 14px; border-radius: 8px; font-size: 13px;">⚡ Thử Kết Nối</button>
+            <button type="button" id="btn-server-reset" class="secondary-btn" style="padding: 8px 14px; border-radius: 8px; font-size: 13px;" title="Đặt lại về máy chủ cục bộ">🔄 Mặc Định</button>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="btn-server-cancel" class="secondary-btn" style="padding: 8px 16px; border-radius: 8px; font-size: 13px;">Đóng</button>
+            <button type="button" id="btn-server-save" class="primary-btn" style="padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;">Lưu & Kết Nối</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
 
@@ -549,6 +588,7 @@
 
   <!-- Scripts -->
   <script src="/js/i18n.js"></script>
+  <script src="/js/remote-client.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/admin.js"></script>
   <script src="/js/player.js"></script>

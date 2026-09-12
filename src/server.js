@@ -18,7 +18,7 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.ytimg.com https://*.youtube.com https://*.ggpht.com https://*.googleusercontent.com data: blob:; media-src 'self' blob: data: https://*.googlevideo.com http://localhost:* http://127.0.0.1:*; connect-src 'self' https://*.googlevideo.com http://localhost:* http://127.0.0.1:*;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.ytimg.com https://*.youtube.com https://*.ggpht.com https://*.googleusercontent.com https: http: data: blob:; media-src 'self' blob: data: https://*.googlevideo.com https: http: http://localhost:* http://127.0.0.1:*; connect-src 'self' https://*.googlevideo.com https: http: http://localhost:* http://127.0.0.1:*;"
   );
   next();
 });

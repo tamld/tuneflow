@@ -45,7 +45,7 @@ jobs:
       - name: Install Puppeteer Chrome
         run: npx puppeteer browsers install chrome
 
-      - name: Run Full Test Suite (257 Tests)
+      - name: Run Full Test Suite (433 Tests)
         run: npm test
 
   # ============================================================================
@@ -294,8 +294,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Compile macOS Application Bundle & DMG
-        run: ./scripts/package_macos.sh
+      - name: Compile macOS Application Bundle & DMG (Standalone & Thin Client)
+        run: |
+          ./scripts/package_macos.sh
+          ./scripts/package_macos.sh --thin-client
 
       - name: Upload macOS Desktop Artifacts
         uses: actions/upload-artifact@v4
@@ -305,10 +307,10 @@ jobs:
           if-no-files-found: error
 
   # ============================================================================
-  # STAGE 5: Linux Portable Desktop Archive
+  # STAGE 5: Linux Portable Desktop & Headless Server Archives
   # ============================================================================
   linux-desktop-build:
-    name: 5. Build & Package Linux Portable Desktop Archive
+    name: 5. Build & Package Linux Desktop & Headless Server Archives
     runs-on: ubuntu-latest
     needs: test-gate
 
@@ -325,7 +327,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Package Linux Desktop Archive
+      - name: Package Linux Desktop & Headless Server Archives
         run: ./scripts/package_linux.sh
 
       - name: Upload Linux Desktop Artifacts
