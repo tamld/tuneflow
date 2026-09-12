@@ -123,7 +123,7 @@ flowchart TB
 ## 🛡️ 4. DoR & DoD QUALITY GATES
 
 ### 4.1 Definition of Ready (DoR)
-- [x] SPEC-0013 Tri-Mode Deployment and Decoupled Architecture verified and tested (444/444 tests passing).
+- [x] SPEC-0013 Tri-Mode Deployment and Decoupled Architecture verified and tested (445/445 tests passing).
 - [x] Web Client Remote Switcher engine (`remote-client.js`) proven with transparent fetch and SSE interception.
 - [x] CI/CD multi-target release pipeline ready to accept native desktop distribution artifacts.
 

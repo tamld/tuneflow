@@ -194,6 +194,26 @@ describe('Headless Server & Launcher Verification (Mode 2 & Mode 3)', () => {
         execSync(`bash -n "${linuxInstaller}"`, { stdio: 'pipe' });
       }, 'install_linux.sh should pass bash syntax check');
     });
+
+    test('macOS native shell and CSS enforce window minSize and anti-stacking scaling', () => {
+      const mainSwiftPath = path.join(REPO_ROOT, 'src/desktop/macos/main.swift');
+      const cssPath = path.join(REPO_ROOT, 'public/css/silver-melody.css');
+
+      assert.ok(fs.existsSync(mainSwiftPath), 'main.swift must exist');
+      assert.ok(fs.existsSync(cssPath), 'silver-melody.css must exist');
+
+      const swiftContent = fs.readFileSync(mainSwiftPath, 'utf8');
+      assert.match(swiftContent, /window\.minSize\s*=\s*NSSize\(width:\s*minWidth,\s*height:\s*minHeight\)/, 'Must enforce minSize');
+      assert.match(swiftContent, /minWidth:\s*CGFloat\s*=\s*860/, 'minWidth must be >= 860');
+      assert.match(swiftContent, /minHeight:\s*CGFloat\s*=\s*640/, 'minHeight must be >= 640');
+      assert.match(swiftContent, /tuneflow-desktop/, 'Must inject tuneflow-desktop user script class');
+
+      const cssContent = fs.readFileSync(cssPath, 'utf8');
+      assert.match(cssContent, /\.tuneflow-macos\s+body/, 'Must provide macOS native window padding');
+      assert.match(cssContent, /-webkit-app-region:\s*drag/, 'Must provide native titlebar drag region');
+      assert.match(cssContent, /grid-template-columns:\s*repeat\(3,\s*1fr\)/, 'Must keep playlist buttons in a uniform non-stacking 3-column grid');
+      assert.match(cssContent, /max-height:\s*min\(380px,\s*42vh\)/, 'Must constrain playlist height to prevent viewport overlap');
+    });
   });
 });
 

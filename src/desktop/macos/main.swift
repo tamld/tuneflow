@@ -13,8 +13,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         setupMenuBar()
 
         let screenRect = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
-        let windowWidth: CGFloat = min(1200, screenRect.width * 0.85)
-        let windowHeight: CGFloat = min(800, screenRect.height * 0.85)
+        let defaultWidth: CGFloat = 1080
+        let defaultHeight: CGFloat = 750
+        let minWidth: CGFloat = 860
+        let minHeight: CGFloat = 640
+        let windowWidth: CGFloat = min(defaultWidth, max(minWidth, screenRect.width * 0.85))
+        let windowHeight: CGFloat = min(defaultHeight, max(minHeight, screenRect.height * 0.85))
         let rect = NSRect(
             x: screenRect.origin.x + (screenRect.width - windowWidth) / 2,
             y: screenRect.origin.y + (screenRect.height - windowHeight) / 2,
@@ -34,7 +38,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.titleVisibility = .hidden
         window.backgroundColor = NSColor(red: 14.0/255.0, green: 16.0/255.0, blue: 23.0/255.0, alpha: 1.0)
         window.delegate = self
-        window.minSize = NSSize(width: 480, height: 600)
+        window.minSize = NSSize(width: minWidth, height: minHeight)
+        window.contentMinSize = NSSize(width: minWidth, height: minHeight)
 
         // WebKit Configuration optimized for Audio/Video playback and Desktop UX
         let config = WKWebViewConfiguration()
@@ -44,6 +49,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if #available(macOS 10.15, *) {
             config.defaultWebpagePreferences.allowsContentJavaScript = true
         }
+
+        let desktopScript = WKUserScript(
+            source: "document.documentElement.classList.add('tuneflow-desktop', 'tuneflow-macos');",
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        )
+        config.userContentController.addUserScript(desktopScript)
 
         webView = WKWebView(frame: rect, configuration: config)
         webView.autoresizingMask = [.width, .height]
