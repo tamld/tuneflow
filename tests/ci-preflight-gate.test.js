@@ -169,4 +169,27 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
       assert.match(setupIss, new RegExp(`#define\\s+MyAppVersion\\s+"${version.replace(/\./g, '\\.')}"`), 'setup.iss MyAppVersion must match package.json');
     }
   });
+
+  it('should verify that all test files guard platform-specific binary invocations against Linux CI divergence', () => {
+    const testsDir = path.join(rootDir, 'tests');
+    const testFiles = fs.readdirSync(testsDir).filter(f => f.endsWith('.test.js'));
+    const osSpecificBinaries = ['plutil', 'lsregister', 'mdimport', 'codesign', 'spctl'];
+
+    for (const file of testFiles) {
+      const content = fs.readFileSync(path.join(testsDir, file), 'utf8');
+      for (const bin of osSpecificBinaries) {
+        if (content.includes(bin)) {
+          const regex = new RegExp(`(?:execSync|spawnSync)\\([^)]*${bin}[^)]*\\)`);
+          if (regex.test(content)) {
+            assert.ok(
+              content.includes("process.platform === 'darwin'") ||
+              content.includes('try {') ||
+              content.includes('hasCommand('),
+              `Test file "${file}" invokes platform-specific binary "${bin}" without Darwin platform guard or try-catch protection!`
+            );
+          }
+        }
+      }
+    }
+  });
 });

@@ -139,11 +139,16 @@ describe('Headless Server & Launcher Verification (Mode 2 & Mode 3)', () => {
       const plistPath = path.join(REPO_ROOT, 'installer', 'macos', 'Info.plist');
       assert.ok(fs.existsSync(plistPath), 'Info.plist must exist');
 
-      assert.doesNotThrow(() => {
-        execSync(`plutil -lint "${plistPath}"`, { stdio: 'pipe' });
-      }, 'Info.plist should pass plutil lint');
+      // Only execute Apple plutil utility on macOS; on Linux/Windows validate XML structure
+      if (process.platform === 'darwin') {
+        assert.doesNotThrow(() => {
+          execSync(`plutil -lint "${plistPath}"`, { stdio: 'pipe' });
+        }, 'Info.plist should pass plutil lint');
+      }
 
       const content = fs.readFileSync(plistPath, 'utf8');
+      assert.match(content, /<\?xml version="1\.0" encoding="UTF-8"\?>/, 'Must be valid XML');
+      assert.match(content, /<!DOCTYPE plist PUBLIC "-\/\/Apple\/\/DTD PLIST 1\.0\/\/EN"/, 'Must have Apple plist DTD');
       assert.ok(content.includes('LSApplicationCategoryType'), 'Must declare LSApplicationCategoryType');
       assert.ok(content.includes('public.app-category.music'), 'Must classify as music app');
       assert.ok(content.includes('NSPrincipalClass'), 'Must declare NSPrincipalClass');
