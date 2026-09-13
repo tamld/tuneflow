@@ -273,4 +273,5 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-44** | Physical USB/SD Card Exporter, 3-Digit Sequence & FAT32 Metadata Purging | Issue #135 | `tests/usb-exporter.test.js`, `tests/connect-usb-health-api.test.js` |
 | **RM-45** | Autonomous Self-Healing yt-dlp Daemon, Gerontechnology Fallback & Platform OpSec | Issue #136 | `tests/engine-health.test.js`, `tests/connect-usb-health-api.test.js` |
 | **RM-46** | Community Homelab AppStore Manifests & Turnkey 1-Click Packaging | Phase 19 | `tests/community-homelab-templates.test.js` |
+| **RM-47** | Native Windows Test Parity, Cross-Platform POSIX Guards & Windows CI Matrix | Issue #137 | `tests/windows-desktop-packaging.test.js`, `.github/workflows/ci.yml` |
 

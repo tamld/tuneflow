@@ -21,6 +21,19 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
   const releaseYmlPath = path.join(rootDir, '.github/workflows/release.yml');
   const pyCmd = process.platform === 'win32' ? 'python' : (fs.existsSync('/usr/bin/python3') ? '/usr/bin/python3' : 'python3');
 
+  function isPythonAvailable() {
+    try {
+      const probe = spawnSync(pyCmd, ['--version'], {
+        encoding: 'utf8',
+        timeout: 3000,
+        shell: process.platform === 'win32'
+      });
+      return probe.status === 0;
+    } catch {
+      return false;
+    }
+  }
+
   it('should verify package.json overrides syntax is strictly valid for npm and pnpm', () => {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
@@ -54,7 +67,8 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
       const res = spawnSync('npm', ['ci', '--dry-run'], {
         cwd: tempDir,
         encoding: 'utf8',
-        timeout: 30000
+        timeout: 30000,
+        shell: process.platform === 'win32'
       });
 
       assert.strictEqual(
@@ -80,7 +94,8 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
       const res = spawnSync('npm', ['audit', '--audit-level=high'], {
         cwd: tempDir,
         encoding: 'utf8',
-        timeout: 30000
+        timeout: 30000,
+        shell: process.platform === 'win32'
       });
 
       assert.strictEqual(
@@ -106,17 +121,25 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
     assert.match(content, /npm test/, 'Must execute full test suite');
     assert.match(content, /container-smoke-test:/, 'Must contain container smoke test job');
     assert.match(content, /curl --fail http:\/\/localhost:3000\/api\/health/, 'Container smoke test must check /api/health');
+    assert.match(content, /ubuntu-latest/, 'Must include ubuntu-latest in CI matrix');
+    assert.match(content, /windows-latest/, 'Must include windows-latest in CI matrix');
   });
 
-  it('should verify scripts/gh_safe_post.py executes deterministically without blocking stdin', () => {
+  it('should verify scripts/gh_safe_post.py executes deterministically without blocking stdin', (t) => {
     const scriptPath = path.join(rootDir, 'scripts', 'gh_safe_post.py');
     assert.strictEqual(fs.existsSync(scriptPath), true);
+
+    if (!isPythonAvailable()) {
+      t.skip('Python interpreter not available on this host');
+      return;
+    }
 
     // Run --help
     const helpRes = spawnSync(pyCmd, [scriptPath, '--help'], {
       input: '', // Empty stdin
       encoding: 'utf8',
-      timeout: 5000
+      timeout: 5000,
+      shell: process.platform === 'win32'
     });
     assert.strictEqual(helpRes.status, 0, 'gh_safe_post.py --help must exit with 0 immediately');
 
@@ -124,7 +147,8 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
     const lintRes = spawnSync(pyCmd, [scriptPath, 'lint', '--body', '# Safe Markdown Test\n\nValid line.'], {
       input: '',
       encoding: 'utf8',
-      timeout: 5000
+      timeout: 5000,
+      shell: process.platform === 'win32'
     });
     assert.strictEqual(lintRes.status, 0, 'gh_safe_post.py lint must exit with 0');
     assert.match(lintRes.stdout, /Clean: No shell mangling/i);

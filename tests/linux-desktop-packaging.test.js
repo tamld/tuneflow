@@ -30,7 +30,9 @@ describe('SPEC-0010: Linux Desktop Packaging Suite', () => {
   it('should verify scripts/package_linux.sh exists, is executable, and creates portable tarball', () => {
     assert.strictEqual(fs.existsSync(packageScriptPath), true, 'package_linux.sh must exist in scripts/');
     const stat = fs.statSync(packageScriptPath);
-    assert.ok((stat.mode & 0o111) !== 0, 'package_linux.sh must be executable');
+    if (process.platform !== 'win32') {
+      assert.ok((stat.mode & 0o111) !== 0, 'package_linux.sh must be executable');
+    }
 
     const content = fs.readFileSync(packageScriptPath, 'utf8');
     assert.match(content, /tar -czf/, 'Must produce compressed tar.gz');
