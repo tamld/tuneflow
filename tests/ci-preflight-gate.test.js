@@ -25,10 +25,9 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
     try {
       const probe = spawnSync(pyCmd, ['--version'], {
         encoding: 'utf8',
-        timeout: 3000,
-        shell: process.platform === 'win32'
+        timeout: 3000
       });
-      return probe.status === 0;
+      return probe.status === 0 && !probe.stderr.includes('Python was not found');
     } catch {
       return false;
     }
@@ -138,8 +137,7 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
     const helpRes = spawnSync(pyCmd, [scriptPath, '--help'], {
       input: '', // Empty stdin
       encoding: 'utf8',
-      timeout: 5000,
-      shell: process.platform === 'win32'
+      timeout: 5000
     });
     assert.strictEqual(helpRes.status, 0, 'gh_safe_post.py --help must exit with 0 immediately');
 
@@ -147,8 +145,7 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
     const lintRes = spawnSync(pyCmd, [scriptPath, 'lint', '--body', '# Safe Markdown Test\n\nValid line.'], {
       input: '',
       encoding: 'utf8',
-      timeout: 5000,
-      shell: process.platform === 'win32'
+      timeout: 5000
     });
     assert.strictEqual(lintRes.status, 0, 'gh_safe_post.py lint must exit with 0');
     assert.match(lintRes.stdout, /Clean: No shell mangling/i);

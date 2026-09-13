@@ -13,10 +13,9 @@ describe('Issue Helper & Safe GitHub CLI Poster (gh_safe_post.py)', () => {
     try {
       const probe = spawnSync(pyCmd, ['--version'], {
         encoding: 'utf8',
-        timeout: 3000,
-        shell: process.platform === 'win32'
+        timeout: 3000
       });
-      return probe.status === 0;
+      return probe.status === 0 && !probe.stderr.includes('Python was not found');
     } catch {
       return false;
     }
@@ -27,8 +26,7 @@ describe('Issue Helper & Safe GitHub CLI Poster (gh_safe_post.py)', () => {
   function runPy(args, stdinInput = null) {
     return spawnSync(pyCmd, [scriptPath, ...args], {
       input: stdinInput,
-      encoding: 'utf-8',
-      shell: process.platform === 'win32'
+      encoding: 'utf-8'
     });
   }
 
