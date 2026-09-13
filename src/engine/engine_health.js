@@ -38,12 +38,54 @@ function classifyYouTubeError(err) {
 }
 
 class EngineHealthMonitor {
-  constructor(threshold = 2) {
+  constructor(threshold = 2, cooldownMs = 30 * 60 * 1000) {
     this.consecutiveErrors = 0;
     this.errorThreshold = threshold;
+    this.cooldownMs = cooldownMs;
     this.lastError = null;
     this.lastSuccessTime = Date.now();
+    this.lastUpdateAttempt = 0;
     this.isUpdating = false;
+    this.autoUpdaterFn = null;
+  }
+
+  /**
+   * Set callback function for autonomous binary self-update
+   * @param {Function} fn Async function returning { success: boolean, newVersion?: string }
+   */
+  setAutoUpdater(fn) {
+    this.autoUpdaterFn = fn;
+  }
+
+  /**
+   * Attempt autonomous self-healing if not in cooldown
+   * @returns {Promise<boolean>}
+   */
+  async triggerSelfHealing() {
+    if (this.isUpdating) return false;
+    const now = Date.now();
+    if (now - this.lastUpdateAttempt < this.cooldownMs) {
+      return false; // Still in cooldown
+    }
+    if (typeof this.autoUpdaterFn !== 'function') {
+      return false;
+    }
+
+    this.isUpdating = true;
+    this.lastUpdateAttempt = now;
+    try {
+      const result = await this.autoUpdaterFn();
+      if (result && result.success) {
+        this.consecutiveErrors = 0;
+        this.lastError = null;
+        return true;
+      }
+      return false;
+    } catch (_err) {
+      return false;
+    } finally {
+      this.isUpdating = false;
+    }
   }
 
   /**
@@ -56,6 +98,10 @@ class EngineHealthMonitor {
     this.lastError = error;
 
     const classification = classifyYouTubeError(error);
+    if (this.consecutiveErrors >= this.errorThreshold && classification.isYouTubeDegraded) {
+      // Trigger autonomous self-healing in the background
+      this.triggerSelfHealing().catch(() => {});
+    }
     return classification;
   }
 

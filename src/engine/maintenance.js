@@ -1,4 +1,4 @@
-﻿const { initDatabase } = require('../db/database');
+const { initDatabase } = require('../db/database');
 const { SessionRepo } = require('../db/repositories/session_repo');
 const { DB_PATH } = require('../config');
 
@@ -31,7 +31,25 @@ function runSessionCleanup() {
   }
 }
 
-function startMaintenance(intervalMs = 60 * 60 * 1000) {
+let engineInterval = null;
+
+async function runEngineMaintenanceSweep() {
+  try {
+    const { updateYtDlpBinary } = require('./ytdlp');
+    const result = await updateYtDlpBinary();
+    if (result && result.success) {
+      console.log(`✅ [Maintenance] yt-dlp binary is up to date (${result.newVersion || 'latest'}).`);
+    } else if (result && result.error) {
+      console.warn(`⚠️ [Maintenance] yt-dlp check warning: ${result.error}`);
+    }
+    return result;
+  } catch (err) {
+    console.error('❌ [Maintenance] Error during engine maintenance sweep:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+function startMaintenance(intervalMs = 60 * 60 * 1000, engineIntervalMs = 12 * 60 * 60 * 1000) {
   if (activeInterval) {
     return activeInterval;
   }
@@ -42,8 +60,15 @@ function startMaintenance(intervalMs = 60 * 60 * 1000) {
   activeInterval = setInterval(() => {
     runSessionCleanup();
   }, intervalMs);
-
   activeInterval.unref();
+
+  if (engineIntervalMs && engineIntervalMs > 0) {
+    engineInterval = setInterval(() => {
+      runEngineMaintenanceSweep().catch(() => {});
+    }, engineIntervalMs);
+    engineInterval.unref();
+  }
+
   console.log(`⏱️ [Maintenance] Automated session cleanup scheduled (every ${Math.round(intervalMs / 60000)}m).`);
   return activeInterval;
 }
@@ -52,8 +77,12 @@ function stopMaintenance() {
   if (activeInterval) {
     clearInterval(activeInterval);
     activeInterval = null;
-    console.log('🛑 [Maintenance] Automated maintenance timer stopped.');
   }
+  if (engineInterval) {
+    clearInterval(engineInterval);
+    engineInterval = null;
+  }
+  console.log('🛑 [Maintenance] Automated maintenance timer stopped.');
 }
 
 function isMaintenanceRunning() {
@@ -64,6 +93,7 @@ module.exports = {
   startMaintenance,
   stopMaintenance,
   runSessionCleanup,
+  runEngineMaintenanceSweep,
   isMaintenanceRunning,
   setSessionRepo
 };

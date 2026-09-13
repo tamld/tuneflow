@@ -65,4 +65,44 @@ describe('Autonomous Engine Health & Filial Fallback Interceptor (Issue #136)', 
     assert.strictEqual(monitor.getStatus().degraded, false);
     assert.strictEqual(monitor.getStatus().consecutiveErrors, 0);
   });
+
+  it('should trigger autonomous self-healing updater when degraded and recover on success', async () => {
+    let updateCalled = 0;
+    monitor.setAutoUpdater(async () => {
+      updateCalled++;
+      return { success: true, newVersion: '2026.09.13' };
+    });
+
+    const botErr = new Error("Sign in to confirm you're not a bot");
+    monitor.recordError(botErr);
+    assert.strictEqual(updateCalled, 0);
+
+    // Second error reaches threshold = 2
+    monitor.recordError(botErr);
+    await new Promise(r => setTimeout(r, 20));
+
+    assert.strictEqual(updateCalled, 1, 'Auto-updater must be triggered autonomously');
+    assert.strictEqual(monitor.getStatus().healthy, true, 'Monitor should recover after successful self-healing');
+  });
+
+  it('should respect cooldown and prevent duplicate concurrent update triggers', async () => {
+    let updateCalled = 0;
+    monitor.setAutoUpdater(async () => {
+      updateCalled++;
+      return { success: true };
+    });
+
+    const botErr = new Error("Sign in to confirm you're not a bot");
+    monitor.recordError(botErr);
+    monitor.recordError(botErr);
+    await new Promise(r => setTimeout(r, 20));
+    assert.strictEqual(updateCalled, 1);
+
+    // Immediate subsequent error within cooldown window should NOT trigger another update
+    monitor.recordError(botErr);
+    monitor.recordError(botErr);
+    await new Promise(r => setTimeout(r, 20));
+    assert.strictEqual(updateCalled, 1, 'Must suppress update triggers during cooldown');
+  });
 });
+

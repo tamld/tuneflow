@@ -62,6 +62,7 @@ describe('Issue #103: Automated Session Cleanup & Maintenance Engine Suite', () 
     assert.strictEqual(typeof maintenance.startMaintenance, 'function', 'Must export startMaintenance');
     assert.strictEqual(typeof maintenance.stopMaintenance, 'function', 'Must export stopMaintenance');
     assert.strictEqual(typeof maintenance.runSessionCleanup, 'function', 'Must export runSessionCleanup');
+    assert.strictEqual(typeof maintenance.runEngineMaintenanceSweep, 'function', 'Must export runEngineMaintenanceSweep');
     assert.strictEqual(typeof maintenance.isMaintenanceRunning, 'function', 'Must export isMaintenanceRunning');
   });
 
@@ -70,6 +71,18 @@ describe('Issue #103: Automated Session Cleanup & Maintenance Engine Suite', () 
     const prunedCount = maintenance.runSessionCleanup();
     assert.strictEqual(typeof prunedCount, 'number', 'runSessionCleanup must return integer count');
     assert.ok(prunedCount >= 0, 'Pruned count must be >= 0');
+  });
+
+  it('should verify runEngineMaintenanceSweep executes successfully with mock updater', async () => {
+    const maintenance = require('../src/engine/maintenance');
+    process.env.MOCK_YTDLP_UPDATE = 'success';
+    try {
+      const result = await maintenance.runEngineMaintenanceSweep();
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.newVersion, '2025.02.01');
+    } finally {
+      delete process.env.MOCK_YTDLP_UPDATE;
+    }
   });
 
   it('should verify maintenance timer lifecycle (start, double-start idempotency, and stop)', () => {

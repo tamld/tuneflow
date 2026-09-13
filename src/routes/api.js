@@ -39,6 +39,11 @@ try {
 const authenticate = createAuthenticateMiddleware(authService);
 const guestGuard = createGuestGuardMiddleware(guestRepo);
 
+// Wire autonomous self-healing binary updater into engine health monitor (Issue #136)
+engineHealthMonitor.setAutoUpdater(async () => {
+  return await updateYtDlpBinary();
+});
+
 // Apply authentication to all API endpoints
 router.use(authenticate);
 
