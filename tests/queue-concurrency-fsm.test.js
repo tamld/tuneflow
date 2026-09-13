@@ -128,4 +128,38 @@ describe('TuneFlow Queue Concurrency, FSM Transitions & Quota Engine Tests', () 
     try { fs.unlinkSync(dummyFile1); } catch (_e) {}
     try { fs.unlinkSync(dummyFile2); } catch (_e) {}
   });
+
+  it('should clean up old files past maxAge threshold via cleanupOldFiles()', () => {
+    const expiredFile = path.join(DOWNLOADS_DIR, 'expired_test_file.mp3');
+    fs.writeFileSync(expiredFile, 'dummy content');
+    const pastTime = (Date.now() - 3600 * 1000) / 1000; // 1 hour ago
+    fs.utimesSync(expiredFile, pastTime, pastTime);
+
+    const deleted = queue.cleanupOldFiles(0.1); // Max age 0.1 hours (6 minutes)
+    assert.ok(deleted >= 1, 'Should delete at least 1 expired file');
+    assert.strictEqual(fs.existsSync(expiredFile), false);
+  });
+
+  it('should return all queue items sorted by createdAt descending via getAll()', () => {
+    const all = queue.getAll();
+    assert.ok(Array.isArray(all));
+    for (let i = 0; i < all.length - 1; i++) {
+      const current = new Date(all[i].createdAt).getTime();
+      const next = new Date(all[i + 1].createdAt).getTime();
+      assert.ok(current >= next, 'Items must be sorted descending by createdAt');
+    }
+  });
+
+  it('should gracefully shutdown active processes and close SSE clients via shutdown()', () => {
+    let closed = false;
+    const mockClient = {
+      end: () => { closed = true; }
+    };
+    queue.sseClients.add(mockClient);
+    assert.ok(queue.sseClients.has(mockClient));
+
+    queue.shutdown();
+    assert.strictEqual(queue.sseClients.size, 0);
+    assert.strictEqual(closed, true);
+  });
 });

@@ -169,5 +169,19 @@ describe('Engine: FFmpeg Transcoding Resilience & Atomic Cleanup Suite', () => {
       assert.strictEqual(res, mp3Path);
       assert.strictEqual(fs.existsSync(mp3Path), true);
     });
+
+    it('should handle inputStream error event and clean up partial output file', async () => {
+      const { PassThrough } = require('stream');
+      const stream = new PassThrough();
+
+      const transcodePromise = pipeToMp3(stream, dummyOutput);
+      stream.emit('error', new Error('Simulated upstream stream network break'));
+
+      await assert.rejects(
+        () => transcodePromise,
+        /Simulated upstream stream network break/
+      );
+      assert.strictEqual(fs.existsSync(dummyOutput), false);
+    });
   });
 });

@@ -86,7 +86,9 @@ Là một dự án mã nguồn mở phi lợi nhuận, TuneFlow luôn minh bạc
 
 ---
 
-## 🚀 Khởi Chạy Nhanh (Docker Compose)
+## 🚀 Khởi Chạy Nhanh 1-Click (Homelab & Desktop)
+
+### Lựa chọn A: Docker Compose (Tự động cập nhật ngầm không mất dữ liệu)
 
 Tạo file `compose.yaml`:
 
@@ -107,11 +109,29 @@ services:
       - ./data:/app/data            # Dữ liệu SQLite
 ```
 
-Khởi chạy service:
+Khởi chạy container thông thường:
 ```bash
 docker compose up -d
 ```
+
+**Khuyến nghị cho Homelab (Bật Watchtower tự cập nhật bản vá ngầm):**
+```bash
+# Tự động kéo bản vá mới mỗi 12h, bảo toàn 100% nhạc và tài khoản trong ./data và ./downloads
+docker compose --profile auto-update up -d
+```
 Truy cập tại `http://localhost:3000`. Đăng nhập ban đầu: `admin` / `admin`.
+
+### Lựa chọn B: Chợ Ứng Dụng CasaOS & ZimaOS AppStore
+1. Mở Bảng điều khiển CasaOS -> **AppStore** -> **Custom Install**.
+2. Kéo thả file [`docker-compose.casaos.yml`](docker-compose.casaos.yml) hoặc dán nội dung thô.
+3. Bấm **Install**. TuneFlow sẽ xuất hiện như một ứng dụng âm nhạc bản địa trên màn hình chính.
+
+### Lựa chọn C: Unraid Community Applications
+Sao chép [`installer/unraid/tuneflow.xml`](installer/unraid/tuneflow.xml) vào thư mục `/boot/config/plugins/dockerMan/templates-user/` hoặc thêm qua giao diện Docker WebGUI của Unraid.
+
+### Lựa chọn D: Desktop 1-Click (Cài đặt máy tính cho con cái & bố mẹ)
+* **macOS**: Tải [`TuneFlow.dmg`](https://github.com/tamld/tuneflow/releases/latest), kéo vào thư mục `/Applications`, bấm đúp chuột để mở.
+* **Windows**: Tải [`TuneFlow-Setup.exe`](https://github.com/tamld/tuneflow/releases/latest), chạy trình cài đặt thân thiện, icon ứng dụng sẽ xuất hiện trên màn hình desktop.
 
 ---
 

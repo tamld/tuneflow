@@ -35,3 +35,21 @@ services:
         reservations:
           cpus: '0.10'
           memory: 40M
+
+  # Optional zero-touch automated updates daemon for homelabs (Phase 19)
+  # Run with: docker compose --profile auto-update up -d
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: tuneflow-watchtower
+    restart: unless-stopped
+    profiles:
+      - auto-update
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=43200   # Check for new container image every 12 hours
+      - WATCHTOWER_CLEANUP=true          # Remove old images after updating
+      - WATCHTOWER_INCLUDE_STOPPED=false
+      - WATCHTOWER_SCOPE=tuneflow-scope
+    labels:
+      - "com.centurylinklabs.watchtower.scope=tuneflow-scope"

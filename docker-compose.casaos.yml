@@ -1,0 +1,66 @@
+name: tuneflow
+services:
+  tuneflow:
+    image: ghcr.io/tamld/tuneflow:latest
+    container_name: tuneflow
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - ADMIN_PASSWORD=admin
+      - MAX_DOWNLOADS=2
+      - MAX_CONVERSIONS=1
+      - MAX_RETRIES=3
+      - STORAGE_MAX_MB=20480
+    volumes:
+      - /DATA/AppData/tuneflow/downloads:/app/downloads
+      - /DATA/AppData/tuneflow/data:/app/data
+    x-casaos:
+      envs:
+        - container: PORT
+          description:
+            en_us: Web UI port
+            vi_vn: Cổng giao diện Web
+        - container: ADMIN_PASSWORD
+          description:
+            en_us: Initial admin password
+            vi_vn: Mật khẩu quản trị viên khởi tạo
+      volumes:
+        - container: /app/downloads
+          description:
+            en_us: Downloaded media storage
+            vi_vn: Thư mục chứa nhạc và video tải về
+        - container: /app/data
+          description:
+            en_us: SQLite database and user settings
+            vi_vn: Cơ sở dữ liệu SQLite và cài đặt người dùng
+      ports:
+        - container: "3000"
+          description:
+            en_us: Web UI port
+            vi_vn: Cổng Web UI
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+    - arm
+  main: tuneflow
+  description:
+    en_us: "TuneFlow is an elegant, elderly-friendly YouTube music streamer and downloader with in-app audio preview player, TV casting, and USB exporter for parents."
+    vi_vn: "TuneFlow là ứng dụng tải và nghe nhạc YouTube dành riêng cho cha mẹ, giao diện trực quan tương phản cao, hỗ trợ phát lên Smart TV và xuất thẻ nhớ/USB cho đài Craven."
+  tagline:
+    en_us: "Senior-first YouTube music downloader and in-app player"
+    vi_vn: "Trạm âm nhạc hiếu đạo - Tải và nghe nhạc YouTube cho cha mẹ"
+  developer: "tamld"
+  author: "tamld"
+  icon: "https://raw.githubusercontent.com/tamld/tuneflow/master/assets/branding/icon_512.png"
+  thumbnail: "https://raw.githubusercontent.com/tamld/tuneflow/master/docs/assets/screenshots/desktop-player.png"
+  title:
+    en_us: "TuneFlow"
+    vi_vn: "TuneFlow"
+  category: "Media"
+  port_map: "3000"
+  index: /

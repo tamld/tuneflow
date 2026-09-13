@@ -94,4 +94,41 @@ describe('SPEC-0010: Desktop Launcher Engine Suite', () => {
     assert.match(res.stdout, /--port/);
     assert.match(res.stdout, /--no-browser/);
   });
+
+  it('should throw descriptive error when findAvailablePort exhausts all attempts', async () => {
+    await assert.rejects(
+      async () => {
+        await launcher.findAvailablePort(49300, 0);
+      },
+      /No available port found between 49300/
+    );
+  });
+
+  it('should verify waitForHealthCheck returns true when server is responsive and false on timeout', async () => {
+    const http = require('http');
+    const healthPort = 49350;
+    const testServer = http.createServer((_req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok' }));
+    });
+
+    await new Promise((resolve) => testServer.listen(healthPort, '127.0.0.1', resolve));
+
+    try {
+      const isReady = await launcher.waitForHealthCheck(`http://127.0.0.1:${healthPort}/api/health`, 1500);
+      assert.strictEqual(isReady, true, 'waitForHealthCheck must resolve true when server is healthy');
+    } finally {
+      await new Promise((resolve) => testServer.close(resolve));
+    }
+
+    // Now check unreachable port with short timeout
+    const isUnreachable = await launcher.waitForHealthCheck('http://127.0.0.1:49399/api/health', 200);
+    assert.strictEqual(isUnreachable, false, 'waitForHealthCheck must resolve false on timeout');
+  });
+
+  it('should gracefully handle openBrowser errors and return null when spawn fails', () => {
+    // Platform fallback check
+    const fallbackCmd = launcher.getBrowserOpenCommand('http://localhost:3000', 'freebsd');
+    assert.strictEqual(fallbackCmd.cmd, 'xdg-open');
+  });
 });

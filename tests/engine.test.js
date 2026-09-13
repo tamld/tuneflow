@@ -84,4 +84,46 @@ describe('TuneFlow Core Engine Unit Tests', () => {
     const fetched = queue.get(item.id);
     assert.equal(fetched.status, 'cancelled');
   });
+
+  it('should query getYtDlpVersion and getFFmpegVersion without throwing', async () => {
+    const { getYtDlpVersion, getFFmpegVersion } = require('../src/engine/ytdlp');
+    const ytdlpVer = await getYtDlpVersion();
+    const ffmpegVer = await getFFmpegVersion();
+    assert.equal(typeof ytdlpVer, 'string');
+    assert.equal(typeof ffmpegVer, 'string');
+  });
+
+  it('should collect getSystemDiagnostics accurately', async () => {
+    const { getSystemDiagnostics } = require('../src/engine/ytdlp');
+    const diag = await getSystemDiagnostics();
+    assert.ok(diag);
+    assert.equal(typeof diag.nodeVersion, 'string');
+    assert.equal(typeof diag.platform, 'string');
+    assert.equal(typeof diag.arch, 'string');
+    assert.ok(diag.storage);
+    assert.equal(typeof diag.storage.usedMb, 'number');
+    assert.equal(typeof diag.storage.quotaMb, 'number');
+  });
+
+  it('should execute updateYtDlpBinary with mock success and fail branches', async () => {
+    const { updateYtDlpBinary } = require('../src/engine/ytdlp');
+
+    process.env.MOCK_YTDLP_UPDATE = 'success';
+    try {
+      const resSuccess = await updateYtDlpBinary();
+      assert.equal(resSuccess.success, true);
+      assert.equal(resSuccess.newVersion, '2025.02.01');
+    } finally {
+      delete process.env.MOCK_YTDLP_UPDATE;
+    }
+
+    process.env.MOCK_YTDLP_UPDATE = 'fail';
+    try {
+      const resFail = await updateYtDlpBinary();
+      assert.equal(resFail.success, false);
+      assert.ok(resFail.error.includes('Không thể tự động cập nhật yt-dlp'));
+    } finally {
+      delete process.env.MOCK_YTDLP_UPDATE;
+    }
+  });
 });

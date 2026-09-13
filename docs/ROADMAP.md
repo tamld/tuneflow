@@ -204,12 +204,22 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 18: Filial Physical Bridge & Living Room Casting Ecosystem (v2.8.0)
+### Phase 18: Filial Physical Bridge & Living Room Casting Ecosystem (v3.2.0)
 - **Scope**:
   - **TuneFlow Connect (Gap 5 & Issue #134)**: 100% self-hosted local LAN device pairing and casting protocol. Android TV acts as a receiver with 4-digit PIN code (`8888`), eliminating remote control typing fatigue for seniors. Mobile devices cast tracks and manage playback with low-latency SSE delivery.
   - **Physical USB/SD Card Exporter (Gap 1 & Issue #135)**: Bridges the digital-to-hardware gap for parents' portable FM radios, Craven boxes, chanting players, and automobile stereos. Automatically applies 3-digit zero-padded indexing (`001 - Artist - Title.mp3`), purges macOS `.DS_Store` / `._*` AppleDouble shadow files from FAT32 filesystems, writes standard `playlist.m3u`, and generates client-side batch ZIP packages.
   - **Autonomous Engine Self-Healing & Empathetic Fallback (Gaps 2, 3, 4 & Issue #136)**: Engine health monitor detecting YouTube cipher updates and HTTP 429 challenges with automated `yt-dlp -U` self-healing daemon. Replaces intimidating developer stack traces with warm, comforting filial Vietnamese banners and 1-click fallback to the offline downloaded library. Honest architectural documentation for OS Gatekeeper and iOS WebKit sandbox constraints.
 - **Verification**: 26/26 tests passing in `tests/connect.test.js`, `tests/usb-exporter.test.js`, `tests/engine-health.test.js`, and `tests/connect-usb-health-api.test.js`.
+
+---
+
+### Phase 19: 1-Click Zero-Friction Community Ship (v3.3.0)
+- **Scope**:
+  - **CasaOS & ZimaOS AppStore 1-Click Manifest (`docker-compose.casaos.yml`)**: Native `x-casaos` manifest integration with high-contrast icon, category metadata ("Media / Music"), and non-destructive volume mappings (`./downloads` & `./data`).
+  - **Unraid Community Applications Template (`installer/unraid/tuneflow.xml`)**: Turnkey XML template for Unraid WebGUI with pre-configured shares, unprivileged user permissions, and filial Vietnamese description.
+  - **Turnkey Production Compose Suite (`docker-compose.yml`)**: Production-ready compose configuration with `--profile auto-update` integrating `containrrr/watchtower` for zero-touch GHCR digest polling and background container rolling updates without volume loss.
+  - **Comprehensive Zero-Debt Onboarding Guides**: Dual-language documentation (`README.md`, `README.vi.md`) detailing the filial value proposition, homelab store installation, and 1-click USB/TV workflows for children and parents.
+- **Verification**: Automated validation test in `tests/community-homelab-templates.test.js` asserting schema integrity for CasaOS metadata, Unraid XML tags, and Watchtower auto-update compose profiles.
 
 ---
 
@@ -262,4 +272,5 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-43** | TuneFlow Connect Receiver Mode, SSE Command Stream & QR Pairing for 10-Foot TV | Issue #134 | `tests/connect.test.js`, `tests/connect-usb-health-api.test.js` |
 | **RM-44** | Physical USB/SD Card Exporter, 3-Digit Sequence & FAT32 Metadata Purging | Issue #135 | `tests/usb-exporter.test.js`, `tests/connect-usb-health-api.test.js` |
 | **RM-45** | Autonomous Self-Healing yt-dlp Daemon, Gerontechnology Fallback & Platform OpSec | Issue #136 | `tests/engine-health.test.js`, `tests/connect-usb-health-api.test.js` |
+| **RM-46** | Community Homelab AppStore Manifests & Turnkey 1-Click Packaging | Phase 19 | `tests/community-homelab-templates.test.js` |
 

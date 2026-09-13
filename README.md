@@ -86,7 +86,9 @@ As an open-source, non-profit homelab project, TuneFlow maintains radical transp
 
 ---
 
-## 🚀 Quickstart (Docker Compose)
+## 🚀 Turnkey 1-Click Quickstart (Homelab & Desktop)
+
+### Option A: Docker Compose (with Zero-Touch Auto-Updates)
 
 Save as `compose.yaml`:
 
@@ -107,11 +109,29 @@ services:
       - ./data:/app/data            # SQLite DB
 ```
 
-Start the service:
+Start standard container:
 ```bash
 docker compose up -d
 ```
+
+**Homelab Best Practice (with Automated Watchtower Updates)**:
+```bash
+# Automatically pulls new engine updates every 12h without touching ./data or ./downloads
+docker compose --profile auto-update up -d
+```
 Access at `http://localhost:3000`. Default login: `admin` / `admin`.
+
+### Option B: CasaOS & ZimaOS AppStore
+1. Open CasaOS Dashboard -> **AppStore** -> **Custom Install**.
+2. Drag & drop [`docker-compose.casaos.yml`](docker-compose.casaos.yml) or paste raw contents.
+3. Click **Install**. TuneFlow will appear as an official native media app icon on your home screen.
+
+### Option C: Unraid Community Applications
+Copy [`installer/unraid/tuneflow.xml`](installer/unraid/tuneflow.xml) into `/boot/config/plugins/dockerMan/templates-user/` or install via Unraid Docker WebGUI.
+
+### Option D: Desktop 1-Click (Mac & Windows)
+* **macOS**: Download [`TuneFlow.dmg`](https://github.com/tamld/tuneflow/releases/latest), drag to `/Applications`, double-click to launch.
+* **Windows**: Download [`TuneFlow-Setup.exe`](https://github.com/tamld/tuneflow/releases/latest), follow zero-admin wizard, desktop shortcut launches automatically.
 
 ---
 

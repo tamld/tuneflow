@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>TuneFlow</Name>
+  <Repository>ghcr.io/tamld/tuneflow:latest</Repository>
+  <Registry>https://ghcr.io/tamld/tuneflow</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/tamld/tuneflow/issues</Support>
+  <Project>https://github.com/tamld/tuneflow</Project>
+  <Overview>TuneFlow is an elegant, elderly-friendly YouTube to MP3/MP4 music downloader with an in-app audio preview player, living room TV casting (TuneFlow Connect), and physical USB/SD card exporter (with 001, 002... sequential formatting and FAT32 metadata cleaning for Craven players and car stereos). Fully ad-free and self-hosted.</Overview>
+  <Category>MediaApp:Music MediaServer:Music Productivity:</Category>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/tamld/tuneflow/master/assets/branding/icon_512.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Description>TuneFlow là ứng dụng tải và nghe nhạc YouTube dành riêng cho cha mẹ và người lớn tuổi. Giao diện chữ to tương phản cao (chuẩn WCAG AAA), hỗ trợ nghe thử không lưu ổ cứng, bắn nhạc lên Smart TV bằng mã PIN và xuất thẻ nhớ/USB chuẩn đài Craven.</Description>
+  <Networking>
+    <Mode>bridge</Mode>
+    <Publish>
+      <Port>
+        <HostPort>3000</HostPort>
+        <ContainerPort>3000</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir>/mnt/user/appdata/tuneflow/downloads</HostDir>
+      <ContainerDir>/app/downloads</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <Volume>
+      <HostDir>/mnt/user/appdata/tuneflow/data</HostDir>
+      <ContainerDir>/app/data</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+  </Data>
+  <Environment>
+    <Variable>
+      <Value>3000</Value>
+      <Name>PORT</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>production</Value>
+      <Name>NODE_ENV</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>admin</Value>
+      <Name>ADMIN_PASSWORD</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>20480</Value>
+      <Name>STORAGE_MAX_MB</Name>
+      <Mode/>
+    </Variable>
+  </Environment>
+  <Labels/>
+  <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="Downloads Storage" Target="/app/downloads" Default="/mnt/user/appdata/tuneflow/downloads" Mode="rw" Description="Location for downloaded audio/video files" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/tuneflow/downloads</Config>
+  <Config Name="Application Data" Target="/app/data" Default="/mnt/user/appdata/tuneflow/data" Mode="rw" Description="Location for SQLite database and persistent settings" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/tuneflow/data</Config>
+  <Config Name="Admin Password" Target="ADMIN_PASSWORD" Default="admin" Mode="" Description="Default administrator password" Type="Variable" Display="always" Required="true" Mask="true">admin</Config>
+</Container>
