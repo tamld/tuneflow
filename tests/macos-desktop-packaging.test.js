@@ -57,8 +57,10 @@ describe('SPEC-0010: macOS Native Desktop Packaging Suite', () => {
   it('should verify scripts/package_macos.sh exists, is executable, and configures UDZO DMG', () => {
     assert.strictEqual(fs.existsSync(packageScriptPath), true, 'package_macos.sh must exist in scripts/');
     const stat = fs.statSync(packageScriptPath);
-    // Mode should have executable permission
-    assert.ok((stat.mode & 0o111) !== 0, 'package_macos.sh must be executable');
+    // Mode should have executable permission on POSIX filesystems
+    if (process.platform !== 'win32') {
+      assert.ok((stat.mode & 0o111) !== 0, 'package_macos.sh must be executable');
+    }
 
     const script = fs.readFileSync(packageScriptPath, 'utf8');
     assert.match(script, /TuneFlow\.app/, 'Must assemble TuneFlow.app');

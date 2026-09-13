@@ -73,6 +73,13 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Ban hành `docs/superpowers/plans/2026-09-11-superpowers-tuneflow-mandatory-steps.md` quy định 8 bước bắt buộc và cơ chế chống stale docs.
 
 ### Đã Sửa (Fixed)
+- **Đồng Bộ Kiểm Thử Bản Địa Windows, Bọc Chặn POSIX & Bổ Sung Windows Runner Cho GitHub Actions CI (Native Windows Test Parity, POSIX Guards & Windows CI Matrix - Issue #137)**:
+  - Bổ sung bộ kiểm thử đóng gói chuyên biệt cho Windows `tests/windows-desktop-packaging.test.js` kiểm định Inno Setup 6 (`setup.iss`), AppUserModelID, URL Protocol `tuneflow://`, App Paths và các manifest WinGet / Scoop.
+  - Khắc phục lỗi kiểm tra quyền thực thi `stat.mode & 0o111` trên hệ thống tập tin NTFS của Windows trong `tests/macos-desktop-packaging.test.js` và `tests/linux-desktop-packaging.test.js`.
+  - Bọc an toàn các lệnh gọi bash script (`bash -n`, `install.sh`) trong `tests/headless-server-and-launcher.test.js` khi chạy trên môi trường Windows.
+  - Thêm cờ `{ shell: process.platform === 'win32' }` cho các lệnh gọi `spawnSync('npm', ...)` trong `tests/ci-preflight-gate.test.js` né lỗi `EINVAL` của Node.js khi gọi file batch trên Windows.
+  - Bổ sung kiểm tra khả dụng của trình thông dịch Python (`isPythonAvailable()`) trong `tests/gh-safe-post.test.js` và `tests/ci-preflight-gate.test.js`, cho phép test suite bỏ qua êm thuận (clean skip) khi chạy trên các máy trạm không cài sẵn Python.
+  - Nâng cấp `.github/workflows/ci.yml` bổ sung `windows-latest` vào ma trận kiểm thử (`strategy.matrix.os`), bảo đảm 100% Pull Request được xác minh tự động trên cả Linux và Windows.
 - **Gia Cố Khả Năng Khôi Phục & Dọn Dẹp Nguyên Tử Tiến Trình FFmpeg (FFmpeg Transcode Resilience & Atomic Temp Cleanup - Issue #131)**:
   - Tái cấu trúc và gia cố module `src/engine/ffmpeg.js`: tự động dọn dẹp nguyên tử (`fs.unlinkSync`) các tệp đầu ra dở dang, bị hỏng hoặc lỗi giữa chừng khi tiến trình FFmpeg gặp sự cố thoát với mã lỗi khác 0 hoặc stream pipe bị đứt.
   - Bổ sung hook giả lập hermetic mock `MOCK_FFMPEG` hỗ trợ kiểm thử đơn vị toàn diện không cần phụ thuộc vào môi trường binary FFmpeg ngoại vi.

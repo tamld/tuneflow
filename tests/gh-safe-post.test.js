@@ -9,6 +9,20 @@ describe('Issue Helper & Safe GitHub CLI Poster (gh_safe_post.py)', () => {
   const scriptPath = path.join(repoRoot, 'scripts', 'gh_safe_post.py');
   const pyCmd = process.platform === 'win32' ? 'python' : (fs.existsSync('/usr/bin/python3') ? '/usr/bin/python3' : 'python3');
 
+  function isPythonAvailable() {
+    try {
+      const probe = spawnSync(pyCmd, ['--version'], {
+        encoding: 'utf8',
+        timeout: 3000
+      });
+      return probe.status === 0 && !probe.stderr.includes('Python was not found');
+    } catch {
+      return false;
+    }
+  }
+
+  const pythonAvailable = isPythonAvailable();
+
   function runPy(args, stdinInput = null) {
     return spawnSync(pyCmd, [scriptPath, ...args], {
       input: stdinInput,
@@ -22,7 +36,11 @@ describe('Issue Helper & Safe GitHub CLI Poster (gh_safe_post.py)', () => {
     assert.ok(stat.size > 1000, 'gh_safe_post.py must have substantial content');
   });
 
-  it('should verify all required issue and PR subcommands are documented in --help', () => {
+  it('should verify all required issue and PR subcommands are documented in --help', (t) => {
+    if (!pythonAvailable) {
+      t.skip('Python interpreter not available on this host');
+      return;
+    }
     const res = runPy(['--help']);
     assert.strictEqual(res.status, 0, 'Help command must exit with code 0');
 
@@ -47,7 +65,11 @@ describe('Issue Helper & Safe GitHub CLI Poster (gh_safe_post.py)', () => {
     }
   });
 
-  it('should verify issue-comment and pr-comment support --body and --body-file flags', () => {
+  it('should verify issue-comment and pr-comment support --body and --body-file flags', (t) => {
+    if (!pythonAvailable) {
+      t.skip('Python interpreter not available on this host');
+      return;
+    }
     const issueCommentHelp = runPy(['issue-comment', '--help']);
     assert.strictEqual(issueCommentHelp.status, 0);
     assert.ok(issueCommentHelp.stdout.includes('--body'), 'issue-comment must support --body');
@@ -59,27 +81,43 @@ describe('Issue Helper & Safe GitHub CLI Poster (gh_safe_post.py)', () => {
     assert.ok(prCommentHelp.stdout.includes('--body-file'), 'pr-comment must support --body-file');
   });
 
-  it('should pass linter check on clean Vietnamese UTF-8 markdown text', () => {
+  it('should pass linter check on clean Vietnamese UTF-8 markdown text', (t) => {
+    if (!pythonAvailable) {
+      t.skip('Python interpreter not available on this host');
+      return;
+    }
     const cleanMd = '### Báo cáo kiểm thử: Thành công 100%\n- Mục 1: `code_block` hợp lệ\n- Mục 2: Bảng tiếng Việt | Cột 1 | Cột 2 |';
     const res = runPy(['lint', '--body', cleanMd]);
     assert.strictEqual(res.status, 0);
     assert.ok(res.stdout.includes('Clean'), 'Clean markdown must pass linter with zero warnings');
   });
 
-  it('should detect and flag PowerShell mangled backticks and tabs in linter', () => {
+  it('should detect and flag PowerShell mangled backticks and tabs in linter', (t) => {
+    if (!pythonAvailable) {
+      t.skip('Python interpreter not available on this host');
+      return;
+    }
     const mangledBacktick = 'Testing with mangled \\backtick\\ pattern from PowerShell';
     const res = runPy(['lint', '--body', mangledBacktick]);
     assert.strictEqual(res.status, 2, 'Linter should return status 2 on detected corruption');
     assert.ok(res.stdout.includes('Linter detected potential shell corruption'), 'Must flag corruption in stdout');
   });
 
-  it('should exit with error code 1 when required body content is missing', () => {
+  it('should exit with error code 1 when required body content is missing', (t) => {
+    if (!pythonAvailable) {
+      t.skip('Python interpreter not available on this host');
+      return;
+    }
     const res = runPy(['issue-comment', '999']);
     assert.strictEqual(res.status, 1);
     assert.ok(res.stderr.includes('Must provide Markdown body content'), 'Must output clear error message');
   });
 
-  it('should accept body via piped stdin cleanly without corruption', () => {
+  it('should accept body via piped stdin cleanly without corruption', (t) => {
+    if (!pythonAvailable) {
+      t.skip('Python interpreter not available on this host');
+      return;
+    }
     const pipedContent = '## Nhận xét qua STDIN Pipe\n\nNội dung Markdown tiếng Việt có dấu: Ứng dụng hoạt động mượt mà.';
     const res = runPy(['lint'], pipedContent);
     assert.strictEqual(res.status, 0);

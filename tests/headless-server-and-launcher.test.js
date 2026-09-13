@@ -68,16 +68,32 @@ describe('Headless Server & Launcher Verification (Mode 2 & Mode 3)', () => {
 
     test('install.sh exists and is executable', () => {
       assert.ok(fs.existsSync(installerPath), 'install.sh should exist');
-      fs.accessSync(installerPath, fs.constants.X_OK);
+      if (process.platform !== 'win32') {
+        fs.accessSync(installerPath, fs.constants.X_OK);
+      }
     });
 
-    test('install.sh passes bash syntax validation (bash -n)', () => {
+    test('install.sh passes bash syntax validation (bash -n)', (t) => {
+      if (process.platform === 'win32') {
+        t.skip('Bash syntax check requires POSIX shell environment');
+        return;
+      }
       assert.doesNotThrow(() => {
         execSync(`bash -n "${installerPath}"`, { stdio: 'pipe' });
       }, 'install.sh should pass bash syntax verification');
     });
 
-    test('install.sh --help outputs comprehensive usage info and exits 0', () => {
+    test('install.sh --help outputs comprehensive usage info and exits 0', (t) => {
+      if (process.platform === 'win32') {
+        const content = fs.readFileSync(installerPath, 'utf8');
+        assert.ok(content.includes('Usage:'), 'Should document usage');
+        assert.ok(content.includes('--prefix'), 'Should document --prefix');
+        assert.ok(content.includes('--data-dir'), 'Should document --data-dir');
+        assert.ok(content.includes('--config-dir'), 'Should document --config-dir');
+        assert.ok(content.includes('--port'), 'Should document --port');
+        assert.ok(content.includes('--dry-run'), 'Should document --dry-run');
+        return;
+      }
       const stdout = execSync(`"${installerPath}" --help`, { encoding: 'utf8' });
       assert.ok(stdout.includes('Usage:'), 'Should display usage');
       assert.ok(stdout.includes('--prefix'), 'Should document --prefix');
@@ -87,7 +103,13 @@ describe('Headless Server & Launcher Verification (Mode 2 & Mode 3)', () => {
       assert.ok(stdout.includes('--dry-run'), 'Should document --dry-run');
     });
 
-    test('install.sh --dry-run validates parameters without making system modifications', () => {
+    test('install.sh --dry-run validates parameters without making system modifications', (t) => {
+      if (process.platform === 'win32') {
+        const content = fs.readFileSync(installerPath, 'utf8');
+        assert.ok(content.includes('DRY-RUN SIMULATION'), 'Should define dry-run simulation');
+        assert.ok(content.includes('Dry run validation completed successfully'), 'Should define validation success');
+        return;
+      }
       const stdout = execSync(`"${installerPath}" --dry-run --port 9090 --prefix /tmp/tuneflow_test`, {
         encoding: 'utf8'
       });
@@ -116,8 +138,16 @@ describe('Headless Server & Launcher Verification (Mode 2 & Mode 3)', () => {
   });
 
   describe('5. Packaging Suites & Thin Client Profiles', () => {
-    test('scripts/package_macos.sh passes bash syntax validation and supports --thin-client', () => {
+    test('scripts/package_macos.sh passes bash syntax validation and supports --thin-client', (t) => {
       const scriptPath = path.join(REPO_ROOT, 'scripts', 'package_macos.sh');
+      assert.ok(fs.existsSync(scriptPath), 'package_macos.sh must exist');
+      const content = fs.readFileSync(scriptPath, 'utf8');
+      assert.ok(content.includes('--thin-client'), 'package_macos.sh should document --thin-client');
+
+      if (process.platform === 'win32') {
+        t.skip('Bash syntax check requires POSIX shell environment');
+        return;
+      }
       assert.doesNotThrow(() => {
         execSync(`bash -n "${scriptPath}"`, { stdio: 'pipe' });
       }, 'package_macos.sh should pass bash syntax check');
@@ -126,8 +156,13 @@ describe('Headless Server & Launcher Verification (Mode 2 & Mode 3)', () => {
       assert.ok(stdout.includes('--thin-client'), 'package_macos.sh help should document --thin-client');
     });
 
-    test('scripts/package_linux.sh passes bash syntax validation', () => {
+    test('scripts/package_linux.sh passes bash syntax validation', (t) => {
       const scriptPath = path.join(REPO_ROOT, 'scripts', 'package_linux.sh');
+      assert.ok(fs.existsSync(scriptPath), 'package_linux.sh must exist');
+      if (process.platform === 'win32') {
+        t.skip('Bash syntax check requires POSIX shell environment');
+        return;
+      }
       assert.doesNotThrow(() => {
         execSync(`bash -n "${scriptPath}"`, { stdio: 'pipe' });
       }, 'package_linux.sh should pass bash syntax check');
@@ -183,16 +218,24 @@ describe('Headless Server & Launcher Verification (Mode 2 & Mode 3)', () => {
       const linuxInstaller = path.join(REPO_ROOT, 'scripts', 'install_linux.sh');
 
       assert.ok(fs.existsSync(macInstaller), 'install_macos.sh must exist');
-      fs.accessSync(macInstaller, fs.constants.X_OK);
-      assert.doesNotThrow(() => {
-        execSync(`bash -n "${macInstaller}"`, { stdio: 'pipe' });
-      }, 'install_macos.sh should pass bash syntax check');
-
       assert.ok(fs.existsSync(linuxInstaller), 'install_linux.sh must exist');
-      fs.accessSync(linuxInstaller, fs.constants.X_OK);
-      assert.doesNotThrow(() => {
-        execSync(`bash -n "${linuxInstaller}"`, { stdio: 'pipe' });
-      }, 'install_linux.sh should pass bash syntax check');
+
+      if (process.platform !== 'win32') {
+        fs.accessSync(macInstaller, fs.constants.X_OK);
+        assert.doesNotThrow(() => {
+          execSync(`bash -n "${macInstaller}"`, { stdio: 'pipe' });
+        }, 'install_macos.sh should pass bash syntax check');
+
+        fs.accessSync(linuxInstaller, fs.constants.X_OK);
+        assert.doesNotThrow(() => {
+          execSync(`bash -n "${linuxInstaller}"`, { stdio: 'pipe' });
+        }, 'install_linux.sh should pass bash syntax check');
+      } else {
+        const macContent = fs.readFileSync(macInstaller, 'utf8');
+        const linuxContent = fs.readFileSync(linuxInstaller, 'utf8');
+        assert.match(macContent, /^#!.*\bbash\b/, 'macInstaller must have bash shebang');
+        assert.match(linuxContent, /^#!.*\bbash\b/, 'linuxInstaller must have bash shebang');
+      }
     });
 
     test('macOS native shell and CSS enforce window minSize and anti-stacking scaling', () => {
