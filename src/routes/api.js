@@ -8,6 +8,9 @@ const queue = require('../engine/queue');
 const { DOWNLOADS_DIR, DB_PATH, GUEST_MAX_LISTEN_SEC, GUEST_COOLDOWN_SEC, ADMIN_PASSWORD } = require('../config');
 const { isValidYouTubeUrl, isValidVideoId, isValidStreamMimeType, isSafeRemoteStreamUrl } = require('../utils/validator');
 const { createRateLimiter } = require('../utils/rateLimiter');
+const { connectHub } = require('../engine/connect');
+const { detectUsbDrives, exportTracksToUsb, generateBatchZipBuffer } = require('../engine/usb_exporter');
+const { engineHealthMonitor } = require('../engine/engine_health');
 
 // SQLite DB & Auth Services (Issue #52)
 const { initDatabase } = require('../db/database');
@@ -87,6 +90,7 @@ router.get('/search', searchRateLimiter, async (req, res) => {
       sort: resolvedSort,
       limit: parseInt(limit || '10', 10)
     });
+    engineHealthMonitor.recordSuccess();
     res.json({
       ok: true,
       success: true,
@@ -96,7 +100,13 @@ router.get('/search', searchRateLimiter, async (req, res) => {
       results
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const classification = engineHealthMonitor.recordError(err);
+    res.status(500).json({
+      error: err.message,
+      filialMessage: classification.filialMessage,
+      isYouTubeDegraded: classification.isYouTubeDegraded,
+      fallbackSuggested: classification.fallbackSuggested
+    });
   }
 });
 
@@ -632,4 +642,203 @@ router.get('/system/network', (req, res) => {
   }
 });
 
+// =============================================================================
+// TUNEFLOW CONNECT (Issue #134 - TV Remote 10-Foot Casting Hub)
+// =============================================================================
+router.post('/connect/register', (req, res) => {
+  try {
+    const { name } = req.body || {};
+    const receiver = connectHub.registerReceiver({
+      name,
+      userAgent: req.headers['user-agent']
+    });
+    res.json({ success: true, receiver });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/connect/receivers', (_req, res) => {
+  try {
+    const receivers = connectHub.getActiveReceivers();
+    res.json({ success: true, receivers });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/connect/pair', (req, res) => {
+  try {
+    const { pin, receiverId } = req.body || {};
+    const result = connectHub.pair({ pin, receiverId });
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/connect/cast', (req, res) => {
+  try {
+    const { receiverId, command } = req.body || {};
+    if (!receiverId || !command) {
+      return res.status(400).json({ success: false, error: 'Thiếu receiverId hoặc command' });
+    }
+    const result = connectHub.dispatchCommand(receiverId, command);
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/connect/events', (req, res) => {
+  const { receiverId } = req.query;
+  if (!receiverId) {
+    return res.status(400).json({ success: false, error: 'Thiếu receiverId' });
+  }
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  if (typeof res.flushHeaders === 'function') {
+    res.flushHeaders();
+  }
+  const ok = connectHub.subscribeEvents(receiverId, res);
+  if (!ok) {
+    return res.status(404).end();
+  }
+});
+
+router.get('/connect/state', (req, res) => {
+  const { receiverId } = req.query;
+  const state = connectHub.getState(receiverId);
+  if (!state) {
+    return res.status(404).json({ success: false, error: 'Không tìm thấy thiết bị nhận hoặc đã offline' });
+  }
+  res.json({ success: true, state });
+});
+
+router.post('/connect/state', (req, res) => {
+  const { receiverId, state } = req.body || {};
+  if (!receiverId) {
+    return res.status(400).json({ success: false, error: 'Thiếu receiverId' });
+  }
+  connectHub.updateState(receiverId, state);
+  res.json({ success: true });
+});
+
+// =============================================================================
+// PHYSICAL USB / SD CARD EXPORTER (Issue #135 - Filial Hardware Bridge)
+// =============================================================================
+router.get('/usb/drives', (_req, res) => {
+  try {
+    const drives = detectUsbDrives();
+    res.json({ success: true, drives });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/usb/export', (req, res) => {
+  try {
+    const { drivePath, subDir, trackIds } = req.body || {};
+    if (!drivePath) {
+      return res.status(400).json({ success: false, error: 'Vui lòng chọn ổ đĩa USB đích' });
+    }
+
+    if (!fs.existsSync(DOWNLOADS_DIR)) {
+      return res.status(400).json({ success: false, error: 'Thư mục tải về chưa có bài hát nào' });
+    }
+
+    const files = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.endsWith('.mp3') || f.endsWith('.m4a'));
+    let tracksToExport = files.map(file => ({
+      sourceFile: path.join(DOWNLOADS_DIR, file),
+      artist: 'TuneFlow',
+      title: path.basename(file, path.extname(file))
+    }));
+
+    if (Array.isArray(trackIds) && trackIds.length > 0) {
+      tracksToExport = tracksToExport.filter(t => trackIds.includes(path.basename(t.sourceFile)));
+    }
+
+    if (tracksToExport.length === 0) {
+      return res.status(400).json({ success: false, error: 'Không tìm thấy bài hát nào để xuất' });
+    }
+
+    const result = exportTracksToUsb({
+      drivePath,
+      tracks: tracksToExport,
+      subDir: subDir || 'TuneFlow_Music'
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/usb/batch-zip', (_req, res) => {
+  try {
+    if (!fs.existsSync(DOWNLOADS_DIR)) {
+      return res.status(400).json({ success: false, error: 'Chưa có bài hát nào được tải về' });
+    }
+
+    const files = fs.readdirSync(DOWNLOADS_DIR).filter(f => f.endsWith('.mp3') || f.endsWith('.m4a'));
+    if (files.length === 0) {
+      return res.status(400).json({ success: false, error: 'Thư mục bài hát đang trống' });
+    }
+
+    const tracks = files.map(file => ({
+      sourceFile: path.join(DOWNLOADS_DIR, file),
+      artist: 'TuneFlow',
+      title: path.basename(file, path.extname(file))
+    }));
+
+    const zipBuffer = generateBatchZipBuffer({ tracks, includeGuide: true });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="TuneFlow_Nhac_Cho_Bo_Me.zip"');
+    res.send(zipBuffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =============================================================================
+// ENGINE HEALTH & AUTONOMOUS SELF-HEALING (Issue #136)
+// =============================================================================
+router.get('/engine/health', async (_req, res) => {
+  try {
+    const status = engineHealthMonitor.getStatus();
+    const fastDiag = {
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      uptime: process.uptime()
+    };
+    res.json({ success: true, status, diagnostics: fastDiag });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/engine/update', async (_req, res) => {
+  try {
+    engineHealthMonitor.isUpdating = true;
+    const result = await updateYtDlpBinary();
+    if (result && result.success) {
+      engineHealthMonitor.recordSuccess();
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    engineHealthMonitor.isUpdating = false;
+  }
+});
+
 module.exports = router;
+

@@ -609,10 +609,23 @@ if (typeof document !== 'undefined') {
       });
       const data = await res.json();
 
+      const fallbackBanner = document.getElementById('filial-fallback-banner');
+      const fallbackMsg = document.getElementById('filial-fallback-message');
+
       if (!res.ok || !data.success) {
         resultsHeader.textContent = '⚠️ Lỗi tìm kiếm bài hát';
-        resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--accent-red);">${escapeHtml(data.error || 'Dạ hệ thống tìm kiếm đang gặp trục trặc, Bố Mẹ bấm thử lại nha!')}</div>`;
+        if (data.isYouTubeDegraded || data.fallbackSuggested) {
+          if (fallbackBanner) {
+            if (fallbackMsg && data.filialMessage) fallbackMsg.textContent = data.filialMessage;
+            fallbackBanner.style.display = 'block';
+          }
+        }
+        resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--accent-red);">${escapeHtml(data.filialMessage || data.error || 'Dạ hệ thống tìm kiếm đang gặp trục trặc, Bố Mẹ bấm thử lại nha!')}</div>`;
         return;
+      }
+
+      if (fallbackBanner) {
+        fallbackBanner.style.display = 'none';
       }
 
       if (!data.results || data.results.length === 0) {
@@ -1554,6 +1567,200 @@ if (typeof document !== 'undefined') {
     }
     showToast('✨ Đã cài đặt TuneFlow thành công!', 'info');
   });
+
+  // 14. TuneFlow Connect, USB Exporter & WakeLock Wiring (Issue #134, #135, #136)
+  if (window.tuneflowConnect) {
+    window.tuneflowConnect.init();
+  }
+
+  // Filial Fallback CTA
+  const btnFallbackLibrary = document.getElementById('btn-fallback-library');
+  if (btnFallbackLibrary) {
+    btnFallbackLibrary.addEventListener('click', () => {
+      const favBtn = document.getElementById('btn-persona-favorites');
+      if (favBtn) favBtn.click();
+      const banner = document.getElementById('filial-fallback-banner');
+      if (banner) banner.style.display = 'none';
+      showToast('🌸 Đang chuyển sang các bài hát yêu thích đã tải sẵn của Bố Mẹ!', 'info');
+    });
+  }
+
+  // WakeLock Ambient Bedside Mode (Gap 4)
+  const btnToggleWakeLock = document.getElementById('btn-toggle-wakelock');
+  if (btnToggleWakeLock) {
+    btnToggleWakeLock.addEventListener('click', async () => {
+      if (window.tuneflowConnect) {
+        const active = await window.tuneflowConnect.toggleWakeLock();
+        if (active) {
+          btnToggleWakeLock.style.borderColor = 'var(--accent-gold)';
+          btnToggleWakeLock.style.color = 'var(--accent-gold)';
+          btnToggleWakeLock.innerHTML = '⏰ Giữ Màn Hình (BẬT)';
+          showToast('🌟 Màn hình sẽ luôn giữ sáng khi đặt trên bàn để nghe nhạc không bị ngắt quãng!', 'info');
+        } else {
+          btnToggleWakeLock.style.borderColor = '';
+          btnToggleWakeLock.style.color = '';
+          btnToggleWakeLock.innerHTML = '⏰ Màn Hình Đặt Bàn';
+          showToast('💤 Đã tắt chế độ giữ sáng màn hình.', 'info');
+        }
+      }
+    });
+  }
+
+  // TuneFlow Connect Modal & Pairing (Gap 5 & Issue #134)
+  const modalConnect = document.getElementById('modal-connect-cast');
+  const btnConnectCast = document.getElementById('btn-connect-cast');
+  const btnOpenConnect = document.getElementById('btn-open-connect-modal');
+  const btnCloseConnect = document.getElementById('btn-connect-modal-close');
+  const connectList = document.getElementById('connect-receivers-list');
+  const inputConnectPin = document.getElementById('input-connect-pin');
+  const btnPairPin = document.getElementById('btn-connect-pair-pin');
+  const connectPinStatus = document.getElementById('connect-pin-status');
+  const btnActivateTv = document.getElementById('btn-activate-tv-receiver');
+
+  const openConnectModal = async () => {
+    if (!modalConnect) return;
+    modalConnect.style.display = 'flex';
+    if (connectList) {
+      connectList.innerHTML = '<div style="font-size: 13px; color: var(--text-muted); padding: 12px; background: var(--bg-card); border-radius: 8px; text-align: center;">Đang tìm TV trong mạng gia đình...</div>';
+      if (window.tuneflowConnect) {
+        const receivers = await window.tuneflowConnect.fetchReceivers();
+        if (receivers.length === 0) {
+          connectList.innerHTML = '<div style="font-size: 13px; color: var(--text-sub); padding: 12px; background: var(--bg-card); border-radius: 8px; text-align: center;">Chưa thấy TV nào mở TuneFlow. Bố Mẹ bật TuneFlow trên TV trước nha!</div>';
+        } else {
+          connectList.innerHTML = receivers.map(r => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;">
+              <div>
+                <strong>📺 ${escapeHtml(r.name)}</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">${r.state && r.state.isPlaying ? '🟢 Đang phát nhạc' : '⚪ Đang chờ'}</div>
+              </div>
+              <button class="primary-btn btn-connect-quick-pair" data-rcv-id="${r.receiverId}" style="padding: 6px 14px; font-size: 13px; border-radius: var(--radius-pill);">
+                Phát Lên TV Này
+              </button>
+            </div>
+          `).join('');
+
+          connectList.querySelectorAll('.btn-connect-quick-pair').forEach(btn => {
+            btn.addEventListener('click', () => {
+              if (inputConnectPin) inputConnectPin.focus();
+              showToast('🔑 Vui lòng nhập 4 số PIN hiển thị trên góc TV để ghép nối nhé!', 'info');
+            });
+          });
+        }
+      }
+    }
+  };
+
+  if (btnConnectCast) btnConnectCast.addEventListener('click', openConnectModal);
+  if (btnOpenConnect) btnOpenConnect.addEventListener('click', openConnectModal);
+  if (btnCloseConnect) btnCloseConnect.addEventListener('click', () => { modalConnect.style.display = 'none'; });
+
+  if (btnPairPin && inputConnectPin) {
+    btnPairPin.addEventListener('click', async () => {
+      const pin = inputConnectPin.value.trim();
+      if (!pin) return;
+      btnPairPin.disabled = true;
+      btnPairPin.textContent = 'Đang ghép...';
+      const result = await window.tuneflowConnect.pairWithPin(pin);
+      btnPairPin.disabled = false;
+      btnPairPin.textContent = 'Ghép Nối';
+      if (result.success) {
+        showToast(`🎉 Đã kết nối thành công với ${result.receiver.name}! Giờ đây bất kỳ bài hát nào Bố Mẹ bấm nghe đều sẽ phát lên TV!`, 'info');
+        modalConnect.style.display = 'none';
+      } else {
+        if (connectPinStatus) {
+          connectPinStatus.style.display = 'block';
+          connectPinStatus.style.color = 'var(--accent-red)';
+          connectPinStatus.textContent = result.error || 'Mã PIN chưa đúng, Bố Mẹ kiểm tra lại trên TV nha!';
+        }
+      }
+    });
+  }
+
+  if (btnActivateTv) {
+    btnActivateTv.addEventListener('click', () => {
+      modalConnect.style.display = 'none';
+      if (window.tuneflowConnect) {
+        window.tuneflowConnect.activateReceiverMode();
+        showToast('📺 Đã bật chế độ TV Receiver! Màn hình đang sẵn sàng nhận nhạc từ điện thoại.', 'info');
+      }
+    });
+  }
+
+  // Physical USB Exporter Modal (Gap 1 & Issue #135)
+  const modalUsb = document.getElementById('modal-export-usb');
+  const btnOpenUsb = document.getElementById('btn-open-usb-modal');
+  const btnCloseUsb = document.getElementById('btn-usb-modal-close');
+  const selectUsb = document.getElementById('select-usb-drive');
+  const btnRefreshUsb = document.getElementById('btn-refresh-usb-drives');
+  const btnDoExportUsb = document.getElementById('btn-do-usb-export');
+  const usbStatus = document.getElementById('usb-export-status');
+
+  const refreshUsbDrives = async () => {
+    if (!selectUsb) return;
+    selectUsb.innerHTML = '<option value="">-- Đang quét ổ đĩa USB... --</option>';
+    try {
+      const res = await fetch('/api/usb/drives');
+      const data = await res.json();
+      if (data.success && data.drives && data.drives.length > 0) {
+        selectUsb.innerHTML = data.drives.map(d => `<option value="${escapeHtml(d.path)}">💾 ${escapeHtml(d.name)} (${escapeHtml(d.path)})</option>`).join('');
+      } else {
+        selectUsb.innerHTML = '<option value="">⚠️ Không thấy USB nào cắm vào máy chủ. Hãy cắm USB hoặc dùng tải ZIP bên dưới nhé!</option>';
+      }
+    } catch (_e) {
+      selectUsb.innerHTML = '<option value="">Lỗi khi quét ổ đĩa USB</option>';
+    }
+  };
+
+  if (btnOpenUsb) {
+    btnOpenUsb.addEventListener('click', () => {
+      if (modalUsb) {
+        modalUsb.style.display = 'flex';
+        refreshUsbDrives();
+      }
+    });
+  }
+  if (btnCloseUsb && modalUsb) {
+    btnCloseUsb.addEventListener('click', () => { modalUsb.style.display = 'none'; });
+  }
+  if (btnRefreshUsb) {
+    btnRefreshUsb.addEventListener('click', refreshUsbDrives);
+  }
+  if (btnDoExportUsb && selectUsb) {
+    btnDoExportUsb.addEventListener('click', async () => {
+      const drivePath = selectUsb.value;
+      if (!drivePath) {
+        showToast('⚠️ Vui lòng cắm USB hoặc chọn ổ đĩa USB trước khi xuất nhé!', 'warn');
+        return;
+      }
+      btnDoExportUsb.disabled = true;
+      btnDoExportUsb.textContent = '⏳ Đang sao chép & đánh số thứ tự...';
+      try {
+        const res = await fetch('/api/usb/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ drivePath, subDir: 'TuneFlow_Music' })
+        });
+        const data = await res.json();
+        btnDoExportUsb.disabled = false;
+        btnDoExportUsb.textContent = '⚡ Chép Toàn Bộ Bài Đã Tải Vào USB';
+        if (data.success) {
+          showToast(`🎉 Đã xuất thành công ${data.exportedCount} bài hát vào USB! Các bài đã được đánh số 001, 002... sẵn sàng nghe trên loa đài / ô tô!`, 'info');
+          if (usbStatus) {
+            usbStatus.style.display = 'block';
+            usbStatus.style.color = 'var(--accent-green)';
+            usbStatus.style.background = 'rgba(16, 185, 129, 0.15)';
+            usbStatus.textContent = `✅ Đã chép ${data.exportedCount} bài hát vào thư mục: ${data.targetDir}`;
+          }
+        } else {
+          showToast(`⚠️ Lỗi: ${data.error}`, 'error');
+        }
+      } catch (err) {
+        btnDoExportUsb.disabled = false;
+        btnDoExportUsb.textContent = '⚡ Chép Toàn Bộ Bài Đã Tải Vào USB';
+        showToast(`⚠️ Lỗi kết nối: ${err.message}`, 'error');
+      }
+    });
+  }
 
   window.showToast = showToast;
   window.renderResults = renderResults;

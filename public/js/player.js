@@ -504,6 +504,11 @@ class PreviewPlayer {
     this.isLoading = true;
     this.isPlaying = false;
 
+    // Dispatch to paired TV receiver if TuneFlow Connect is active (Issue #134)
+    if (typeof window !== 'undefined' && window.tuneflowConnect && window.tuneflowConnect.activeReceiver) {
+      window.tuneflowConnect.castCommand('playTrack', track);
+    }
+
     if (this.playerContainer) this.playerContainer.classList.add('visible');
     if (this.trackTitle) this.trackTitle.textContent = `${track.title} - ${track.uploader || ''}`;
     if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_stream_connecting') : '⏳ Đang kết nối luồng nhạc...';
@@ -593,6 +598,9 @@ class PreviewPlayer {
       this.isPlaying = false;
       this.stopVisualizer();
       if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_paused') : 'Tạm dừng nghe thử';
+      if (typeof window !== 'undefined' && window.tuneflowConnect && window.tuneflowConnect.activeReceiver) {
+        window.tuneflowConnect.castCommand('pause');
+      }
     } else {
       if (this.audio.ended) {
         this.audio.currentTime = 0;
@@ -605,6 +613,9 @@ class PreviewPlayer {
       }).catch(() => {});
       this.isPlaying = true;
       if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_streaming_live') : '🟢 Đang nghe thử trực tiếp...';
+      if (typeof window !== 'undefined' && window.tuneflowConnect && window.tuneflowConnect.activeReceiver) {
+        window.tuneflowConnect.castCommand('play');
+      }
     }
     this.updatePlayPauseIcon();
     this.updateCardState();

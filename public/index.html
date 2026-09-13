@@ -144,6 +144,21 @@
 
     <!-- Results Section -->
     <section class="results-section">
+      <!-- Filial Fallback Banner (Issue #136) -->
+      <div id="filial-fallback-banner" class="filial-fallback-card" style="display: none; margin-bottom: 20px; padding: 18px 24px; border-radius: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(16, 185, 129, 0.15)); border: 2px solid var(--accent-gold); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <span style="font-size: 36px;">🌸</span>
+          <div style="flex: 1; min-width: 240px;">
+            <div style="font-weight: 800; font-size: 17px; color: var(--accent-gold); margin-bottom: 4px;">Thông Báo Từ TuneFlow Dành Cho Bố Mẹ</div>
+            <div id="filial-fallback-message" style="font-size: 15px; color: var(--text-main); line-height: 1.5;">
+              Dạ máy chủ YouTube đang nâng cấp bảo trì một chút, TuneFlow đang tự động khắc phục cho Bố Mẹ. Trong lúc chờ đợi, Bố Mẹ bấm vào đây để nghe ngay các bài đã tải sẵn trong Thư Viện nhé!
+            </div>
+          </div>
+          <button id="btn-fallback-library" class="primary-btn" style="padding: 12px 22px; font-size: 15px; font-weight: 700; border-radius: var(--radius-pill); white-space: nowrap; background: var(--accent-gold); color: #000;">
+            ❤️ Nghe Bài Đã Tải Về
+          </button>
+        </div>
+      </div>
       <h2 id="results-header" class="results-header">✨ Bấm chọn một thể loại ở trên hoặc gõ tên bài hát để bắt đầu nhé!</h2>
       <div id="results-grid" class="results-grid"></div>
     </section>
@@ -186,6 +201,9 @@
         </button>
         <button id="btn-player-pip" class="player-ctrl-btn" title="Chế độ cửa sổ nổi (Picture-in-Picture) / PiP Mode" aria-label="Cửa sổ nổi PiP">
           📺
+        </button>
+        <button id="btn-connect-cast" class="player-ctrl-btn" title="Phát nhạc lên TV (TuneFlow Connect)" aria-label="Phát nhạc lên TV">
+          📡
         </button>
       </div>
     </div>
@@ -543,6 +561,15 @@
             <button id="btn-toggle-tv" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Bật/Tắt chế độ điều khiển TV / Android TV Leanback Mode" aria-pressed="false">
               📺 Chế Độ TV
             </button>
+            <button id="btn-open-connect-modal" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--accent-gold); border-radius: var(--radius-pill); background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); font-weight: 600;" title="Ghép nối phát nhạc lên TV (TuneFlow Connect)">
+              📡 Phát Lên TV
+            </button>
+            <button id="btn-open-usb-modal" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--accent-green); border-radius: var(--radius-pill); background: rgba(16, 185, 129, 0.15); color: var(--accent-green); font-weight: 600;" title="Xuất nhạc ra USB / Thẻ nhớ cho loa đài">
+              💾 Xuất Ra USB
+            </button>
+            <button id="btn-toggle-wakelock" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Giữ màn hình sáng khi đặt iPad/Điện thoại trên bàn">
+              ⏰ Màn Hình Đặt Bàn
+            </button>
             <button id="btn-install-pwa" class="font-scale-btn" style="display: none; min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--accent-gold); border-radius: var(--radius-pill); background: rgba(243, 156, 18, 0.15); color: var(--accent-gold); font-weight: 600;" title="Cài đặt ứng dụng lên màn hình chính / Install App">
               📲 <span id="text-install-pwa">Cài App</span>
             </button>
@@ -616,6 +643,93 @@
     </div>
   </div>
 
+  <!-- TuneFlow Connect Modal (Issue #134) -->
+  <div id="modal-connect-cast" class="modal-overlay modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="connect-modal-title">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h2 id="connect-modal-title" style="margin: 0; font-size: 19px; display: flex; align-items: center; gap: 8px; color: var(--accent-gold);">
+          📡 TuneFlow Connect (Phát Lên TV)
+        </h2>
+        <button id="btn-connect-modal-close" class="modal-close-btn" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 0;">
+        <p style="margin-top: 0; color: var(--text-sub); font-size: 14px; line-height: 1.5;">
+          Phát nhạc trực tiếp từ điện thoại / máy tính lên màn hình TV phòng khách. <strong>Bố Mẹ không cần bấm phím gõ chữ trên remote TV!</strong>
+        </p>
+        
+        <!-- Active TV Receivers -->
+        <div style="margin-bottom: 16px;">
+          <div style="font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--text-main);">Thiết bị TV đang mở TuneFlow:</div>
+          <div id="connect-receivers-list" style="display: flex; flex-direction: column; gap: 8px; min-height: 60px;">
+            <div style="font-size: 13px; color: var(--text-muted); padding: 12px; background: var(--bg-card); border-radius: 8px; text-align: center;">
+              Đang tìm kiếm TV trong mạng gia đình...
+            </div>
+          </div>
+        </div>
+
+        <!-- Pair by PIN -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 6px;">Hoặc nhập mã PIN 4 số hiển thị trên TV:</div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="input-connect-pin" maxlength="4" pattern="\d{4}" placeholder="Ví dụ: 6868" style="flex: 1; padding: 10px; font-size: 18px; font-weight: 700; text-align: center; letter-spacing: 4px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--accent-gold);">
+            <button id="btn-connect-pair-pin" class="primary-btn" style="padding: 10px 18px; font-weight: 700; border-radius: 8px;">Ghép Nối</button>
+          </div>
+          <div id="connect-pin-status" style="display: none; margin-top: 8px; font-size: 13px;"></div>
+        </div>
+
+        <!-- TV Receiver Mode Switch -->
+        <div style="text-align: center; border-top: 1px solid var(--border-color); padding-top: 14px;">
+          <button id="btn-activate-tv-receiver" class="secondary-btn" style="padding: 10px 20px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 600;">
+            📺 Biến Máy Này Thành Màn Hình TV Nhận Nhạc
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Physical USB / SD Card Exporter Modal (Issue #135) -->
+  <div id="modal-export-usb" class="modal-overlay modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="usb-modal-title">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h2 id="usb-modal-title" style="margin: 0; font-size: 19px; display: flex; align-items: center; gap: 8px; color: var(--accent-green);">
+          💾 Xuất Nhạc Ra USB / Thẻ Nhớ Cho Bố Mẹ
+        </h2>
+        <button id="btn-usb-modal-close" class="modal-close-btn" aria-label="Đóng">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 0;">
+        <p style="margin-top: 0; color: var(--text-sub); font-size: 14px; line-height: 1.5;">
+          Tự động đánh số thứ tự <strong>001, 002, 003...</strong> và làm sạch file rác hệ thống (macOS .DS_Store, ._*) để tương thích 100% với loa cắm thẻ, đài niệm Phật, đài Craven/BKK và đầu đĩa ô tô.
+        </p>
+
+        <!-- Option 1: Direct USB Copy (Server/Desktop) -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+          <div style="font-weight: 700; font-size: 15px; margin-bottom: 8px; color: var(--accent-green);">Ổ đĩa USB đang cắm vào máy:</div>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <select id="select-usb-drive" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 14px;">
+              <option value="">-- Đang quét ổ đĩa USB... --</option>
+            </select>
+            <button id="btn-refresh-usb-drives" class="secondary-btn" style="padding: 8px 14px; border-radius: 8px;" title="Quét lại USB">🔄</button>
+          </div>
+          <button id="btn-do-usb-export" class="primary-btn" style="width: 100%; padding: 12px; font-weight: 700; border-radius: 8px; background: var(--accent-green); color: #fff;">
+            ⚡ Chép Toàn Bộ Bài Đã Tải Vào USB
+          </button>
+          <div id="usb-export-status" style="display: none; margin-top: 10px; font-size: 13px; padding: 8px; border-radius: 6px;"></div>
+        </div>
+
+        <!-- Option 2: Download ZIP Pack (Web/Remote Client) -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px;">
+          <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px; color: var(--accent-gold);">Tải Gói ZIP Đã Đánh Số (Dành Cho Điện Thoại / Máy Khác):</div>
+          <p style="margin: 0 0 10px 0; font-size: 13px; color: var(--text-muted);">
+            Tải về 1 file nén chứa tất cả bài hát đã đánh số và kèm file hướng dẫn chép USB chi tiết.
+          </p>
+          <a id="btn-download-batch-zip" href="/api/usb/batch-zip" download="TuneFlow_Nhac_Cho_Bo_Me.zip" class="secondary-btn" style="display: block; text-align: center; padding: 12px; font-weight: 700; border-radius: 8px; text-decoration: none; border: 1px solid var(--accent-gold); color: var(--accent-gold);">
+            📦 Tải File ZIP Cho USB / Loa Đài
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
 
@@ -629,6 +743,7 @@
   <script src="/js/admin.js"></script>
   <script src="/js/player.js"></script>
   <script src="/js/tv-leanback.js"></script>
+  <script src="/js/connect-client.js"></script>
   <script src="/js/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

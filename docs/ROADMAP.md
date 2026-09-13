@@ -201,6 +201,15 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
+### Phase 18: Filial Physical Bridge & Living Room Casting Ecosystem (v2.8.0)
+- **Scope**:
+  - **TuneFlow Connect (Gap 5 & Issue #134)**: 100% self-hosted local LAN device pairing and casting protocol. Android TV acts as a receiver with 4-digit PIN code (`8888`), eliminating remote control typing fatigue for seniors. Mobile devices cast tracks and manage playback with low-latency SSE delivery.
+  - **Physical USB/SD Card Exporter (Gap 1 & Issue #135)**: Bridges the digital-to-hardware gap for parents' portable FM radios, Craven boxes, chanting players, and automobile stereos. Automatically applies 3-digit zero-padded indexing (`001 - Artist - Title.mp3`), purges macOS `.DS_Store` / `._*` AppleDouble shadow files from FAT32 filesystems, writes standard `playlist.m3u`, and generates client-side batch ZIP packages.
+  - **Autonomous Engine Self-Healing & Empathetic Fallback (Gaps 2, 3, 4 & Issue #136)**: Engine health monitor detecting YouTube cipher updates and HTTP 429 challenges with automated `yt-dlp -U` self-healing daemon. Replaces intimidating developer stack traces with warm, comforting filial Vietnamese banners and 1-click fallback to the offline downloaded library. Honest architectural documentation for OS Gatekeeper and iOS WebKit sandbox constraints.
+- **Verification**: 26/26 tests passing in `tests/connect.test.js`, `tests/usb-exporter.test.js`, `tests/engine-health.test.js`, and `tests/connect-usb-health-api.test.js`.
+
+---
+
 ## 📋 Traceability Matrix
 
 | Requirement | Scope Description | SSoT Specification | Test Suite / Verification |
@@ -247,3 +256,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-40** | Tauri v2 Native GUI Architecture, IPC Contract & Tray Lifecycle | SPEC-0014, ADR-0016 | `tests/tauri-architecture-matrix.test.js` |
 | **RM-41** | Desktop In-App Auto-Update, Self-Healing Diagnostics & Multi-Arch Distribution | SPEC-0015, ADR-0017 | `tests/phase17-desktop-updater-and-distribution.test.js` |
 | **RM-42** | Senior Visual Ergonomics, Header Declutter, Warm Cream Day Mode & Unified Settings | Issue #133 | `tests/elderly-visual-theme-and-settings.test.js` |
+| **RM-43** | TuneFlow Connect Receiver Mode, SSE Command Stream & QR Pairing for 10-Foot TV | Issue #134 | `tests/connect.test.js`, `tests/connect-usb-health-api.test.js` |
+| **RM-44** | Physical USB/SD Card Exporter, 3-Digit Sequence & FAT32 Metadata Purging | Issue #135 | `tests/usb-exporter.test.js`, `tests/connect-usb-health-api.test.js` |
+| **RM-45** | Autonomous Self-Healing yt-dlp Daemon, Gerontechnology Fallback & Platform OpSec | Issue #136 | `tests/engine-health.test.js`, `tests/connect-usb-health-api.test.js` |
+
