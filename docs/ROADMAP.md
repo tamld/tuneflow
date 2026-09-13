@@ -28,7 +28,10 @@ Each phase is designed independently with a complete quality assurance dossier:
 │ Phase 13 │ Portable Binary & Hash Checker Security  │ v2.5.0      │ ✅ Completed (SSoT)│
 │ Phase 14 │ Two-Tier Self-Update & WinGet Packaging │ v2.6.0      │ ✅ Completed (SSoT)│
 │ Phase 15 │ Tri-Mode Deployment & Decoupled Client   │ v2.7.0      │ ✅ Completed (SSoT)│
-│ Phase 16 │ Native Desktop GUI Shell with Tauri v2   │ v3.0.0      │ 📅 Planned         │
+│ Phase 16 │ Native Desktop GUI Shell with Tauri v2   │ v3.0.0      │ ✅ Completed (SSoT)│
+│ Phase 17 │ Desktop In-App Update & Multi-Arch Dist  │ v3.1.0      │ ✅ Completed (SSoT)│
+│ Phase 18 │ Filial Physical Bridge & TV Casting      │ v3.2.0      │ ✅ Completed (SSoT)│
+│ Phase 19 │ 1-Click Zero-Friction Community Ship     │ v3.3.0      │ 📅 Next Target     │
 └──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
 ```
 
