@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
-using System.Net.Sockets;
+using System.Net;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -10,15 +11,30 @@ namespace TuneFlow
     static class Program
     {
         private static Process backendProcess = null;
+        private static Mutex singleInstanceMutex = null;
+        private static NotifyIcon trayIcon = null;
+        private static int port = 3000;
 
         [STAThread]
         static void Main(string[] args)
         {
-            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            // 0. Single-instance guard: focus/re-open window if already running
+            bool isNewInstance = false;
+            singleInstanceMutex = new Mutex(true, "com.tamld.tuneflow.singleinstance", out isNewInstance);
+            if (!isNewInstance)
+            {
+                OpenAppWindow();
+                return;
+            }
+
+            AppDomain.CurrentDomain.ProcessExit += delegate { Cleanup(); };
 
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            // 1. Locate Node.js executable
+            // 1. Locate Node.js runtime executable
             string nodeExe = Path.Combine(baseDir, "node.exe");
             if (!File.Exists(nodeExe))
             {
@@ -32,7 +48,7 @@ namespace TuneFlow
             string scriptPath = Path.Combine(baseDir, "bin", "tuneflow.js");
             if (!File.Exists(scriptPath))
             {
-                // Fallback for dev repository layout
+                // Fallback for development workspace layout
                 scriptPath = Path.Combine(baseDir, "..", "..", "bin", "tuneflow.js");
             }
 
@@ -51,7 +67,7 @@ namespace TuneFlow
             ProcessStartInfo backendInfo = new ProcessStartInfo
             {
                 FileName = nodeExe,
-                Arguments = "\"" + scriptPath + "\" --daemon",
+                Arguments = string.Format("\"{0}\" --daemon --no-browser --port {1}", scriptPath, port),
                 WorkingDirectory = baseDir,
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden,
@@ -73,51 +89,86 @@ namespace TuneFlow
                 return;
             }
 
-            // 3. Wait for port 3000 to listen (up to 15 seconds)
-            int port = 3000;
-            bool ready = false;
+            // 3. Wait for HTTP /api/health to be ready (up to 15 seconds)
+            WaitForHealth();
+
+            // 4. Setup Windows Notification Area (System Tray) Icon & Menu
+            trayIcon = new NotifyIcon();
+            string iconPath = Path.Combine(baseDir, "public", "icons", "favicon.ico");
+            if (!File.Exists(iconPath))
+            {
+                iconPath = Path.Combine(baseDir, "..", "..", "public", "icons", "favicon.ico");
+            }
+
+            if (File.Exists(iconPath))
+            {
+                try
+                {
+                    trayIcon.Icon = new Icon(iconPath);
+                }
+                catch
+                {
+                    trayIcon.Icon = SystemIcons.Application;
+                }
+            }
+            else
+            {
+                trayIcon.Icon = SystemIcons.Application;
+            }
+
+            trayIcon.Text = "TuneFlow - YouTube Music Player";
+            trayIcon.Visible = true;
+
+            ContextMenuStrip menu = new ContextMenuStrip();
+            ToolStripMenuItem openItem = new ToolStripMenuItem("Open TuneFlow", null, delegate { OpenAppWindow(); });
+            openItem.Font = new Font(openItem.Font, FontStyle.Bold);
+            menu.Items.Add(openItem);
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("Exit TuneFlow", null, delegate
+            {
+                if (trayIcon != null) trayIcon.Visible = false;
+                Application.Exit();
+            });
+
+            trayIcon.ContextMenuStrip = menu;
+            trayIcon.DoubleClick += delegate { OpenAppWindow(); };
+
+            // 5. Open Standalone Window (Zero Browser Residue) immediately on start
+            OpenAppWindow();
+
+            // 6. Run Windows Forms Message Loop to service Tray Icon & keep backend alive
+            Application.Run();
+
+            Cleanup();
+        }
+
+        private static void WaitForHealth()
+        {
+            string healthUrl = string.Format("http://127.0.0.1:{0}/api/health", port);
             for (int i = 0; i < 75; i++)
             {
-                if (backendProcess != null && backendProcess.HasExited)
-                {
-                    MessageBox.Show(
-                        "TuneFlow backend engine exited unexpectedly (Exit Code: " + backendProcess.ExitCode + ").",
-                        "TuneFlow Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error
-                    );
-                    return;
-                }
+                if (backendProcess != null && backendProcess.HasExited) return;
 
                 try
                 {
-                    using (TcpClient client = new TcpClient())
+                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(healthUrl);
+                    req.Timeout = 400;
+                    using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                     {
-                        IAsyncResult ar = client.BeginConnect("127.0.0.1", port, null, null);
-                        if (ar.AsyncWaitHandle.WaitOne(200))
+                        if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 400)
                         {
-                            client.EndConnect(ar);
-                            ready = true;
                             break;
                         }
                     }
                 }
                 catch { }
 
-                Thread.Sleep(100);
+                Thread.Sleep(200);
             }
+        }
 
-            if (!ready)
-            {
-                MessageBox.Show(
-                    "TuneFlow backend engine did not respond on port " + port + " within 15 seconds.",
-                    "TuneFlow Warning",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
-                );
-            }
-
-            // 4. Launch Standalone Desktop Application Window (Zero Browser Residue)
+        private static void OpenAppWindow()
+        {
             string appRunner = null;
             string[] candidates = new string[]
             {
@@ -138,19 +189,17 @@ namespace TuneFlow
                 }
             }
 
-            string targetUrl = "http://127.0.0.1:" + port;
+            string targetUrl = string.Format("http://127.0.0.1:{0}", port);
             string profileDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "TuneFlow",
                 "AppProfile"
             );
 
-            Process guiProcess = null;
             if (appRunner != null)
             {
-                // App Mode: Opens standalone window with NO tabs, NO URL bar, and custom 1080x750 frame
                 string appArgs = string.Format(
-                    "--app=\"{0}\" --window-size=1080,750 --user-data-dir=\"{1}\" --app-id=com.tamld.tuneflow",
+                    "--app=\"{0}\" --window-size=1080,750 --user-data-dir=\"{1}\" --no-first-run --no-default-browser-check",
                     targetUrl,
                     profileDir
                 );
@@ -164,7 +213,7 @@ namespace TuneFlow
 
                 try
                 {
-                    guiProcess = Process.Start(guiInfo);
+                    Process.Start(guiInfo);
                 }
                 catch
                 {
@@ -173,29 +222,11 @@ namespace TuneFlow
             }
             else
             {
-                // Fallback to default browser if no Chromium/Edge runtime found
                 Process.Start(targetUrl);
             }
-
-            // 5. Wait for standalone window to close, then cleanly terminate backend
-            if (guiProcess != null)
-            {
-                try
-                {
-                    guiProcess.WaitForExit();
-                }
-                catch { }
-            }
-
-            CleanupBackend();
         }
 
-        private static void OnProcessExit(object sender, EventArgs e)
-        {
-            CleanupBackend();
-        }
-
-        private static void CleanupBackend()
+        private static void Cleanup()
         {
             if (backendProcess != null && !backendProcess.HasExited)
             {
@@ -204,6 +235,28 @@ namespace TuneFlow
                     backendProcess.Kill();
                     backendProcess.Dispose();
                     backendProcess = null;
+                }
+                catch { }
+            }
+
+            if (trayIcon != null)
+            {
+                try
+                {
+                    trayIcon.Visible = false;
+                    trayIcon.Dispose();
+                    trayIcon = null;
+                }
+                catch { }
+            }
+
+            if (singleInstanceMutex != null)
+            {
+                try
+                {
+                    singleInstanceMutex.ReleaseMutex();
+                    singleInstanceMutex.Dispose();
+                    singleInstanceMutex = null;
                 }
                 catch { }
             }
