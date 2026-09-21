@@ -47,8 +47,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "dist\win-unpacked\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "bin\tuneflow.js"; IconFilename: "{app}\public\icons\favicon.ico"; AppUserModelID: "com.tamld.tuneflow"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "bin\tuneflow.js"; Tasks: desktopicon; IconFilename: "{app}\public\icons\favicon.ico"; AppUserModelID: "com.tamld.tuneflow"
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\public\icons\favicon.ico"; AppUserModelID: "com.tamld.tuneflow"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\public\icons\favicon.ico"; AppUserModelID: "com.tamld.tuneflow"
 
 [Registry]
 ; Register App Paths for Windows Run dialog (Win+R) and Command Prompt
@@ -60,7 +60,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\tuneflo
 Root: HKCU; Subkey: "Software\Classes\tuneflow"; ValueType: string; ValueName: ""; ValueData: "URL:TuneFlow Protocol"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\tuneflow"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\tuneflow\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\public\icons\favicon.ico"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Classes\tuneflow\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""bin\tuneflow.js"" ""%1"""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\tuneflow\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Parameters: "bin\tuneflow.js"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent

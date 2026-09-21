@@ -49,6 +49,15 @@ describe('SPEC-0010: Windows Native Desktop Packaging Suite', () => {
       assert.match(content, /Filename:\s*"\{app\}\\\{#MyAppExeName\}"/, 'Must execute installed executable');
       assert.match(content, /nowait\s+postinstall/, 'Must specify nowait postinstall flags');
     });
+
+    it('should verify installer/windows/TuneFlowLauncher.cs exists and compiles native GUI winexe', () => {
+      const csPath = path.join(repoRoot, 'installer', 'windows', 'TuneFlowLauncher.cs');
+      assert.strictEqual(fs.existsSync(csPath), true, 'TuneFlowLauncher.cs must exist in installer/windows/');
+      const content = fs.readFileSync(csPath, 'utf8');
+      assert.match(content, /STAThread/, 'Must define STAThread for Windows GUI subsystem');
+      assert.match(content, /--app=/, 'Must launch standalone app mode without browser tabs');
+      assert.match(content, /CreateNoWindow\s*=\s*true/, 'Must run background backend without black console window');
+    });
   });
 
   describe('2. Windows Package Manager Manifest Compliance (WinGet & Scoop)', () => {

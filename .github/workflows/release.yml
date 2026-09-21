@@ -248,8 +248,10 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist\win-unpacked, dist\installer
           Copy-Item -Recurse -Force src, public, bin, package.json, node_modules dist\win-unpacked\
           $nodeExe = (Get-Command node).Source
-          Copy-Item -Force $nodeExe dist\win-unpacked\TuneFlow.exe
-          echo "Distribution tree prepared."
+          Copy-Item -Force $nodeExe dist\win-unpacked\node.exe
+          $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          & "$cscPath" /target:winexe /win32icon:public\icons\favicon.ico /out:dist\win-unpacked\TuneFlow.exe installer\windows\TuneFlowLauncher.cs
+          echo "Distribution tree prepared with native C# GUI launcher."
 
       - name: Compile Inno Setup Installer
         shell: pwsh

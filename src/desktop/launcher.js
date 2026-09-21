@@ -63,12 +63,76 @@ function getBrowserOpenCommand(url, platform = process.platform) {
 }
 
 /**
- * Launches the system's default browser to the specified URL.
+ * Returns OS-specific standalone application window command if a compatible
+ * Chromium/WebKit runtime is available (Edge/Chrome App Mode), or null.
  * @param {string} url
  * @param {string} [platform]
+ * @returns {{ cmd: string, args: string[] } | null}
+ */
+function getStandaloneAppCommand(url, platform = process.platform) {
+  const fs = require('fs');
+  const os = require('os');
+
+  if (platform === 'win32') {
+    const candidates = [
+      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+      path.join(process.env.LOCALAPPDATA || '', 'Microsoft\\Edge\\Application\\msedge.exe'),
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe')
+    ];
+
+    const profileDir = path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'TuneFlow', 'AppProfile');
+
+    for (const bin of candidates) {
+      if (fs.existsSync(bin)) {
+        return {
+          cmd: bin,
+          args: [
+            `--app=${url}`,
+            '--window-size=1080,750',
+            `--user-data-dir=${profileDir}`,
+            '--app-id=com.tamld.tuneflow'
+          ]
+        };
+      }
+    }
+  } else if (platform === 'linux') {
+    const linuxBins = ['/usr/bin/google-chrome', '/usr/bin/chromium-browser', '/usr/bin/chromium'];
+    for (const bin of linuxBins) {
+      if (fs.existsSync(bin)) {
+        return {
+          cmd: bin,
+          args: [`--app=${url}`, '--window-size=1080,750']
+        };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Launches the system's standalone application window or default browser.
+ * @param {string} url
+ * @param {string} [platform]
+ * @param {{ preferStandalone?: boolean }} [options]
  * @returns {import('child_process').ChildProcess | null}
  */
-function openBrowser(url, platform = process.platform) {
+function openBrowser(url, platform = process.platform, options = {}) {
+  if (options.preferStandalone !== false) {
+    const appCmd = getStandaloneAppCommand(url, platform);
+    if (appCmd) {
+      try {
+        const child = spawn(appCmd.cmd, appCmd.args, { stdio: 'ignore', detached: true });
+        child.unref();
+        return child;
+      } catch (err) {
+        console.warn(`⚠️ Could not launch standalone window: ${err.message}`);
+      }
+    }
+  }
+
   const { cmd, args } = getBrowserOpenCommand(url, platform);
   try {
     const child = spawn(cmd, args, { stdio: 'ignore', detached: true });
@@ -163,6 +227,7 @@ module.exports = {
   isPortAvailable,
   findAvailablePort,
   getBrowserOpenCommand,
+  getStandaloneAppCommand,
   openBrowser,
   waitForHealthCheck,
   launch,

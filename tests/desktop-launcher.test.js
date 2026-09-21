@@ -131,4 +131,14 @@ describe('SPEC-0010: Desktop Launcher Engine Suite', () => {
     const fallbackCmd = launcher.getBrowserOpenCommand('http://localhost:3000', 'freebsd');
     assert.strictEqual(fallbackCmd.cmd, 'xdg-open');
   });
+
+  it('should verify getStandaloneAppCommand returns standalone app mode arguments on supported OS', () => {
+    const testUrl = 'http://localhost:3000';
+    const appCmd = launcher.getStandaloneAppCommand(testUrl, 'win32');
+    if (appCmd) {
+      assert.ok(typeof appCmd.cmd === 'string');
+      assert.ok(appCmd.args.some((arg) => arg.startsWith('--app=')));
+      assert.ok(appCmd.args.includes('--window-size=1080,750'));
+    }
+  });
 });
