@@ -22,6 +22,7 @@ DisableProgramGroupPage=yes
 ; Zero-Admin User-Level Installation: No UAC elevation required
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
+SourceDir=..\..
 OutputDir=dist\installer
 OutputBaseFilename=TuneFlow-Setup-{#MyAppVersion}
 SetupIconFile=public\icons\favicon.ico
