@@ -1,5 +1,7 @@
 # Phase 4 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
+**Status**: `ACCEPTED`
+
 ## 1. Definition of Ready (DoR)
 - [x] ADR-0009 approved, establishing Persona Taxonomy and Zero-Login Storage architecture.
 - [x] Persona bar interface styled to WCAG 2.2 AAA with button dimensions $\ge 64\text{px}$.
@@ -16,3 +18,6 @@
 - **AC-401**: Clicking "🌸 Mother's Feed" tab renders at least 10 meditation, sleep, and folk audio tracks.
 - **AC-402**: Enabling the "Instrumental" toggle restricts track results to acoustic/instrumental arrangements.
 - **AC-403**: `localStorage.getItem('tuneflow_favorites')` stores well-formed JSON objects containing `id`, `title`, `thumbnail`, and `savedAt`.
+
+#### Scenario: Curation Presets and Favorites Storage
+<!-- tests: api.test.js -->

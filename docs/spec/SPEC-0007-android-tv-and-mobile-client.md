@@ -1,7 +1,8 @@
 # OpenSpec SPEC-0007: Android Mobile & Android TV D-Pad Leanback Client Specification
 
 > **Specification Standard**: OpenSpec Spec Kit Framework  
-> **Status**: APPROVED  
+**Status**: ACCEPTED  
+> **Status**: ACCEPTED  
 > **Authority**: TamLD (`github.com/tamld/tuneflow`)  
 > **Target Audience**: Android Developers, QA Engineers, UX Reviewers  
 > **Reference Issues**: [#17](https://github.com/tamld/tuneflow/issues/17), [#18](https://github.com/tamld/tuneflow/issues/18)  
@@ -114,3 +115,6 @@ The Android TV layout organizes media into 4 horizontal carousels with smooth in
 - [x] **AC-3**: Mobile audio continues uninterrupted when screen locks, verified with persistent lock screen notification.
 - [x] **AC-4**: Server auto-discovers via local mDNS without manual IP configuration.
 - [x] **AC-5**: UI labels and iconography adhere strictly to accessible, senior-friendly standards.
+
+#### Scenario: Android TV Leanback and Mobile Client Navigation
+<!-- tests: tv-leanback.test.js, ios-pwa-responsive.test.js -->

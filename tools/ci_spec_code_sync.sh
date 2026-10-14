@@ -46,7 +46,7 @@ fi
 FAIL=0
 WARN=0
 
-for spec in "$SPEC_ROOT"/*.md; do
+for spec in "$SPEC_ROOT"/*.md "$SPEC_ROOT"/*/*.md; do
     [ -e "$spec" ] || continue
     status=$(grep -m1 '^\*\*Status\*\*:' "$spec" || true)
     enforced=0

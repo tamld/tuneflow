@@ -1,5 +1,7 @@
 # OpenSpec DELTA-01: TuneFlow Core Specification
 
+**Status**: `ACCEPTED`
+
 > **Specification Standard**: OpenSpec Spec Kit Framework  
 > **Status**: APPROVED  
 > **Authority**: TamLD (`github.com/tamld/tuneflow`)  
@@ -68,3 +70,6 @@ TuneFlow provides:
 - [x] Puppeteer E2E test confirms Search ➔ Preview ➔ Download flow.
 - [x] WCAG AAA contrast ratio verified on all interactive elements.
 - [x] Dockerfile builds multi-stage image under 120MB.
+
+#### Scenario: Core Engine Search, Preview and Queue Execution
+<!-- tests: engine.test.js, api.test.js -->

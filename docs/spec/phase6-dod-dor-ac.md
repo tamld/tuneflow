@@ -1,5 +1,7 @@
 # Phase 6 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
+**Status**: `ACCEPTED`
+
 ## 1. Definition of Ready (DoR)
 - [x] ADR-0011 approved, evaluating Manifest V3 architecture and legal compliance boundaries.
 - [x] SRS and FSM specifications finalized for content scripts and background service workers.
@@ -16,3 +18,6 @@
 - **AC-601**: Browser extension loads without CSP violations or unhandled runtime exceptions.
 - **AC-602**: Triggering download button displays immediate desktop / browser notification within 1 second.
 - **AC-603**: `docs/LEGAL_COMPLIANCE.md` provides clear safe harbor terms and homelab personal fair-use parameters.
+
+#### Scenario: Browser Extension Integration and Download Dispatch
+<!-- tests: extension.test.js -->

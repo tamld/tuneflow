@@ -1,5 +1,7 @@
 # Phase 5 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
+**Status**: `ACCEPTED`
+
 ## 1. Definition of Ready (DoR)
 - [x] ADR-0010 approved, defining Server Proxy vs. Client Compute boundaries.
 - [x] SRS and FSM specifications finalized for ReadableStream pipelining and WebAssembly offloading.
@@ -15,3 +17,6 @@
 - **AC-501**: Accessing `/api/stream/pipe/:id` returns header `Transfer-Encoding: chunked` and plays natively in audio elements.
 - **AC-502**: Host `downloads/` directory size does not increase during live stream playback.
 - **AC-503**: Client browser successfully receives completed MP3 stream and invokes native OS save dialog.
+
+#### Scenario: Audio Stream Pipelining and WebAudio Processing
+<!-- tests: stream-edge-cases.test.js, stream-security.test.js -->

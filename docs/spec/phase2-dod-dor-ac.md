@@ -1,5 +1,7 @@
 # Phase 2 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
+**Status**: `ACCEPTED`
+
 ## 1. Definition of Ready (DoR)
 - [x] Multi-stage Dockerfile drafted based on `node:22-alpine`.
 - [x] GitHub Actions workflow `.github/workflows/release.yml` defined with buildx and QEMU.
@@ -17,3 +19,6 @@
 - **AC-202**: Executing `docker compose -f docker-compose.prod.yml up -d` boots daemon within $\le 5\text{ seconds}$.
 - **AC-203**: Requesting `curl http://localhost:3000/api/health` returns HTTP 200 `{ "status": "healthy" }`.
 - **AC-204**: Container image size verified via `docker images` does not exceed 120MB.
+
+#### Scenario: Server Health and Container Readiness
+<!-- tests: api.test.js -->

@@ -1,5 +1,7 @@
 # Phase 3 Governance: Definition of Ready, Definition of Done & Acceptance Criteria
 
+**Status**: `ACCEPTED`
+
 ## 1. Definition of Ready (DoR)
 - [x] ADR-0008 approved, defining flat-playlist extraction and SHA-256 hashing.
 - [x] SRS and FSM specifications finalized for queue state transitions and bounded concurrency pool.
@@ -16,3 +18,6 @@
 - **AC-301**: Sending a 10-track playlist URL to `/api/playlist/parse` returns 10 JSON track objects with titles and thumbnails.
 - **AC-302**: When submitting a batch of 10 tracks, active `yt-dlp` and `ffmpeg` processes never exceed 2 concurrently.
 - **AC-303**: Completed download via `curl -i /api/download/:id/file` delivers header `x-tuneflow-checksum` matching local `sha256sum <file>`.
+
+#### Scenario: Playlist Parsing, Batch Queue and Checksum Verification
+<!-- tests: playlist.test.js, checksum.test.js -->
