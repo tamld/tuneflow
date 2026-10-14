@@ -4,35 +4,44 @@
 
 ---
 
+## 🔍 Sources of Truth
+
+TuneFlow enforces a strict truth-baseline hierarchy across code, package definitions, and published release artifacts:
+1. **GitHub Releases (`gh release list`)**: Canonical record of published, downloadable binary distributions. The latest published release tag is **`v2.5.0`** (covering Phases 1–13).
+2. **Package Version ([package.json](../package.json))**: Single source of truth for runtime application versioning (`"version": "2.5.0"`).
+3. **Claims Registry ([docs/claims.yml](claims.yml))**: Machine-verifiable claims registry linking architectural claims directly to active unit tests and implementation source files.
+
+---
+
 ## 🗺️ Roadmap Phase Breakdown
 
 Each phase is designed independently with a complete quality assurance dossier:  
 **`PRD` (Product Requirements) ➔ `SRS` (Software Specs) ➔ `FSM` (State Machines) ➔ `ADR` (Architecture Decisions) ➔ `DoR` (Definition of Ready) ➔ `DoD` (Definition of Done) ➔ `AC` (Acceptance Criteria)**.
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                 TUNEFLOW ROADMAP MATRIX                                │
-├──────────┼──────────────────────────────────────────┼─────────────┼────────────────────┤
-│ Phase 1  │ Core Engine & Elderly UI Baseline        │ v1.0.0      │ ✅ Completed (SSoT)│
-│ Phase 2  │ Container Engine, Multi-Arch & GHCR CI/CD│ v1.1.1      │ ✅ Completed       │
-│ Phase 3  │ Playlist Downloads, Batch Queue & SHA-256│ v1.2.0      │ ✅ Completed       │
-│ Phase 4  │ Elderly Persona Curation & Zero-Login    │ v1.3.0      │ ✅ Completed       │
-│ Phase 5  │ Hybrid Client-Server Compute & Streaming │ v1.4.0      │ ✅ Completed       │
-│ Phase 6  │ Browser Extension MV3 & Legal Compliance │ v2.0.0      │ ✅ Completed       │
-│ Phase 7  │ Android TV D-Pad Leanback & Mobile Audio │ v2.1.0      │ ✅ Completed       │
-│ Phase 8  │ Offline PWA Shell, Voice Search & LAN QR │ v2.2.0      │ ✅ Completed       │
-│ Phase 9  │ SQLite RBAC, Domain Policy & Cooldown    │ v2.3.0      │ ✅ Completed       │
-│ Phase 10 │ Active Sessions, Favorites & Encrypted DB│ v2.4.0      │ ✅ Completed       │
-│ Phase 11 │ Mobile PWA, iOS PiP & Unified CI/CD      │ v2.4.2      │ ✅ Completed       │
-│ Phase 12 │ Schema Migrations & Session Maintenance  │ v2.4.3      │ ✅ Completed       │
-│ Phase 13 │ Portable Binary & Hash Checker Security  │ v2.5.0      │ ✅ Completed (SSoT)│
-│ Phase 14 │ Two-Tier Self-Update & WinGet Packaging │ v2.6.0      │ ✅ Completed (SSoT)│
-│ Phase 15 │ Tri-Mode Deployment & Decoupled Client   │ v2.7.0      │ ✅ Completed (SSoT)│
-│ Phase 16 │ Native Desktop GUI Shell with Tauri v2   │ v3.0.0      │ ✅ Completed (SSoT)│
-│ Phase 17 │ Desktop In-App Update & Multi-Arch Dist  │ v3.1.0      │ ✅ Completed (SSoT)│
-│ Phase 18 │ Filial Physical Bridge & TV Casting      │ v3.2.0      │ ✅ Completed (SSoT)│
-│ Phase 19 │ 1-Click Zero-Friction Community Ship     │ v3.3.0      │ 📅 Next Target     │
-└──────────┴──────────────────────────────────────────┴─────────────┴────────────────────┘
+┌──────────┬──────────────────────────────────────────┬─────────────────────────┬───────────────────────────────────────────────────────────────┐
+│ Phase    │ Focus / Feature Scope                    │ Code Milestone (Master) │ Published Release (v2.5.0 latest on GitHub Releases)          │
+├──────────┼──────────────────────────────────────────┼─────────────────────────┼───────────────────────────────────────────────────────────────┤
+│ Phase 1  │ Core Engine & Elderly UI Baseline        │ v1.0.0                  │ ✅ Published (v1.0.0)                                         │
+│ Phase 2  │ Container Engine, Multi-Arch & GHCR CI/CD│ v1.1.1                  │ ✅ Published (v1.1.0)                                         │
+│ Phase 3  │ Playlist Downloads, Batch Queue & SHA-256│ v1.2.0                  │ ✅ Published (v1.2.0)                                         │
+│ Phase 4  │ Elderly Persona Curation & Zero-Login    │ v1.3.0                  │ ✅ Published (v1.3.0)                                         │
+│ Phase 5  │ Hybrid Client-Server Compute & Streaming │ v1.4.0                  │ ✅ Code-complete (Published in v2.2.0 roll-up)                  │
+│ Phase 6  │ Browser Extension MV3 & Legal Compliance │ v2.0.0                  │ ✅ Code-complete (Published in v2.2.0 roll-up)                  │
+│ Phase 7  │ Android TV D-Pad Leanback & Mobile Audio │ v2.1.0                  │ ✅ Code-complete (Published in v2.2.0 roll-up)                  │
+│ Phase 8  │ Offline PWA Shell, Voice Search & LAN QR │ v2.2.0                  │ ✅ Published (v2.2.0)                                         │
+│ Phase 9  │ SQLite RBAC, Domain Policy & Cooldown    │ v2.3.0                  │ ✅ Published (v2.3.0)                                         │
+│ Phase 10 │ Active Sessions, Favorites & Encrypted DB│ v2.4.0                  │ ✅ Code-complete (Published in v2.4.2 roll-up)                  │
+│ Phase 11 │ Mobile PWA, iOS PiP & Unified CI/CD      │ v2.4.2                  │ ✅ Published (v2.4.2)                                         │
+│ Phase 12 │ Schema Migrations & Session Maintenance  │ v2.4.3                  │ ✅ Published (v2.4.3)                                         │
+│ Phase 13 │ Portable Binary & Hash Checker Security  │ v2.5.0                  │ ✅ Published (v2.5.0 — Latest GitHub Release Tag)             │
+│ Phase 14 │ Two-Tier Self-Update & WinGet Packaging │ v2.6.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
+│ Phase 15 │ Tri-Mode Deployment & Decoupled Client   │ v2.7.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
+│ Phase 16 │ Native Desktop GUI Shell with Tauri v2   │ v3.0.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
+│ Phase 17 │ Desktop In-App Update & Multi-Arch Dist  │ v3.1.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
+│ Phase 18 │ Filial Physical Bridge & TV Casting      │ v3.2.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
+│ Phase 19 │ 1-Click Zero-Friction Community Ship     │ v3.3.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
+└──────────┴──────────────────────────────────────────┴─────────────────────────┴───────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -162,7 +171,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 14: Cryptographic Two-Tier Self-Update & WinGet Distribution (v2.6.0)
+### Phase 14: Cryptographic Two-Tier Self-Update & WinGet Distribution (Milestone v2.6.0 — Code-complete on master, Unreleased — latest release tag v2.5.0)
 - **Scope**:
   - Tier 1: Independent background auto-update for `yt-dlp` upon cipher 403 error.
   - Tier 2: Ed25519 cryptographic signature verification for core updates paired with Windows Atomic Swap (`.old` rename).
@@ -171,7 +180,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 15: Tri-Mode Deployment & Decoupled Client-Server Topology (v2.7.0)
+### Phase 15: Tri-Mode Deployment & Decoupled Client-Server Topology (Milestone v2.7.0 — Code-complete on master, Unreleased — latest release tag v2.5.0)
 - **Scope**:
   - Tri-Mode Deployment: Mode 1 (Full Standalone + Native Window), Mode 2 (Dedicated Headless Server), Mode 3 (Dedicated Thin Client).
   - Storage-Agnostic Headless Linux Server: turnkey installer (`installer/server/install.sh`), systemd service unit (`tuneflow.service`), and POSIX environment template (`tuneflow.env.example`).
@@ -182,7 +191,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 16: Native Desktop GUI Shell with Tauri v2 (v3.0.0)
+### Phase 16: Native Desktop GUI Shell with Tauri v2 (Milestone v3.0.0 — Code-complete on master, Unreleased — latest release tag v2.5.0)
 - **Scope**:
   - Ultra-lightweight Rust shell (~15MB memory footprint, zero Node runtime) with native System Tray integration.
   - Native Webview window management (macOS WKWebView, Windows WebView2, Linux WebKitGTK) with frameless SilverMelody UI.
@@ -193,7 +202,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 17: Desktop In-App Auto-Update & Self-Healing Distribution (v3.1.0)
+### Phase 17: Desktop In-App Auto-Update & Self-Healing Distribution (Milestone v3.1.0 — Code-complete on master, Unreleased — latest release tag v2.5.0)
 - **Scope**:
   - In-App Auto-Update with Ed25519 signature verification against tamper and DNS poisoning.
   - Active System Diagnostics (`get_system_diagnostics`) for filesystem writability and network latency.
@@ -204,7 +213,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 18: Filial Physical Bridge & Living Room Casting Ecosystem (v3.2.0)
+### Phase 18: Filial Physical Bridge & Living Room Casting Ecosystem (Milestone v3.2.0 — Code-complete on master, Unreleased — latest release tag v2.5.0)
 - **Scope**:
   - **TuneFlow Connect (Gap 5 & Issue #134)**: 100% self-hosted local LAN device pairing and casting protocol. Android TV acts as a receiver with 4-digit PIN code (`8888`), eliminating remote control typing fatigue for seniors. Mobile devices cast tracks and manage playback with low-latency SSE delivery.
   - **Physical USB/SD Card Exporter (Gap 1 & Issue #135)**: Bridges the digital-to-hardware gap for parents' portable FM radios, Craven boxes, chanting players, and automobile stereos. Automatically applies 3-digit zero-padded indexing (`001 - Artist - Title.mp3`), purges macOS `.DS_Store` / `._*` AppleDouble shadow files from FAT32 filesystems, writes standard `playlist.m3u`, and generates client-side batch ZIP packages.
@@ -213,7 +222,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
-### Phase 19: 1-Click Zero-Friction Community Ship (v3.3.0)
+### Phase 19: 1-Click Zero-Friction Community Ship (Milestone v3.3.0 — Code-complete on master, Unreleased — latest release tag v2.5.0)
 - **Scope**:
   - **CasaOS & ZimaOS AppStore 1-Click Manifest (`docker-compose.casaos.yml`)**: Native `x-casaos` manifest integration with high-contrast icon, category metadata ("Media / Music"), and non-destructive volume mappings (`./downloads` & `./data`).
   - **Unraid Community Applications Template (`installer/unraid/tuneflow.xml`)**: Turnkey XML template for Unraid WebGUI with pre-configured shares, unprivileged user permissions, and filial Vietnamese description.

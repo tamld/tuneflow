@@ -1,0 +1,37 @@
+version: "1.0.0"
+claims:
+  - id: CLAIM-01
+    claim: "Core download queue manages FIFO concurrency and safe cancellation."
+    evidence:
+      test: tests/engine.test.js
+      source: src/engine/queue.js
+
+  - id: CLAIM-02
+    claim: "TuneFlow Connect provides local LAN TV casting with 4-digit PIN pairing and SSE streaming."
+    evidence:
+      test: tests/connect.test.js
+      source: src/engine/connect.js
+
+  - id: CLAIM-03
+    claim: "USB exporter handles FAT32 metadata sanitization and 3-digit zero-padded track ordering."
+    evidence:
+      test: tests/usb-exporter.test.js
+      source: src/engine/usb_exporter.js
+
+  - id: CLAIM-04
+    claim: "Engine health monitor detects YouTube cipher errors and manages autonomous yt-dlp updater."
+    evidence:
+      test: tests/engine-health.test.js
+      source: src/engine/engine_health.js
+
+  - id: CLAIM-05
+    claim: "Database migrations handle schema versioning and rollback resilience for SQLite."
+    evidence:
+      test: tests/database-migrations.test.js
+      source: src/db/migrations.js
+
+  - id: CLAIM-06
+    claim: "Binary guard enforces fail-closed SHA-256 CAS integrity verification before child process execution."
+    evidence:
+      test: tests/portable-binary-security.test.js
+      source: src/security/binary_guard.js

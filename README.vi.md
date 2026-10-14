@@ -90,7 +90,7 @@ Là một dự án mã nguồn mở phi lợi nhuận, TuneFlow luôn minh bạc
 
 ### Lựa chọn A: Docker Compose (Tự động cập nhật ngầm không mất dữ liệu)
 
-Tạo file `compose.yaml`:
+Tạo file `docker-compose.yml`:
 
 ```yaml
 services:

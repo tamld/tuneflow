@@ -19,3 +19,10 @@ A work item, user story, or engineering task is considered **READY** for active 
 - [ ] Test approach is defined prior to writing implementation code (TDD / Test-First).
 - [ ] Mocking strategies for YouTube network calls or external child processes are established.
 - [ ] Verification steps are clearly stated with concrete terminal execution commands.
+
+## 4. Governance, Constitution & Offer/Claims Readiness
+- [ ] Requirements and proposed architectural changes comply with all 6 axioms of the [TuneFlow Constitution](constitution.md).
+- [ ] Verification plan identifies new or updated machine-verifiable claims to register in [docs/claims.yml](claims.yml).
+- [ ] Task execution plan accounts for automated CI gates (`tools/claims_check.sh`, `tools/ci_link_integrity.sh`, `tools/ci_spec_code_sync.sh`).
+- [ ] Any operational workarounds or temporary exceptions are framed with directive clocks for [directives.md](directives.md).
+

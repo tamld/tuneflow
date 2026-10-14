@@ -33,3 +33,13 @@ A feature, fix, or release is considered **DONE** if and only if all following p
 - [ ] All architectural, engineering, and specification documentation is maintained in 100% English.
 - [ ] Dual bilingual separation maintained between `README.md` (EN) and `README.vi.md` (VI).
 - [ ] No mixed languages within any single technical document.
+
+## 6. Governance, Constitution & Offer/Claims Gates
+- [ ] **Constitutional Alignment**: Implementation adheres to all 6 axioms of the [TuneFlow Constitution](constitution.md).
+- [ ] **Offer & Claims Gates**:
+  - [ ] Claims Registry verified: `bash tools/claims_check.sh` passes cleanly with all evidence paths in [docs/claims.yml](claims.yml) validated on disk.
+  - [ ] Link Integrity verified: `./tools/ci_link_integrity.sh` passes with 0 dead relative links.
+  - [ ] Spec-Code Sync verified: `tools/ci_spec_code_sync.sh` passes with all scenario pins validated.
+  - [ ] Structure Sync verified: `tools/ci_structure_sync.sh` passes with canonical repository layout.
+  - [ ] Directive Clocks recorded: Any compensatory operational constraints logged in [directives.md](directives.md) with active clocks.
+

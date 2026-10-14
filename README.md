@@ -90,7 +90,7 @@ As an open-source, non-profit homelab project, TuneFlow maintains radical transp
 
 ### Option A: Docker Compose (with Zero-Touch Auto-Updates)
 
-Save as `compose.yaml`:
+Save as `docker-compose.yml`:
 
 ```yaml
 services:

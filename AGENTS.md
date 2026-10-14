@@ -43,10 +43,10 @@ This workspace operates under the **Asymmetric Edge-Compute Topology**:
 | Action | Command | Expected Output / SLA |
 | :--- | :--- | :--- |
 | **Hydrate Packages** | `pnpm install` | Instant hardlink (< 1s) |
-| **Run Unit Tests** | `npm run test:unit` | 8/8 tests pass (< 4s) |
-| **Run API Tests** | `npm run test:api` | Integration endpoints pass |
-| **Start Dev Server** | `npm run dev` | Auto-reloading Express server on port 3000 |
-| **Lint Code** | `npm run lint` | ESLint 10.x pass |
+| **Run Unit Tests** | `pnpm run test:unit` | 11/11 unit tests pass (< 4s) |
+| **Run API Tests** | `pnpm run test:api` | Integration endpoints pass |
+| **Start Dev Server** | `pnpm run dev` | Auto-reloading Express server on port 3000 |
+| **Lint Code** | `pnpm run lint` | ESLint 10.x pass |
 | **Git Push to ZFS SSoT** | `git push ct122 master` | Verified push to Proxmox ZFS |
 
 ---
@@ -58,7 +58,20 @@ tuneflow/
 ├── src/
 │   ├── server.js          # Express app entry point, security headers, middleware
 │   ├── config.js          # Configuration (port, paths, download limits)
-│   ├── engine.js          # Core downloader queue, yt-dlp wrapper, track search
+│   ├── engine/            # Modularized core download & media engine
+│   │   ├── queue.js           # In-memory download queue & worker FSM
+│   │   ├── ytdlp.js           # yt-dlp CLI process wrapper & search query parser
+│   │   ├── ffmpeg.js          # ffmpeg transcoding, thumbnail & audio extraction
+│   │   ├── connect.js         # TuneFlow Connect receiver & casting protocol
+│   │   ├── usb_exporter.js    # FAT32 USB/SD export & 3-digit indexing
+│   │   ├── engine_health.js   # Health monitor & automated yt-dlp updater
+│   │   ├── maintenance.js     # TTL file pruning & cache deduplication
+│   │   └── zip_util.js        # Batch download streaming ZIP packaging
+│   ├── db/                # SQLite database, schema migrations & repositories
+│   ├── auth/              # Authentication service & cryptographic utilities
+│   ├── middleware/        # Express guards (authenticate, authorize, guest_guard)
+│   ├── desktop/           # Native desktop launcher, client config & FSM
+│   ├── security/          # Binary integrity guard & Ed25519 update verifier
 │   └── routes/api.js      # REST API endpoints (/search, /download, /preview, /queue)
 ├── public/                # Static assets (HTML, CSS, Vanilla JS player)
 ├── tests/                 # Native Node.js test suites (*.test.js)
@@ -75,7 +88,7 @@ tuneflow/
 ## 5. Agent Verification Protocol (Red-Green-Refactor)
 
 Before declaring any task complete:
-1. Run `npm run test:unit` and verify all tests remain 100% green.
+1. Run `pnpm run test:unit` and verify all tests remain 100% green.
 2. Ensure no untracked build artifacts or temporary downloads contaminate the Git tree (`git status -s`).
 3. Commit with semantic commit messages (`feat:`, `fix:`, `refactor:`, `test:`).
 4. Push durable state to `ct122`.
