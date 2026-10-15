@@ -17,35 +17,91 @@ permissions:
 
 jobs:
   # ============================================================================
-  # STAGE 0: Pre-Flight Test Gate (Quality & Security Assurance)
+  # STAGE 0: Pre-Flight Test Gate & Workspace Path Filter (Issue #147)
   # ============================================================================
   test-gate:
     name: 0. Pre-Flight Test Gate (Quality Assurance)
     runs-on: ubuntu-latest
+    outputs:
+      container: ${{ steps.changes.outputs.container }}
+      android: ${{ steps.changes.outputs.android }}
+      desktop: ${{ steps.changes.outputs.desktop }}
+      docs_only: ${{ steps.changes.outputs.docs_only }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect Workspace Path Changes per Release Lane (Issue #147)
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "ALL")
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          # Check if only docs or markdown files were touched
+          NON_DOC=$(echo "$CHANGED" | grep -vE '^(docs/|README|CHANGELOG|AGENTS\.md|CLAUDE\.md|\.github/ISSUE_TEMPLATE)' || true)
+          if [ -z "$NON_DOC" ] && [ "$CHANGED" != "ALL" ]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+            echo "container=false" >> "$GITHUB_OUTPUT"
+            echo "android=false" >> "$GITHUB_OUTPUT"
+            echo "desktop=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "docs_only=false" >> "$GITHUB_OUTPUT"
+
+          # Tag pushes or manual dispatch build all lanes unless scoped to specific package paths
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]] || [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "container=true" >> "$GITHUB_OUTPUT"
+            echo "android=true" >> "$GITHUB_OUTPUT"
+            echo "desktop=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if echo "$CHANGED" | grep -qE '^(packages/core|packages/web|packages/contract|distros/selfhost|src/|public/|Dockerfile|package\.json|pnpm-lock\.yaml)'; then
+            echo "container=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "container=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if echo "$CHANGED" | grep -qE '^(apps/android|packages/web|android/|public/)'; then
+            echo "android=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "android=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if echo "$CHANGED" | grep -qE '^(apps/desktop|src-tauri/|src/desktop/|installer/|scripts/package_)'; then
+            echo "desktop=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "desktop=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Security audit (Zero High/Critical CVEs)
-        run: npm audit --audit-level=high
+        run: pnpm audit --audit-level=high
 
       - name: Run ESLint static analysis
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Install Puppeteer Chrome
         run: npx puppeteer browsers install chrome
 
-      - name: Run Full Test Suite (517 Tests)
+      - name: Run Full Test Suite (525 Tests)
         run: npm test
 
   # ============================================================================
@@ -55,6 +111,7 @@ jobs:
     name: 1. Build & Push Multi-Arch Container Image (GHCR)
     runs-on: ubuntu-latest
     needs: test-gate
+    if: needs.test-gate.outputs.container == 'true'
 
     steps:
       - name: Checkout repository
@@ -105,6 +162,7 @@ jobs:
     name: 2. Build, Package & Sign Android APKs (Mobile & TV)
     runs-on: ubuntu-latest
     needs: test-gate
+    if: needs.test-gate.outputs.android == 'true'
 
     steps:
       - name: Checkout repository
@@ -218,16 +276,22 @@ jobs:
     name: 3. Build & Package Windows Desktop Setup (Inno Setup)
     runs-on: windows-latest
     needs: test-gate
+    if: needs.test-gate.outputs.desktop == 'true'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -240,7 +304,7 @@ jobs:
           python scripts/generate_icons.py
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Prepare Windows Distribution Tree
         shell: pwsh
@@ -283,19 +347,25 @@ jobs:
     name: 4. Build & Package macOS DMG (Apple Silicon & Intel)
     runs-on: macos-latest
     needs: test-gate
+    if: needs.test-gate.outputs.desktop == 'true'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Compile macOS Application Bundle & DMG (Standalone & Thin Client)
         run: |
@@ -316,19 +386,25 @@ jobs:
     name: 5. Build & Package Linux Desktop & Headless Server Archives
     runs-on: ubuntu-latest
     needs: test-gate
+    if: needs.test-gate.outputs.desktop == 'true'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Package Linux Desktop & Headless Server Archives
         run: ./scripts/package_linux.sh
@@ -347,7 +423,7 @@ jobs:
     name: 6. Publish Authoritative GitHub Release
     runs-on: ubuntu-latest
     needs: [container-image, apk-build, windows-desktop-build, macos-desktop-build, linux-desktop-build]
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: always() && !cancelled() && needs.test-gate.outputs.docs_only != 'true' && (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
 
     steps:
       - name: Checkout repository
@@ -355,30 +431,35 @@ jobs:
 
       - name: Download APK Build Artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: tuneflow-android-apks
           path: release-assets
 
       - name: Download Windows Installer Artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: tuneflow-windows-installer
           path: release-assets
 
       - name: Download macOS Desktop Artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: tuneflow-macos-artifacts
           path: release-assets
 
       - name: Download Linux Desktop Artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: tuneflow-linux-artifacts
           path: release-assets
 
       - name: Consolidate SHA-256 Manifest
         run: |
+          mkdir -p release-assets
           cd release-assets
           cat SHA256SUMS*.txt >> temp-sums.txt 2>/dev/null || true
           rm -f SHA256SUMS*.txt

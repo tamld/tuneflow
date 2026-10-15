@@ -1,0 +1,15 @@
+{
+  "name": "@tuneflow/contract",
+  "version": "2.5.0",
+  "description": "TuneFlow HTTP API OpenAPI 3.1.0 & Route Manifest Single Source of Truth (SSoT) across all 5 client surfaces",
+  "main": "index.js",
+  "type": "commonjs",
+  "files": [
+    "index.js",
+    "openapi.json"
+  ],
+  "scripts": {
+    "test": "node --test ../../tests/api-contract.test.js"
+  },
+  "license": "MIT"
+}

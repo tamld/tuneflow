@@ -71,4 +71,14 @@ describe('Issue #90: Unified 3-Stage Remote CI/CD & Android Packaging Suite', ()
     assert.match(gradle, /mobile\s*\{/, 'Must define mobile flavor');
     assert.match(gradle, /tv\s*\{/, 'Must define tv flavor');
   });
+
+  it('Issue #147: should verify release.yml implements path-filtered release lanes per workspace package', () => {
+    const content = fs.readFileSync(releaseYmlPath, 'utf8');
+
+    assert.match(content, /docs_only=true/, 'Must detect docs-only changes and skip build lanes');
+    assert.match(content, /if:\s*needs\.test-gate\.outputs\.container\s*==\s*'true'/, 'Container lane must be gated by container path filter');
+    assert.match(content, /if:\s*needs\.test-gate\.outputs\.android\s*==\s*'true'/, 'APK lane must be gated by android/web path filter');
+    assert.match(content, /if:\s*needs\.test-gate\.outputs\.desktop\s*==\s*'true'/, 'Desktop lanes must be gated by desktop path filter');
+    assert.match(content, /needs\.test-gate\.outputs\.docs_only\s*!=\s*'true'/, 'Release publishing must skip when docs_only is true');
+  });
 });

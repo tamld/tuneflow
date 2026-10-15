@@ -29,10 +29,15 @@ Action-first manual for running, installing, and navigating TuneFlow across iOS,
 2. Tap the **Install TuneFlow** banner at the top, or tap **⋮ menu** -> **Install app**.
 3. Tap **Install** to add TuneFlow to your app drawer.
 
-### Option B: Download Official APK
+### Option B: Download Official APK & Zero-Typing QR Pairing
 1. Open [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
 2. Download the latest mobile APK (`tuneflow-mobile-*.apk`).
 3. Open the downloaded APK file and tap **Install**.
+4. **Zero-Typing Server Pairing (Elderly-Friendly):**
+   - On your computer or web admin panel, open the TuneFlow setup screen (powered by `GET /api/system/network` and `GET /api/system/pairing-qr` in `@tuneflow/contract`).
+   - Launch the TuneFlow Android app and tap the large **"Quét mã ghép nối" (Scan Pairing QR)** button.
+   - Point your phone camera at the screen QR code (`tuneflow://pair?url=...&code=...`) to auto-fill and save `server_url` without typing a single character.
+   - *Manual Fallback:* You can also type or paste your LAN server address (e.g. `http://192.168.1.100:3000`) directly in the dialog.
 
 ---
 
@@ -44,13 +49,15 @@ Action-first manual for running, installing, and navigating TuneFlow across iOS,
 1. Download the latest TV APK (`tuneflow-tv-*.apk`) from [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
 2. Sideload onto your Android TV box via USB or `adb install <apk-file>`.
 3. Launch TuneFlow from your Android TV apps row.
+4. **Server Address Setup (TV Fallback):** Press the **MENU** button (or long-press **Back**) on your TV remote at any time to open the server URL configuration dialog, or pair via 4-digit PIN using `POST /api/connect/pair`.
 
 ### Remote Control D-Pad Shortcuts
 | Remote Key | Action |
 | :--- | :--- |
 | `Arrow Keys` (Up/Down/Left/Right) | Move focus between cards and controls |
 | `OK / Select` | Play focused song or trigger button |
-| `Back` (`↩`) | Close modal / return focus to player bar |
+| `Back` (`↩`) | Close modal / return focus to player bar (long-press opens Server Setup) |
+| `MENU` (`☰`) | Open manual Server URL setup dialog (10-foot fallback) |
 | `Play / Pause` (`⏯`) | Toggle audio playback |
 
 ---

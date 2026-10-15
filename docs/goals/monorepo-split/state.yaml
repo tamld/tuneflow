@@ -1,5 +1,5 @@
 campaign_id: monorepo-split
-status: active
+status: completed
 baseline_version: "2.5.0"
 issue_refs:
   - 140
@@ -15,4 +15,4 @@ waves:
   wave_1_governance: completed
   wave_2_openspec: completed
   wave_3_docs_taxonomy: completed
-  wave_4_workspace_merge: pending_owner_merge
+  wave_4_workspace_merge: completed

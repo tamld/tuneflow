@@ -17,6 +17,8 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
   const rootDir = path.join(__dirname, '..');
   const packageJsonPath = path.join(rootDir, 'package.json');
   const packageLockPath = path.join(rootDir, 'package-lock.json');
+  const pnpmLockPath = path.join(rootDir, 'pnpm-lock.yaml');
+  const pnpmWorkspacePath = path.join(rootDir, 'pnpm-workspace.yaml');
   const ciYmlPath = path.join(rootDir, '.github/workflows/ci.yml');
   const releaseYmlPath = path.join(rootDir, '.github/workflows/release.yml');
   const pyCmd = process.platform === 'win32' ? 'python' : (fs.existsSync('/usr/bin/python3') ? '/usr/bin/python3' : 'python3');
@@ -41,7 +43,7 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
       for (const [key, value] of Object.entries(obj)) {
         assert.ok(
           !key.includes('>') && !key.includes(' ') && (!key.includes(':') || key.startsWith('@')),
-          `Key "${key}" at ${pathPrefix} contains illegal characters for npm overrides (e.g. ">"). Must use nested object syntax.`
+          `Key "${key}" at ${pathPrefix} contains illegal characters for overrides (e.g. ">"). Must use nested object syntax.`
         );
         if (typeof value === 'object' && value !== null) {
           validateOverrides(value, `${pathPrefix}.${key}`);
@@ -52,59 +54,57 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
     if (pkg.overrides) {
       validateOverrides(pkg.overrides, 'overrides');
     }
-    if (pkg.pnpm && pkg.pnpm.overrides) {
-      validateOverrides(pkg.pnpm.overrides, 'pnpm.overrides');
-    }
+    assert.strictEqual(
+      pkg.pnpm,
+      undefined,
+      'Deprecated package.json#pnpm field must be migrated to pnpm-workspace.yaml'
+    );
+    assert.strictEqual(fs.existsSync(pnpmWorkspacePath), true, 'pnpm-workspace.yaml must exist');
   });
 
-  it('should verify npm ci dry-run completes successfully without lockfile mismatch or EUSAGE', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tuneflow-npm-ci-check-'));
-    try {
-      fs.copyFileSync(packageJsonPath, path.join(tempDir, 'package.json'));
-      fs.copyFileSync(packageLockPath, path.join(tempDir, 'package-lock.json'));
+  it('should verify single lockfile pnpm law (RULE-04): pnpm-lock.yaml exists, package-lock.json is forbidden, and lockfile is synchronized', () => {
+    assert.strictEqual(
+      fs.existsSync(packageLockPath),
+      false,
+      'RULE-04 violation: package-lock.json must not exist in repository'
+    );
+    assert.strictEqual(
+      fs.existsSync(pnpmLockPath),
+      true,
+      'RULE-04 violation: pnpm-lock.yaml must exist as single lockfile SSoT'
+    );
 
-      const res = spawnSync('npm', ['ci', '--dry-run'], {
-        cwd: tempDir,
-        encoding: 'utf8',
-        timeout: 30000,
-        shell: process.platform === 'win32'
-      });
+    const res = spawnSync('pnpm', ['install', '--frozen-lockfile', '--lockfile-only', '--ignore-scripts'], {
+      cwd: rootDir,
+      encoding: 'utf8',
+      timeout: 30000,
+      shell: process.platform === 'win32'
+    });
 
-      assert.strictEqual(
-        res.status,
-        0,
-        `npm ci --dry-run failed with code ${res.status}.\nStderr: ${res.stderr}\nStdout: ${res.stdout}`
-      );
-      assert.ok(
-        !res.stderr.includes('npm error code EUSAGE'),
-        'npm ci must not report EUSAGE lockfile mismatch'
-      );
-    } finally {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    }
+    assert.strictEqual(
+      res.status,
+      0,
+      `pnpm install --frozen-lockfile --lockfile-only failed with code ${res.status}.\nStderr: ${res.stderr}\nStdout: ${res.stdout}`
+    );
+    assert.ok(
+      !res.stdout.includes('ERR_PNPM_OUTDATED_LOCKFILE') && !res.stderr.includes('ERR_PNPM_OUTDATED_LOCKFILE'),
+      'pnpm-lock.yaml must not be outdated relative to package.json'
+    );
   });
 
-  it('should verify zero high or critical security vulnerabilities via npm audit', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tuneflow-npm-audit-check-'));
-    try {
-      fs.copyFileSync(packageJsonPath, path.join(tempDir, 'package.json'));
-      fs.copyFileSync(packageLockPath, path.join(tempDir, 'package-lock.json'));
+  it('should verify zero high or critical security vulnerabilities via pnpm audit', () => {
+    const res = spawnSync('pnpm', ['audit', '--audit-level=high'], {
+      cwd: rootDir,
+      encoding: 'utf8',
+      timeout: 30000,
+      shell: process.platform === 'win32'
+    });
 
-      const res = spawnSync('npm', ['audit', '--audit-level=high'], {
-        cwd: tempDir,
-        encoding: 'utf8',
-        timeout: 30000,
-        shell: process.platform === 'win32'
-      });
-
-      assert.strictEqual(
-        res.status,
-        0,
-        `npm audit reported high/critical vulnerabilities!\nStderr: ${res.stderr}\nStdout: ${res.stdout}`
-      );
-    } finally {
-      fs.rmSync(tempDir, { recursive: true, force: true });
-    }
+    assert.strictEqual(
+      res.status,
+      0,
+      `pnpm audit reported high/critical vulnerabilities!\nStderr: ${res.stderr}\nStdout: ${res.stdout}`
+    );
   });
 
   it('should verify .github/workflows/ci.yml enforces strict quality gates in correct order', () => {
@@ -112,12 +112,13 @@ describe('CI/CD Preflight Verification Gate & GHA Failure Prevention', () => {
     const content = fs.readFileSync(ciYmlPath, 'utf8');
 
     // Verification steps in ci.yml
+    assert.match(content, /pnpm\/action-setup@v4/, 'Must set up pnpm via pnpm/action-setup@v4');
     assert.match(content, /node-version:\s*22/, 'Must test against Node.js 22');
-    assert.match(content, /npm ci/, 'Must install dependencies via npm ci');
-    assert.match(content, /npm audit --audit-level=high/, 'Must include security audit gate');
-    assert.match(content, /npm run lint/, 'Must include ESLint analysis');
+    assert.match(content, /pnpm install --frozen-lockfile/, 'Must install dependencies via pnpm install --frozen-lockfile');
+    assert.match(content, /pnpm audit --audit-level=high/, 'Must include security audit gate');
+    assert.match(content, /pnpm run lint/, 'Must include ESLint analysis');
     assert.match(content, /npx puppeteer browsers install chrome/, 'Must install Chrome for E2E tests');
-    assert.match(content, /npm test/, 'Must execute full test suite');
+    assert.match(content, /pnpm test/, 'Must execute full test suite');
     assert.match(content, /container-smoke-test:/, 'Must contain container smoke test job');
     assert.match(content, /curl --fail http:\/\/localhost:3000\/api\/health/, 'Container smoke test must check /api/health');
     assert.match(content, /ubuntu-latest/, 'Must include ubuntu-latest in CI matrix');

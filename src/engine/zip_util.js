@@ -39,22 +39,22 @@ function createZipArchive(files = []) {
     const rawData = Buffer.isBuffer(file.data) ? file.data : Buffer.from(file.data || '', 'utf8');
     const nameBuffer = Buffer.from(file.name.replace(/\\/g, '/'), 'utf8');
 
-    // Compress using deflateRaw (no zlib wrapper headers)
-    let compressedData;
-    let compressionMethod = 0; // Stored (uncompressed) as fallback
+    // Compress using deflateRaw, bypassing expensive CPU compression for large pre-compressed media streams
+    let compressedData = rawData;
+    let compressionMethod = 0; // Stored (uncompressed)
+    const isMediaStream = /\.(mp3|mp4|m4a|webm|ogg|aac)$/i.test(file.name) && rawData.length > 4096;
 
-    try {
-      const deflated = zlib.deflateRawSync(rawData);
-      if (deflated.length < rawData.length) {
-        compressedData = deflated;
-        compressionMethod = 8; // Deflate
-      } else {
+    if (!isMediaStream) {
+      try {
+        const deflated = zlib.deflateRawSync(rawData);
+        if (deflated.length < rawData.length) {
+          compressedData = deflated;
+          compressionMethod = 8; // Deflate
+        }
+      } catch (_e) {
         compressedData = rawData;
-        compressionMethod = 0; // Stored
+        compressionMethod = 0;
       }
-    } catch (_e) {
-      compressedData = rawData;
-      compressionMethod = 0;
     }
 
     const crc = zlib.crc32(rawData);

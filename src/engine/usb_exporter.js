@@ -63,6 +63,9 @@ function sanitizeFat32Directory(targetDir) {
   const entries = fs.readdirSync(targetDir, { withFileTypes: true });
 
   for (const entry of entries) {
+    if (typeof entry.isSymbolicLink === 'function' && entry.isSymbolicLink()) {
+      continue;
+    }
     const fullPath = path.join(targetDir, entry.name);
 
     if (entry.isDirectory()) {
@@ -165,7 +168,12 @@ function exportTracksToUsb({ drivePath, tracks = [], subDir = 'TuneFlow_Music' }
     throw new Error('Đường dẫn ổ đĩa USB không tồn tại hoặc đã bị rút ra');
   }
 
+  const resolvedDrive = path.resolve(drivePath);
   const targetDir = path.join(drivePath, subDir);
+  const resolvedTarget = path.resolve(targetDir);
+  if (!resolvedTarget.startsWith(resolvedDrive)) {
+    throw new Error('Thư mục đích không hợp lệ (Path traversal bị từ chối)');
+  }
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
   }

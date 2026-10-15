@@ -29,10 +29,15 @@ Hướng dẫn trực diện, chuẩn hành động (ADHD) để cài đặt, c�
 2. Nhấn vào thanh thông báo **Cài đặt TuneFlow** ở đầu trang, hoặc chọn biểu tượng **Menu 3 chấm (⋮)** -> **Cài đặt ứng dụng**.
 3. Nhấn **Cài đặt** để đưa TuneFlow vào danh sách ứng dụng.
 
-### Cách B: Cài đặt file APK chính thức
+### Cách B: Cài đặt file APK chính thức & Quét mã QR không cần gõ chữ
 1. Truy cập trang [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
 2. Tải file APK Mobile phiên bản mới nhất (`tuneflow-mobile-*.apk`).
 3. Mở file APK vừa tải về và chọn **Cài đặt**.
+4. **Ghép nối máy chủ bằng mã QR (Không cần nhập địa chỉ cho người lớn tuổi):**
+   - Trên màn hình máy tính hoặc trang Quản trị TuneFlow, hiển thị mã QR ghép nối mạng LAN (cung cấp bởi giao thức `GET /api/system/network` và `GET /api/system/pairing-qr` trong `@tuneflow/contract`).
+   - Mở ứng dụng TuneFlow trên điện thoại Android và bấm nút lớn **"Quét mã ghép nối"**.
+   - Hướng camera vào mã QR (`tuneflow://pair?url=...&code=...`) để ứng dụng tự động điền và lưu `server_url` mà không cần gõ bất kỳ ký tự nào.
+   - *Nhập thủ công dự phòng:* Bạn vẫn có thể nhập trực tiếp địa chỉ máy chủ LAN (ví dụ `http://192.168.1.100:3000`) vào ô nhập liệu khi cần.
 
 ---
 
@@ -44,13 +49,15 @@ Hướng dẫn trực diện, chuẩn hành động (ADHD) để cài đặt, c�
 1. Tải file APK Android TV phiên bản mới nhất (`tuneflow-tv-*.apk`) từ trang [TuneFlow Releases](https://github.com/tamld/tuneflow/releases/latest).
 2. Chép vào USB hoặc dùng lệnh `adb install <file-apk>` để cài đặt lên Android TV box.
 3. Mở ứng dụng TuneFlow trên màn hình chính Android TV.
+4. **Cấu hình địa chỉ máy chủ trên TV:** Nhấn phím **MENU** (hoặc nhấn giữ phím **Quay lại / Back**) trên điều khiển từ xa bất kỳ lúc nào để mở hộp thoại nhập địa chỉ máy chủ, hoặc ghép nối qua mã PIN 4 số (`POST /api/connect/pair`).
 
 ### Phím tắt điều khiển bằng Remote (D-Pad)
 | Phím Remote | Chức năng thao tác |
 | :--- | :--- |
 | `Phím mũi tên` (Lên/Xuống/Trái/Phải) | Di chuyển vùng chọn giữa các bài hát và nút bấm |
 | `OK / Chọn` | Phát bài hát đang chọn hoặc kích hoạt tính năng |
-| `Quay lại` (`↩`) | Đóng cửa sổ đang mở / chuyển tiêu điểm về thanh phát nhạc |
+| `Quay lại` (`↩`) | Đóng cửa sổ đang mở / chuyển tiêu điểm về thanh phát nhạc (nhấn giữ để mở Cấu hình máy chủ) |
+| `MENU` (`☰`) | Mở hộp thoại nhập địa chỉ máy chủ thủ công (dự phòng cho TV) |
 | `Phát / Tạm dừng` (`⏯`) | Bật hoặc dừng âm thanh |
 
 ---

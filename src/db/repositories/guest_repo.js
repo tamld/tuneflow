@@ -80,7 +80,8 @@ class GuestRepo {
     }
 
     // 4. Create new guest
-    const finalGuestId = guestId || `guest_${Math.random().toString(36).substring(2, 12)}`;
+    const crypto = require('crypto');
+    const finalGuestId = guestId || `guest_${crypto.randomBytes(6).toString('hex')}`;
     const createdAt = new Date().toISOString();
     const storedIp = encIp || encryptField('127.0.0.1', undefined, true);
     this.insertStmt.run(finalGuestId, storedIp, fingerprintHash || 'default', this.defaultMaxSec, now, createdAt);
@@ -136,6 +137,13 @@ class GuestRepo {
 
   purgeAllGuests() {
     const result = this.purgeAllStmt.run();
+    return result.changes;
+  }
+
+  cleanupStaleGuests(maxAgeMs = 7 * 24 * 60 * 60 * 1000) {
+    const cutoff = Date.now() - maxAgeMs;
+    const stmt = this.db.prepare('DELETE FROM guest_quotas WHERE last_heartbeat_at > 0 AND last_heartbeat_at < ?');
+    const result = stmt.run(cutoff);
     return result.changes;
   }
 }

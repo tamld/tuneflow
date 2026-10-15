@@ -610,10 +610,11 @@ router.post('/system/update-ytdlp', authorize('admin'), async (req, res) => {
   }
 });
 
-// System network interfaces & local LAN QR pairing (Phase 8 - Issue #45)
+// System network interfaces & local LAN QR pairing (Phase 8 - Issue #45 & Issue #146)
 router.get('/system/network', (req, res) => {
   try {
     const os = require('os');
+    const crypto = require('crypto');
     const interfaces = os.networkInterfaces();
     const localIPs = [];
 
@@ -632,6 +633,8 @@ router.get('/system/network', (req, res) => {
     const port = process.env.PORT || 3000;
     const primaryIP = localIPs[0];
     const lanUrl = `http://${primaryIP}:${port}`;
+    const pairingCode = crypto.randomInt(100000, 1000000).toString();
+    const pairingDeepLink = `tuneflow://pair?url=${encodeURIComponent(lanUrl)}&code=${pairingCode}`;
 
     res.json({
       success: true,
@@ -640,7 +643,49 @@ router.get('/system/network', (req, res) => {
       localIPs: localIPs,
       primaryIP: primaryIP,
       lanUrl: lanUrl,
-      qrPayload: lanUrl
+      qrPayload: lanUrl,
+      pairingCode: pairingCode,
+      pairingDeepLink: pairingDeepLink
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/system/pairing-qr', (req, res) => {
+  try {
+    const os = require('os');
+    const crypto = require('crypto');
+    const interfaces = os.networkInterfaces();
+    const localIPs = [];
+
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          localIPs.push(iface.address);
+        }
+      }
+    }
+    if (localIPs.length === 0) {
+      localIPs.push('127.0.0.1');
+    }
+
+    const port = process.env.PORT || 3000;
+    const primaryIP = localIPs[0];
+    const lanUrl = (req.query && req.query.url) ? String(req.query.url) : `http://${primaryIP}:${port}`;
+    const pairingCode = crypto.randomInt(100000, 1000000).toString();
+    const pairingDeepLink = `tuneflow://pair?url=${encodeURIComponent(lanUrl)}&code=${pairingCode}`;
+
+    res.json({
+      success: true,
+      lanUrl,
+      pairingCode,
+      pairingDeepLink,
+      qrPayload: lanUrl,
+      instructions: {
+        vi: 'Mở ứng dụng TuneFlow trên điện thoại và bấm nút "Quét mã ghép nối" để tự động kết nối.',
+        en: 'Open the TuneFlow mobile app and tap "Scan Pairing QR" to connect automatically.'
+      }
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

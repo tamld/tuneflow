@@ -1,0 +1,11 @@
+{
+  "name": "@tuneflow/web",
+  "version": "2.5.0",
+  "description": "TuneFlow SilverMelody vanilla JS/CSS audio player UI, state components, and browser presentation layer",
+  "main": "../../public/js/app.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test ../../tests/e2e.test.js"
+  },
+  "license": "MIT"
+}

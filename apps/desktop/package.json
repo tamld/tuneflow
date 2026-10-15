@@ -1,0 +1,11 @@
+{
+  "name": "@tuneflow/desktop",
+  "version": "2.5.0",
+  "description": "TuneFlow native desktop launcher, client configuration, connection FSM runtime, and Tauri v2 shell",
+  "main": "../../src/desktop/launcher.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test ../../tests/desktop-packaging.test.js ../../tests/tauri-architecture-matrix.test.js"
+  },
+  "license": "MIT"
+}

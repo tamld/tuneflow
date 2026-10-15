@@ -1,0 +1,10 @@
+{
+  "name": "@tuneflow/selfhost",
+  "version": "2.5.0",
+  "description": "TuneFlow self-hosted Docker/Podman container distribution, Traefik ingress, and systemd deployment bundle",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test ../../tests/objective-deployment-and-cicd-alignment.test.js"
+  },
+  "license": "MIT"
+}

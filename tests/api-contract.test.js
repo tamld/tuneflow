@@ -85,4 +85,54 @@ describe('TuneFlow API Contract Tests', () => {
     assert.equal(typeof data, 'object');
     assert.ok(Array.isArray(data.items) || Array.isArray(data));
   });
+
+  it('GET /api/system/network and /api/system/pairing-qr return pairing contract payload', async () => {
+    const netRes = await fetch(`${baseUrl}/api/system/network`);
+    assert.equal(netRes.status, 200);
+    const netData = await netRes.json();
+    assert.equal(netData.success, true);
+    assert.ok(typeof netData.lanUrl === 'string' && netData.lanUrl.startsWith('http'));
+    assert.ok(typeof netData.pairingCode === 'string' && /^\d{6}$/.test(netData.pairingCode));
+    assert.ok(typeof netData.pairingDeepLink === 'string' && netData.pairingDeepLink.startsWith('tuneflow://pair?'));
+
+    const qrRes = await fetch(`${baseUrl}/api/system/pairing-qr`);
+    assert.equal(qrRes.status, 200);
+    const qrData = await qrRes.json();
+    assert.equal(qrData.success, true);
+    assert.ok(qrData.instructions && qrData.instructions.vi && qrData.instructions.en);
+  });
+
+  it('Issue #145: packages/contract/openapi.json maintains 100% bidirectional parity with Express routers', () => {
+    const path = require('path');
+    const { CONTRACT, verifyRouteParity } = require('../packages/contract');
+    const repoRoot = path.join(__dirname, '..');
+
+    assert.equal(CONTRACT.openapi, '3.1.0');
+    const parity = verifyRouteParity(repoRoot);
+    assert.deepEqual(
+      parity.missingFromContract,
+      [],
+      `Routes declared in Express but missing from packages/contract: ${parity.missingFromContract.join(', ')}`
+    );
+    assert.deepEqual(
+      parity.missingFromExpress,
+      [],
+      `Routes in packages/contract but missing from Express routers: ${parity.missingFromExpress.join(', ')}`
+    );
+    assert.ok(parity.declaredCount >= 52, `Expected at least 52 routes, found ${parity.declaredCount}`);
+  });
+
+  it('Issue #145: every client surface /api/* call maps to a contracted endpoint in packages/contract', () => {
+    const path = require('path');
+    const { verifyClientSurfaceCalls } = require('../packages/contract');
+    const repoRoot = path.join(__dirname, '..');
+
+    const result = verifyClientSurfaceCalls(repoRoot);
+    assert.deepEqual(
+      result.uncontractedCalls,
+      [],
+      `Client calls to uncontracted /api endpoints: ${JSON.stringify(result.uncontractedCalls)}`
+    );
+    assert.ok(result.checkedCalls.length >= 25, `Expected at least 25 client API calls verified, got ${result.checkedCalls.length}`);
+  });
 });

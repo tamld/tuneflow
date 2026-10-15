@@ -71,13 +71,20 @@ class FavoriteRepo {
 
   syncFavorites(userId, clientFavorites = []) {
     if (!userId) return [];
-    if (Array.isArray(clientFavorites)) {
-      for (const track of clientFavorites) {
-        if (track && (track.id || track.video_id)) {
-          try {
-            this.addFavorite(userId, track);
-          } catch (_e) {}
+    if (Array.isArray(clientFavorites) && clientFavorites.length > 0) {
+      this.db.exec('BEGIN TRANSACTION;');
+      try {
+        for (const track of clientFavorites) {
+          if (track && (track.id || track.video_id)) {
+            try {
+              this.addFavorite(userId, track);
+            } catch (_e) {}
+          }
         }
+        this.db.exec('COMMIT;');
+      } catch (err) {
+        try { this.db.exec('ROLLBACK;'); } catch (_e) {}
+        throw err;
       }
     }
     return this.getFavorites(userId);

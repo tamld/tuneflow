@@ -28,9 +28,9 @@ ENV NODE_ENV=production \
     DOWNLOADS_DIR=/app/downloads \
     TEMP_DIR=/app/downloads/temp
 
-# Copy package manifests & install production dependencies only
-COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+# Copy package manifests & install production dependencies only (RULE-04: pnpm SSoT)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN corepack enable && pnpm install --prod --frozen-lockfile && pnpm store prune
 
 # Copy source code, assets, and maintenance scripts
 COPY manifest.json ./

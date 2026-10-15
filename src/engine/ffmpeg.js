@@ -60,7 +60,7 @@ function convertToMp3(inputPath, outputPath, metadata = {}) {
     let stderr = '';
 
     proc.stderr.on('data', (data) => {
-      stderr += data.toString('utf8');
+      stderr = (stderr + data.toString('utf8')).slice(-4096);
     });
 
     proc.on('close', (code) => {
@@ -135,7 +135,7 @@ function pipeToMp3(inputStream, outputPath, metadata = {}) {
 
     let stderr = '';
     proc.stderr.on('data', (data) => {
-      stderr += data.toString('utf8');
+      stderr = (stderr + data.toString('utf8')).slice(-4096);
     });
 
     proc.on('close', (code) => {
@@ -157,6 +157,9 @@ function pipeToMp3(inputStream, outputPath, metadata = {}) {
       reject(err);
     });
 
+    if (proc.stdin && typeof proc.stdin.on === 'function') {
+      proc.stdin.on('error', () => {});
+    }
     inputStream.pipe(proc.stdin);
     inputStream.on('error', (err) => {
       try { proc.kill('SIGTERM'); } catch (_e) {}

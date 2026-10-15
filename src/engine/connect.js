@@ -10,6 +10,10 @@ class TuneFlowConnectHub {
   constructor() {
     this.receivers = new Map();
     this.commandHistory = new Map(); // receiverId -> Array of commands
+    this.cleanupInterval = setInterval(() => this.cleanupInactive(), 5 * 60 * 1000);
+    if (typeof this.cleanupInterval.unref === 'function') {
+      this.cleanupInterval.unref();
+    }
   }
 
   /**
@@ -21,8 +25,8 @@ class TuneFlowConnectHub {
    */
   registerReceiver({ name = 'TV Phòng Khách', userAgent = '' } = {}) {
     const receiverId = `rcv_${crypto.randomBytes(6).toString('hex')}`;
-    // 4-digit PIN between 1000 and 9999
-    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    // Cryptographically secure 4-digit PIN between 1000 and 9999
+    const pin = crypto.randomInt(1000, 10000).toString();
 
     const receiver = {
       receiverId,
@@ -135,8 +139,21 @@ class TuneFlowConnectHub {
     rcv.lastSeen = Date.now();
     rcv.sseClients.add(res);
 
+    const heartbeat = setInterval(() => {
+      try {
+        res.write(': keepalive\n\n');
+      } catch (_e) {
+        clearInterval(heartbeat);
+        rcv.sseClients.delete(res);
+      }
+    }, 20 * 1000);
+    if (typeof heartbeat.unref === 'function') {
+      heartbeat.unref();
+    }
+
     if (typeof res.on === 'function') {
       res.on('close', () => {
+        clearInterval(heartbeat);
         rcv.sseClients.delete(res);
       });
     }

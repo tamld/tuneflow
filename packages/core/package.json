@@ -1,0 +1,11 @@
+{
+  "name": "@tuneflow/core",
+  "version": "2.5.0",
+  "description": "TuneFlow core download management, yt-dlp execution engine, ffmpeg transcoding wrappers, queue management, and SQLite repositories",
+  "main": "../../src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test ../../tests/engine.test.js ../../tests/api.test.js"
+  },
+  "license": "MIT"
+}
