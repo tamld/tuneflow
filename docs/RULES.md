@@ -18,6 +18,7 @@
 | **RULE-06** | **Zero Skipped Tests & TDD Discipline**: 100% of test suites must execute and pass cleanly. Silently skipping or bypassing tests without formal deprecation is forbidden. | Native test runner (`pnpm run test:unit`, `pnpm test`) must finish with 0 fails and 0 unannounced skips. | `PROCESS-ENFORCED` |
 | **RULE-07** | **Senior-First Ergonomics**: Interactive targets must meet or exceed $\ge 56\text{px}$, and color contrast must satisfy WCAG 2.2 AAA ($\ge 7:1$). | Validated by SilverMelody CSS specifications and automated UI test assertions. | `PROCESS-ENFORCED` |
 | **RULE-08** | **Child Process Argument Isolation**: All CLI child process invocations (`yt-dlp`, `ffmpeg`) must pass isolated argument arrays with explicit `--` parameter delimiters. | Verified by code security reviews and child process execution test suites. | `PROCESS-ENFORCED` |
+| **RULE-09** | **100% Free & Open-Source Asset Policy**: All bundled fonts, icons, graphics, and static assets must use approved open-source licenses (`OFL-1.1`, `MIT`, `ISC`, `BSD`, `CC0-1.0`, `Unlicense`) with co-located license texts (`public/fonts/OFL.txt`). Proprietary OS fonts and paid CDNs are strictly forbidden ([ADR-0020](adr/ADR-0020-open-source-asset-governance-and-typography-licensing.md)). | Automated asset provenance scanner verifies license headers, `OFL.txt` presence, and absence of proprietary fonts/CDNs. | `tests/open-source-asset-compliance.test.js` |
 
 ---
 

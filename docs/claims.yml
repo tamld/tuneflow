@@ -35,3 +35,10 @@ claims:
     evidence:
       test: tests/portable-binary-security.test.js
       source: src/security/binary_guard.js
+
+  - id: CLAIM-07
+    claim: "Bundled fonts, icons, and static assets strictly adhere to open-source SPDX licenses (OFL-1.1 / MIT) with co-located license texts and zero proprietary dependencies."
+    evidence:
+      test: tests/open-source-asset-compliance.test.js
+      source: public/fonts/be-vietnam-pro.css
+
