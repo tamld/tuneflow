@@ -758,7 +758,45 @@ if (typeof document !== 'undefined') {
   if (btnFontReset) btnFontReset.addEventListener('click', () => applyFontScale(1));
   if (btnFontInc) btnFontInc.addEventListener('click', () => applyFontScale(currentScaleIdx + 1));
 
-  // 4. Search Execution (Supports both single track and playlist URL)
+  // 4. Search Execution with L1 Client-Side LRU Query Cache (system-design-primer query_cache)
+  const SEARCH_LRU_MAX = 24;
+  const SEARCH_LRU_TTL_MS = 15 * 60 * 1000;
+  const searchLruCache = new Map();
+
+  function getCachedSearch(cacheKey) {
+    if (!searchLruCache.has(cacheKey)) return null;
+    const entry = searchLruCache.get(cacheKey);
+    if (!entry || Date.now() - entry.timestamp > SEARCH_LRU_TTL_MS) {
+      searchLruCache.delete(cacheKey);
+      return null;
+    }
+    // Refresh key to most-recently-used position
+    searchLruCache.delete(cacheKey);
+    searchLruCache.set(cacheKey, entry);
+    return entry.results;
+  }
+
+  function setCachedSearch(cacheKey, results) {
+    if (searchLruCache.has(cacheKey)) {
+      searchLruCache.delete(cacheKey);
+    } else if (searchLruCache.size >= SEARCH_LRU_MAX) {
+      const oldestKey = searchLruCache.keys().next().value;
+      if (oldestKey !== undefined) searchLruCache.delete(oldestKey);
+    }
+    searchLruCache.set(cacheKey, { results, timestamp: Date.now() });
+  }
+
+  function prewarmTopTrack(songs) {
+    if (!Array.isArray(songs) || songs.length === 0) return;
+    const firstPlayable = songs.find(s => s && s.id && !s.isPlaylist && !String(s.id).startsWith('PL'));
+    if (!firstPlayable) return;
+    fetch('/api/preview/prewarm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: firstPlayable.id })
+    }).catch(() => {});
+  }
+
   async function executeSearch(query, genreLabel = null) {
     removeFavBatchBar();
     if (!query || !query.trim()) {
@@ -775,14 +813,31 @@ if (typeof document !== 'undefined') {
     }
 
     playlistPanel.style.display = 'none';
-    resultsHeader.textContent = genreLabel 
-      ? `📻 Đang mở thể loại: ${genreLabel} (Bố Mẹ chờ xíu nha...)`
-      : '⏳ Đang tìm kiếm các bài hát hay cho Bố Mẹ...';
-    resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 22px; color: var(--text-muted);">Đang tải danh sách bài hát, vui lòng chờ chút xíu ạ...</div>';
 
     let finalQuery = trimmed;
     if (currentFilter === 'vocal') finalQuery += ' có lời ca sĩ hát';
     if (currentFilter === 'instrumental') finalQuery += ' hòa tấu không lời guitar saxophone';
+
+    const cacheKey = `${finalQuery.toLowerCase()}|${currentSearchType || 'all'}|${currentSearchSort || 'relevance'}`;
+    const cachedResults = getCachedSearch(cacheKey);
+    if (cachedResults && cachedResults.length > 0) {
+      const fallbackBanner = document.getElementById('filial-fallback-banner');
+      if (fallbackBanner) fallbackBanner.style.display = 'none';
+      lastSearchResults = { results: cachedResults, genreLabel };
+      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):';
+      const foundMsg = foundTemplate.replace('{count}', cachedResults.length);
+      resultsHeader.textContent = genreLabel
+        ? `📻 ${genreLabel} — ${foundMsg}`
+        : foundMsg;
+      renderResults(cachedResults);
+      prewarmTopTrack(cachedResults);
+      return;
+    }
+
+    resultsHeader.textContent = genreLabel 
+      ? `📻 Đang mở thể loại: ${genreLabel} (Bố Mẹ chờ xíu nha...)`
+      : '⏳ Đang tìm kiếm các bài hát hay cho Bố Mẹ...';
+    resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 18px; color: var(--text-muted); grid-column: 1 / -1;">Đang tải danh sách bài hát, vui lòng chờ chút xíu ạ...</div>';
 
     if (currentSearchAbortController) {
       try {
@@ -810,7 +865,7 @@ if (typeof document !== 'undefined') {
             fallbackBanner.style.display = 'block';
           }
         }
-        resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--accent-red);">${escapeHtml(data.filialMessage || data.error || 'Dạ hệ thống tìm kiếm đang gặp trục trặc, Bố Mẹ bấm thử lại nha!')}</div>`;
+        resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 18px; color: var(--accent-red); grid-column: 1 / -1;">${escapeHtml(data.filialMessage || data.error || 'Dạ hệ thống tìm kiếm đang gặp trục trặc, Bố Mẹ bấm thử lại nha!')}</div>`;
         return;
       }
 
@@ -821,10 +876,11 @@ if (typeof document !== 'undefined') {
       if (!data.results || data.results.length === 0) {
         lastSearchResults = null;
         resultsHeader.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_no_results') : 'Không tìm thấy bài hát';
-        resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 20px;">Dạ không tìm thấy bài hát này. Bố Mẹ thử chọn thể loại khác hoặc gõ tên khác xem sao nhé!</div>';
+        resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 18px; grid-column: 1 / -1;">Dạ không tìm thấy bài hát này. Bố Mẹ thử chọn thể loại khác hoặc gõ tên khác xem sao nhé!</div>';
         return;
       }
 
+      setCachedSearch(cacheKey, data.results);
       lastSearchResults = { results: data.results, genreLabel };
       const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):';
       const foundMsg = foundTemplate.replace('{count}', data.results.length);
@@ -832,11 +888,12 @@ if (typeof document !== 'undefined') {
         ? `📻 ${genreLabel} — ${foundMsg}`
         : foundMsg;
       renderResults(data.results);
+      prewarmTopTrack(data.results);
     } catch (err) {
       if (err && err.name === 'AbortError') return;
       lastSearchResults = null;
       resultsHeader.textContent = 'Lỗi kết nối';
-      resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 20px; color: var(--accent-red);">Dạ mạng đang bị gián đoạn, Bố Mẹ bấm thử lại nha!</div>`;
+      resultsContainer.innerHTML = `<div style="padding: 40px; text-align: center; font-size: 18px; color: var(--accent-red); grid-column: 1 / -1;">Dạ mạng đang bị gián đoạn, Bố Mẹ bấm thử lại nha!</div>`;
     }
   }
 

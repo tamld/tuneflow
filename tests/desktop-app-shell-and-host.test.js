@@ -86,4 +86,20 @@ describe('SPEC-0016: 3-Zone Desktop App Shell, Instant Curated Shelf & Native Wi
       'TuneFlowLauncher.cs must purge stale Service Worker and HTTP cache in AppProfile on launch'
     );
   });
+
+  test('6. Desktop Vertical Media Card Grid & L1 Client-Side LRU Query Cache eliminate horizontal overflow and tab latency', () => {
+    assert.ok(
+      cssContent.includes('grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))'),
+      'Desktop .results-grid must use auto-fill vertical media card columns to prevent horizontal overflow'
+    );
+    assert.ok(
+      cssContent.includes('@keyframes stageCardFadeIn'),
+      'silver-melody.css must animate card transitions smoothly via stageCardFadeIn'
+    );
+    assert.ok(
+      appJs.includes('searchLruCache') && appJs.includes('getCachedSearch') && appJs.includes('setCachedSearch'),
+      'app.js must implement L1 Client-Side LRU Query Cache (searchLruCache) for instant tab/category switching'
+    );
+  });
 });
+
