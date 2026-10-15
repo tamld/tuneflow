@@ -89,4 +89,34 @@ describe('Elderly Visual Ergonomics, Header Declutter & Warm Cream Theme (Issue 
     assert.ok(appJs.includes("isCream ? '☀️' : '🌙'"), 'Icon must match active theme (☀️ for Cream Day, 🌙 for Dark Night)');
     assert.ok(appJs.includes('isCream ? dayLabel : nightLabel'), 'Text label must match active theme (dayLabel for Cream Day, nightLabel for Dark Night)');
   });
+
+  test('7. Curated 5-Theme System (Dark, Cream, Wood, Jade, High-Contrast AAA) is fully defined', () => {
+    for (const themeId of ['dark', 'cream', 'wood', 'jade', 'hc']) {
+      assert.ok(
+        cssContent.includes(`:root[data-theme="${themeId}"]`),
+        `:root[data-theme="${themeId}"] token block must exist in CSS`
+      );
+      assert.ok(
+        cssContent.includes(`body.theme-${themeId}`),
+        `body.theme-${themeId} selector must exist in CSS`
+      );
+      assert.ok(
+        indexHtml.includes(`data-theme-select="${themeId}"`),
+        `Theme swatch button data-theme-select="${themeId}" must exist in index.html`
+      );
+    }
+    assert.ok(indexHtml.includes('id="settings-theme-grid"'), '#settings-theme-grid must exist in Settings modal');
+    assert.ok(i18nJs.includes('theme_wood'), 'theme_wood localization key must exist');
+    assert.ok(i18nJs.includes('theme_jade'), 'theme_jade localization key must exist');
+    assert.ok(i18nJs.includes('theme_hc'), 'theme_hc localization key must exist');
+  });
+
+  test('8. Display & Comfort preferences (Compact Mode & Auto-Load First Category) are wired', () => {
+    assert.ok(indexHtml.includes('id="btn-toggle-compact"'), '#btn-toggle-compact must exist in Settings modal');
+    assert.ok(indexHtml.includes('id="btn-toggle-autoload"'), '#btn-toggle-autoload must exist in Settings modal');
+    assert.ok(appJs.includes('tuneflow_compact_mode'), 'tuneflow_compact_mode localStorage preference must be wired');
+    assert.ok(appJs.includes('tuneflow_autoload_category'), 'tuneflow_autoload_category localStorage preference must be wired');
+    assert.ok(cssContent.includes('body.compact-mode'), 'body.compact-mode styles must exist in silver-melody.css');
+  });
 });
+

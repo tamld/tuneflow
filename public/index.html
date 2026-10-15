@@ -21,15 +21,21 @@
     <!-- Header -->
     <header class="app-header">
       <div class="brand">
-        <span class="brand-icon">🎶</span>
+        <span class="brand-icon" aria-hidden="true">
+          <svg class="ui-icon" style="width: 22px; height: 22px;" viewBox="0 0 24 24">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </span>
         <div>
           <h1 class="brand-title">TuneFlow</h1>
-          <p class="brand-tagline">Nghe thử & Tải nhạc chất lượng cao dành cho Bố Mẹ</p>
+          <p class="brand-tagline">Nghe thử &amp; Tải nhạc chất lượng cao dành cho Bố Mẹ</p>
         </div>
       </div>
       <div class="header-actions">
-        <!-- Theme Quick Toggle (Cream Day / Dark Warm) (Issue #133) -->
-        <button id="btn-theme-toggle" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="Chế độ Đêm Ấm — Bấm để chuyển sang Ngày Dịu">
+        <!-- Theme Quick Toggle (Cycles 5 Curated Themes) (Issue #133) -->
+        <button id="btn-theme-toggle" class="font-scale-btn theme-toggle-btn" title="Chế độ Đêm Ấm — Bấm để đổi bảng màu giao diện">
           <span id="theme-toggle-icon">🌙</span> <span id="theme-toggle-text">Đêm Ấm</span>
         </button>
         <!-- Font Size Scaler (Issue #12) -->
@@ -40,15 +46,19 @@
         </div>
         <!-- Persistent Queue Trigger (Issue #9) -->
         <button id="btn-floating-queue" class="floating-queue-btn" title="Mở danh sách các bài hát đang tải">
-          📥 Hàng Đợi (<span id="queue-badge-count">0</span>)
+          Hàng Đợi (<span id="queue-badge-count">0</span>)
         </button>
         <!-- Accessible Guidance Modal Trigger (Issue #10) -->
         <button id="btn-help" class="help-btn" title="Bấm để xem hướng dẫn sử dụng">
-          ❓ Hướng Dẫn Dễ Hiểu
+          Hướng Dẫn
         </button>
         <!-- Unified Settings Trigger (Issue #133) -->
-        <button id="btn-settings-trigger" class="font-scale-btn settings-trigger-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="Mở Cài Đặt Hệ Thống">
-          ⚙️ <span id="text-settings">Cài Đặt</span>
+        <button id="btn-settings-trigger" class="font-scale-btn settings-trigger-btn" title="Mở Cài Đặt &amp; Bảng Màu Giao Diện">
+          <svg class="ui-icon" style="width: 16px; height: 16px;" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span id="text-settings">Cài Đặt</span>
         </button>
       </div>
     </header>
@@ -56,15 +66,29 @@
     <!-- Hero Persona Bar (Mom / Dad / Favorites) -->
     <div class="persona-hero">
       <button id="btn-persona-mom" class="persona-btn active" data-persona="mom">
-        <span class="persona-icon">🌸</span>
+        <span class="persona-icon" aria-hidden="true">
+          <svg class="ui-icon" viewBox="0 0 24 24">
+            <path d="M12 2.5c1.5 3.5 4.5 6 8 6.5-2.5 3-3 6.5-1.5 10-3.5-1.5-6.5-1.5-13 0 1.5-3.5 1-7-1.5-10 3.5-.5 6.5-3 8-6.5z"></path>
+          </svg>
+        </span>
         <span class="persona-text">Mẹ Hay Nghe</span>
       </button>
       <button id="btn-persona-dad" class="persona-btn" data-persona="dad">
-        <span class="persona-icon">☕</span>
+        <span class="persona-icon" aria-hidden="true">
+          <svg class="ui-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"></circle>
+            <circle cx="12" cy="12" r="2.5"></circle>
+            <path d="M14.5 9.5 19 5"></path>
+          </svg>
+        </span>
         <span class="persona-text">Bố Hay Nghe</span>
       </button>
       <button id="btn-persona-favorites" class="persona-btn" data-persona="favorites">
-        <span class="persona-icon">❤️</span>
+        <span class="persona-icon" aria-hidden="true">
+          <svg class="ui-icon" viewBox="0 0 24 24">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </span>
         <span class="persona-text">Bài Bố Mẹ Thích (<span id="fav-count">0</span>)</span>
       </button>
     </div>
@@ -72,27 +96,27 @@
     <!-- Category Recommendations for Parents -->
     <section class="category-section">
       <div class="category-header-row">
-        <h2 class="category-label" id="category-section-label">🌸 Thể loại Mẹ hay nghe:</h2>
+        <h2 class="category-label" id="category-section-label">Thể loại Mẹ hay nghe:</h2>
         <!-- Vocal / Instrumental Filter -->
         <div class="filter-group">
           <button class="filter-chip active" data-filter="all">Tất Cả</button>
-          <button class="filter-chip" data-filter="vocal">🎤 Có Lời</button>
-          <button class="filter-chip" data-filter="instrumental">🎻 Không Lời Hòa Tấu</button>
+          <button class="filter-chip" data-filter="vocal">Có Lời</button>
+          <button class="filter-chip" data-filter="instrumental">Không Lời Hòa Tấu</button>
         </div>
       </div>
       <div id="category-pills" class="category-pills">
-        <button class="pill-btn active" data-query="Dân ca quê hương chọn lọc ngọt ngào">🌸 Dân Ca Quê Hương</button>
-        <button class="pill-btn" data-query="Niệm phật êm dịu thanh tịnh">📿 Niệm Phật Tịnh Tâm</button>
-        <button class="pill-btn" data-query="Nhạc thiền tịnh tâm ngủ ngon dễ ngủ">🧘 Nhạc Thiền Dễ Ngủ</button>
-        <button class="pill-btn" data-query="Ca nhạc trữ tình quê hương ngọt ngào">🪷 Trữ Tình Quê Mẹ</button>
-        <button class="pill-btn" data-query="Tân cổ giao duyên tuyển chọn hay nhất">🪕 Tân Cổ Giao Duyên</button>
-        <button class="pill-btn" data-query="Nhạc spa thư giãn ngủ sâu giảm căng thẳng">🌿 Nhạc Spa Thư Giãn</button>
+        <button class="pill-btn active" data-query="Dân ca quê hương chọn lọc ngọt ngào">Dân Ca Quê Hương</button>
+        <button class="pill-btn" data-query="Niệm phật êm dịu thanh tịnh">Niệm Phật Tịnh Tâm</button>
+        <button class="pill-btn" data-query="Nhạc thiền tịnh tâm ngủ ngon dễ ngủ">Nhạc Thiền Dễ Ngủ</button>
+        <button class="pill-btn" data-query="Ca nhạc trữ tình quê hương ngọt ngào">Trữ Tình Quê Mẹ</button>
+        <button class="pill-btn" data-query="Tân cổ giao duyên tuyển chọn hay nhất">Tân Cổ Giao Duyên</button>
+        <button class="pill-btn" data-query="Nhạc spa thư giãn ngủ sâu giảm căng thẳng">Nhạc Spa Thư Giãn</button>
       </div>
     </section>
 
     <!-- Search Section -->
     <section class="search-card">
-      <label for="search-input" class="search-label">🔍 Bố Mẹ muốn tìm bài hát hoặc dán link danh sách phát (Playlist) tại đây:</label>
+      <label for="search-input" class="search-label">Tìm bài hát, ca sĩ hoặc dán link danh sách phát (Playlist) tại đây:</label>
       <div class="search-input-group">
         <input 
           type="text" 
@@ -103,25 +127,30 @@
         >
         <button id="btn-clear-search" class="btn-clear-search" title="Xóa tìm kiếm" aria-label="Xóa nội dung tìm kiếm" style="display: none;">✕</button>
         <button id="btn-voice-search" class="btn-voice-search" title="Tìm kiếm bằng giọng nói" aria-label="Nói để tìm kiếm bài hát">
-          🎙️
+          <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="9" y="2" width="6" height="12" rx="3"></rect>
+            <path d="M5 10v1a7 7 0 0 0 14 0v-1"></path>
+            <line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="8" y1="22" x2="16" y2="22"></line>
+          </svg>
         </button>
         <button id="search-btn" class="search-btn">
-          🔎 Tìm Kiếm
+          Tìm Kiếm
         </button>
       </div>
       <!-- Search Filters: Type & Sort (Issue #80) -->
-      <div class="search-filters-row" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+      <div class="search-filters-row" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color);">
         <div class="search-filter-group" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
           <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Nội dung:</span>
           <button type="button" class="filter-chip active" data-search-type="all">Tất Cả</button>
-          <button type="button" class="filter-chip" data-search-type="video">🎵 Bài Hát</button>
-          <button type="button" class="filter-chip" data-search-type="playlist">📻 Tuyển Tập / Album</button>
+          <button type="button" class="filter-chip" data-search-type="video">Bài Hát</button>
+          <button type="button" class="filter-chip" data-search-type="playlist">Tuyển Tập / Album</button>
         </div>
         <div class="search-sort-group" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
           <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Sắp xếp:</span>
-          <button type="button" class="filter-chip active" data-search-sort="relevance">⭐ Phù Hợp</button>
-          <button type="button" class="filter-chip" data-search-sort="views">👁️ Nhiều Lượt Nghe</button>
-          <button type="button" class="filter-chip" data-search-sort="date">🆕 Mới Nhất</button>
+          <button type="button" class="filter-chip active" data-search-sort="relevance">Phù Hợp</button>
+          <button type="button" class="filter-chip" data-search-sort="views">Nhiều Lượt Nghe</button>
+          <button type="button" class="filter-chip" data-search-sort="date">Mới Nhất</button>
         </div>
       </div>
     </section>
@@ -130,7 +159,7 @@
     <section id="playlist-panel" class="playlist-panel" style="display: none;">
       <div class="playlist-panel-header">
         <div>
-          <h3 id="playlist-panel-title" class="playlist-panel-title">📻 Danh Sách Phát Tuyển Tập</h3>
+          <h3 id="playlist-panel-title" class="playlist-panel-title">Danh Sách Phát Tuyển Tập</h3>
           <p id="playlist-panel-meta" class="playlist-panel-meta">Tích chọn các bài Bố Mẹ ưng ý để tải về máy nhé!</p>
         </div>
         <div class="playlist-panel-actions">
@@ -145,21 +174,20 @@
     <!-- Results Section -->
     <section class="results-section">
       <!-- Filial Fallback Banner (Issue #136) -->
-      <div id="filial-fallback-banner" class="filial-fallback-card" style="display: none; margin-bottom: 20px; padding: 18px 24px; border-radius: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(16, 185, 129, 0.15)); border: 2px solid var(--accent-gold); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
+      <div id="filial-fallback-banner" class="filial-fallback-card" style="display: none; margin-bottom: 16px; padding: 16px 20px; border-radius: 16px; background: var(--accent-gold-soft); border: 2px solid var(--accent-gold); box-shadow: var(--shadow-card);">
         <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-          <span style="font-size: 36px;">🌸</span>
           <div style="flex: 1; min-width: 240px;">
             <div style="font-weight: 800; font-size: 17px; color: var(--accent-gold); margin-bottom: 4px;">Thông Báo Từ TuneFlow Dành Cho Bố Mẹ</div>
             <div id="filial-fallback-message" style="font-size: 15px; color: var(--text-main); line-height: 1.5;">
               Dạ máy chủ YouTube đang nâng cấp bảo trì một chút, TuneFlow đang tự động khắc phục cho Bố Mẹ. Trong lúc chờ đợi, Bố Mẹ bấm vào đây để nghe ngay các bài đã tải sẵn trong Thư Viện nhé!
             </div>
           </div>
-          <button id="btn-fallback-library" class="primary-btn" style="padding: 12px 22px; font-size: 15px; font-weight: 700; border-radius: var(--radius-pill); white-space: nowrap; background: var(--accent-gold); color: #000;">
-            ❤️ Nghe Bài Đã Tải Về
+          <button id="btn-fallback-library" class="primary-btn" style="padding: 12px 22px; font-size: 15px; font-weight: 700; border-radius: var(--radius-pill); white-space: nowrap; background: var(--accent-gold); color: var(--text-on-accent, #000);">
+            Nghe Bài Đã Tải Về
           </button>
         </div>
       </div>
-      <h2 id="results-header" class="results-header">✨ Bấm chọn một thể loại ở trên hoặc gõ tên bài hát để bắt đầu nhé!</h2>
+      <h2 id="results-header" class="results-header">Chọn một thể loại ở trên hoặc gõ tên bài hát để bắt đầu nghe thử</h2>
       <div id="results-grid" class="results-grid"></div>
     </section>
   </div>
@@ -543,20 +571,68 @@
 
   <!-- Unified Settings Modal (Issue #133) -->
   <div id="modal-settings" class="modal-overlay modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
-    <div class="modal-card" style="max-width: 660px;">
+    <div class="modal-card" style="max-width: 720px;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
         <h2 id="settings-modal-title" style="margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; color: var(--accent-gold);">
           ⚙️ Cài Đặt Hệ Thống
         </h2>
         <button id="btn-settings-close" class="modal-close-btn" aria-label="Đóng cài đặt">✕</button>
       </div>
-      <div class="modal-body" style="padding: 16px 0; display: flex; flex-direction: column; gap: 16px;">
+      <div class="modal-body" style="padding: 14px 0; display: flex; flex-direction: column; gap: 14px;">
+        <!-- Group 0: Bảng Màu Giao Diện (5 Chủ Đề Chọn Lọc) -->
+        <section class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
+          <h3 id="settings-theme-heading" style="margin: 0 0 8px 0; font-weight: 700; font-size: 15px; color: var(--accent-gold);">Bảng Màu Giao Diện (5 Chủ Đề Dành Cho Gia Đình)</h3>
+          <nav id="settings-theme-grid" class="theme-swatch-grid" aria-label="Chọn bảng màu giao diện">
+            <button type="button" class="theme-swatch-btn active" data-theme-select="dark">
+              <span class="theme-swatch-preview">
+                <span class="theme-swatch-dot" style="background: #121316; box-shadow: inset 0 0 0 5px #f59e0b;"></span>
+                <span class="theme-swatch-name">Đêm Ấm</span>
+              </span>
+              <span class="theme-swatch-desc">Đen hổ phách dịu mắt</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-theme-select="cream">
+              <span class="theme-swatch-preview">
+                <span class="theme-swatch-dot" style="background: #fcf9f2; box-shadow: inset 0 0 0 5px #d97706;"></span>
+                <span class="theme-swatch-name">Ngày Dịu</span>
+              </span>
+              <span class="theme-swatch-desc">Nền giấy dó ban ngày</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-theme-select="wood">
+              <span class="theme-swatch-preview">
+                <span class="theme-swatch-dot" style="background: #1a120e; box-shadow: inset 0 0 0 5px #e09f45;"></span>
+                <span class="theme-swatch-name">Gỗ Trầm</span>
+              </span>
+              <span class="theme-swatch-desc">Phòng trà Bolero cổ điển</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-theme-select="jade">
+              <span class="theme-swatch-preview">
+                <span class="theme-swatch-dot" style="background: #0d1815; box-shadow: inset 0 0 0 5px #e5ae52;"></span>
+                <span class="theme-swatch-name">Sen Xanh</span>
+              </span>
+              <span class="theme-swatch-desc">Nhạc thiền &amp; tịnh tâm</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-theme-select="hc">
+              <span class="theme-swatch-preview">
+                <span class="theme-swatch-dot" style="background: #000000; box-shadow: inset 0 0 0 5px #ffd60a;"></span>
+                <span class="theme-swatch-name">Rõ Nét (AAA)</span>
+              </span>
+              <span class="theme-swatch-desc">Tương phản tối đa 21:1</span>
+            </button>
+          </nav>
+        </section>
+
         <!-- Group 1: Hiển Thị & Thiết Bị -->
-        <div class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
-          <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px; color: var(--accent-gold);">🎨 Hiển Thị & Thiết Bị</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <section class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
+          <h3 style="margin: 0 0 10px 0; font-weight: 700; font-size: 15px; color: var(--accent-gold);">Hiển Thị &amp; Tùy Chỉnh Trải Nghiệm</h3>
+          <nav style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
             <button id="btn-lang-toggle" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Chuyển đổi ngôn ngữ / Switch Language">
               🇻🇳 Tiếng Việt
+            </button>
+            <button id="btn-toggle-compact" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Thu gọn khoảng cách để hiển thị nhiều bài hát hơn trên màn hình">
+              📐 Bố Cục Gọn
+            </button>
+            <button id="btn-toggle-autoload" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Tự động tải danh sách bài hát ngay khi mở ứng dụng">
+              ⚡ Tự Mở Nhạc Đầu
             </button>
             <button id="btn-toggle-tv" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill);" title="Bật/Tắt chế độ điều khiển TV / Android TV Leanback Mode" aria-pressed="false">
               📺 Chế Độ TV
@@ -573,24 +649,24 @@
             <button id="btn-install-pwa" class="font-scale-btn" style="display: none; min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--accent-gold); border-radius: var(--radius-pill); background: rgba(243, 156, 18, 0.15); color: var(--accent-gold); font-weight: 600;" title="Cài đặt ứng dụng lên màn hình chính / Install App">
               📲 <span id="text-install-pwa">Cài App</span>
             </button>
-          </div>
-        </div>
+          </nav>
+        </section>
 
         <!-- Group 2: Máy Chủ & Kết Nối -->
-        <div class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
-          <div style="font-weight: 700; font-size: 15px; margin-bottom: 8px; color: var(--accent-blue);">🌐 Máy Chủ & Đường Truyền</div>
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <span style="font-size: 14px; color: var(--text-sub);">Máy chủ phát nhạc & tải về (Homelab / LAN / VPS):</span>
+        <section class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
+          <h3 style="margin: 0 0 8px 0; font-weight: 700; font-size: 15px; color: var(--accent-blue);">Máy Chủ &amp; Đường Truyền</h3>
+          <nav style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span style="font-size: 14px; color: var(--text-sub);">Máy chủ phát nhạc &amp; tải về (Homelab / LAN / VPS):</span>
             <button id="btn-server-endpoint-trigger" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 16px; border: 1px solid var(--accent-blue); border-radius: var(--radius-pill); background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" title="Cài đặt máy chủ TuneFlow">
               🌐 <span style="font-size: 14px;">Cấu Hình Máy Chủ</span>
             </button>
-          </div>
-        </div>
+          </nav>
+        </section>
 
         <!-- Group 3: Tài Khoản & Quản Trị -->
-        <div class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
-          <div style="font-weight: 700; font-size: 15px; margin-bottom: 10px; color: var(--accent-green);">👤 Tài Khoản & Quản Trị Hệ Thống</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <section class="settings-group" style="background: var(--bg-card-hover); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-color);">
+          <h3 style="margin: 0 0 10px 0; font-weight: 700; font-size: 15px; color: var(--accent-green);">Tài Khoản &amp; Quản Trị Hệ Thống</h3>
+          <nav style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
             <button id="btn-auth-status" class="font-scale-btn auth-status-btn" style="min-height: 40px; font-size: 15px; padding: 6px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-pill); font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" title="Tài khoản truy cập / Thời gian nghe thử">
               <span id="auth-status-icon">⏱️</span>
               <span id="auth-status-text">Khách: 30:00</span>
@@ -602,8 +678,8 @@
               <span id="admin-trigger-icon">👑</span>
               <span id="admin-trigger-text">Quản Trị</span>
             </button>
-          </div>
-        </div>
+          </nav>
+        </section>
       </div>
     </div>
   </div>

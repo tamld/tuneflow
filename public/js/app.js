@@ -234,27 +234,27 @@ if (typeof document !== 'undefined') {
   const personaPresets = {
     mom: {
       title: 'Mẹ Hay Nghe',
-      sectionLabel: '🌸 Thể loại Mẹ hay nghe:',
+      sectionLabel: 'Thể loại Mẹ hay nghe:',
       pills: [
-        { label: '🌸 Dân Ca Quê Hương', query: 'Dân ca quê hương chọn lọc ngọt ngào' },
-        { label: '📿 Niệm Phật Tịnh Tâm', query: 'Niệm phật êm dịu thanh tịnh' },
-        { label: '🧘 Nhạc Thiền Dễ Ngủ', query: 'Nhạc thiền tịnh tâm ngủ ngon dễ ngủ' },
-        { label: '🪷 Trữ Tình Quê Mẹ', query: 'Ca nhạc trữ tình quê hương ngọt ngào' },
-        { label: '🪕 Tân Cổ Giao Duyên', query: 'Tân cổ giao duyên tuyển chọn hay nhất' },
-        { label: '🌿 Nhạc Spa Thư Giãn', query: 'Nhạc spa thư giãn ngủ sâu giảm căng thẳng' }
+        { label: 'Dân Ca Quê Hương', query: 'Dân ca quê hương chọn lọc ngọt ngào' },
+        { label: 'Niệm Phật Tịnh Tâm', query: 'Niệm phật êm dịu thanh tịnh' },
+        { label: 'Nhạc Thiền Dễ Ngủ', query: 'Nhạc thiền tịnh tâm ngủ ngon dễ ngủ' },
+        { label: 'Trữ Tình Quê Mẹ', query: 'Ca nhạc trữ tình quê hương ngọt ngào' },
+        { label: 'Tân Cổ Giao Duyên', query: 'Tân cổ giao duyên tuyển chọn hay nhất' },
+        { label: 'Nhạc Spa Thư Giãn', query: 'Nhạc spa thư giãn ngủ sâu giảm căng thẳng' }
       ],
       defaultQuery: 'Dân ca quê hương chọn lọc ngọt ngào'
     },
     dad: {
       title: 'Bố Hay Nghe',
-      sectionLabel: '☕ Thể loại Bố hay nghe:',
+      sectionLabel: 'Thể loại Bố hay nghe:',
       pills: [
-        { label: '📻 Nhạc Vàng Bolero', query: 'Nhạc vàng 1975 bolero chọn lọc' },
-        { label: '🎸 Tình Ca Trịnh Công Sơn', query: 'Nhạc Trịnh Công Sơn Khánh Ly bất hủ' },
-        { label: '📜 Nhạc Tiền Chiến & Đỏ', query: 'Nhạc tiền chiến bất hủ hào hùng' },
-        { label: '🪕 Cải Lương & Vọng Cổ', query: 'Cải lương vọng cổ hồ quảng tuyển chọn' },
-        { label: '🎷 Hòa Tấu Guitar & Saxophone', query: 'Hòa tấu guitar saxophone êm dịu' },
-        { label: '🌾 Tình Ca Quê Hương', query: 'Ca khúc quê hương đi cùng năm tháng hay nhất' }
+        { label: 'Nhạc Vàng Bolero', query: 'Nhạc vàng 1975 bolero chọn lọc' },
+        { label: 'Tình Ca Trịnh Công Sơn', query: 'Nhạc Trịnh Công Sơn Khánh Ly bất hủ' },
+        { label: 'Nhạc Tiền Chiến & Đỏ', query: 'Nhạc tiền chiến bất hủ hào hùng' },
+        { label: 'Cải Lương & Vọng Cổ', query: 'Cải lương vọng cổ hồ quảng tuyển chọn' },
+        { label: 'Hòa Tấu Guitar & Saxophone', query: 'Hòa tấu guitar saxophone êm dịu' },
+        { label: 'Tình Ca Quê Hương', query: 'Ca khúc quê hương đi cùng năm tháng hay nhất' }
       ],
       defaultQuery: 'Nhạc vàng 1975 bolero chọn lọc'
     }
@@ -324,10 +324,12 @@ if (typeof document !== 'undefined') {
       categorySectionLabel.textContent = preset.sectionLabel;
     }
 
+    const activeQuery = searchInput ? searchInput.value.trim() : '';
     categoryPillsContainer.innerHTML = '';
     preset.pills.forEach((pillData, idx) => {
       const btn = document.createElement('button');
-      btn.className = 'pill-btn' + (idx === 0 ? ' active' : '');
+      const isPillActive = autoSearch ? (idx === 0) : (activeQuery === pillData.query);
+      btn.className = 'pill-btn' + (isPillActive ? ' active' : '');
       btn.setAttribute('data-query', pillData.query);
       btn.textContent = pillData.label;
       categoryPillsContainer.appendChild(btn);
@@ -340,8 +342,12 @@ if (typeof document !== 'undefined') {
     }
   }
 
-  // Initial load: Bind default Mom persona pills without heavy auto search (Issue #40)
-  switchPersona('mom', false);
+  // Initial load: Check if user enabled auto-load initial category preference, otherwise bind cleanly without false active pill
+  let shouldAutoLoadInitial = false;
+  try {
+    shouldAutoLoadInitial = localStorage.getItem('tuneflow_autoload_category') === 'true';
+  } catch (_e) {}
+  switchPersona('mom', shouldAutoLoadInitial);
 
   // 2. Vocal / Instrumental Filter Chips
   filterChips.forEach(chip => {
@@ -492,23 +498,55 @@ if (typeof document !== 'undefined') {
     }
   });
 
-  // 5c. Senior High-Contrast Warm Cream Day Mode (Issue #133)
+  // 5c. 5-Theme System & Visual Ergonomics Engine (Issue #133 & Multi-Theme Expansion)
+  const THEME_ORDER = ['dark', 'cream', 'wood', 'jade', 'hc'];
+  const THEME_META = {
+    dark: { icon: '🌙', i18nKey: 'theme_night', fallback: 'Đêm Ấm', toast: '🌙 Đã bật giao diện Đêm Ấm (Đen hổ phách dịu mắt)' },
+    cream: { icon: '☀️', i18nKey: 'theme_day', fallback: 'Ngày Dịu', toast: '☀️ Đã bật giao diện Ngày Dịu (Nền giấy dó chống lóa)' },
+    wood: { icon: '🪵', i18nKey: 'theme_wood', fallback: 'Gỗ Trầm', toast: '🪵 Đã bật giao diện Gỗ Trầm (Phòng trà Bolero hoài cổ)' },
+    jade: { icon: '🌿', i18nKey: 'theme_jade', fallback: 'Sen Xanh', toast: '🌿 Đã bật giao diện Sen Xanh (Nhạc thiền tịnh tâm)' },
+    hc: { icon: '👁️', i18nKey: 'theme_hc', fallback: 'Rõ Nét (AAA)', toast: '👁️ Đã bật giao diện Rõ Nét (Tương phản tối đa 21:1)' }
+  };
+
   function applyTheme(theme) {
-    const isCream = theme === 'cream';
-    document.documentElement.setAttribute('data-theme', isCream ? 'cream' : 'dark');
-    document.body.classList.toggle('theme-cream', isCream);
+    const validTheme = THEME_META[theme] ? theme : 'dark';
+    const isCream = validTheme === 'cream';
+    document.documentElement.setAttribute('data-theme', validTheme);
+    THEME_ORDER.forEach(t => {
+      document.body.classList.toggle(`theme-${t}`, validTheme === t);
+    });
     const dayLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_day') : 'Ngày Dịu';
     const nightLabel = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_night') : 'Đêm Ấm';
-    if (themeToggleIcon) themeToggleIcon.textContent = isCream ? '☀️' : '🌙';
-    if (themeToggleText) themeToggleText.textContent = isCream ? dayLabel : nightLabel;
+    const baseIcon = isCream ? '☀️' : '🌙';
+    const baseLabel = isCream ? dayLabel : nightLabel;
+    const meta = THEME_META[validTheme];
+    const activeIcon = (validTheme === 'dark' || validTheme === 'cream') ? baseIcon : meta.icon;
+    const activeLabel = (validTheme === 'dark' || validTheme === 'cream')
+      ? baseLabel
+      : (window.TuneFlowI18n ? window.TuneFlowI18n.t(meta.i18nKey) : meta.fallback);
+
+    if (themeToggleIcon) themeToggleIcon.textContent = activeIcon;
+    if (themeToggleText) themeToggleText.textContent = activeLabel;
     if (btnThemeToggle) {
-      const titleDay = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_day') : 'Chế độ Ngày Dịu — Bấm để chuyển sang Đêm Ấm';
-      const titleNight = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_night') : 'Chế độ Đêm Ấm — Bấm để chuyển sang Ngày Dịu';
+      const titleDay = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_day') : 'Chế độ Ngày Dịu — Bấm để đổi bảng màu giao diện';
+      const titleNight = window.TuneFlowI18n ? window.TuneFlowI18n.t('theme_toggle_title_night') : 'Chế độ Đêm Ấm — Bấm để đổi bảng màu giao diện';
       const currentTitle = isCream ? titleDay : titleNight;
-      btnThemeToggle.setAttribute('title', currentTitle);
-      btnThemeToggle.setAttribute('aria-label', currentTitle);
+      btnThemeToggle.setAttribute('title', `${activeLabel} — ${currentTitle}`);
+      btnThemeToggle.setAttribute('aria-label', `${activeLabel} — ${currentTitle}`);
     }
+
+    const swatchBtns = document.querySelectorAll('[data-theme-select]');
+    swatchBtns.forEach(btn => {
+      const isSelected = btn.getAttribute('data-theme-select') === validTheme;
+      btn.classList.toggle('active', isSelected);
+      btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    });
   }
+
+  window.syncCurrentThemeUI = function() {
+    const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(activeTheme);
+  };
 
   function initTheme() {
     let savedTheme = 'dark';
@@ -519,14 +557,80 @@ if (typeof document !== 'undefined') {
 
     if (btnThemeToggle) {
       btnThemeToggle.addEventListener('click', () => {
-        const isCurrentCream = document.body.classList.contains('theme-cream');
-        const nextTheme = isCurrentCream ? 'dark' : 'cream';
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const currentIdx = THEME_ORDER.indexOf(currentTheme);
+        const nextTheme = THEME_ORDER[(currentIdx + 1) % THEME_ORDER.length];
         try {
           localStorage.setItem('tuneflow_theme', nextTheme);
         } catch (_e) {}
         applyTheme(nextTheme);
+        if (typeof showToast === 'function' && THEME_META[nextTheme]) {
+          showToast(THEME_META[nextTheme].toast, 'info');
+        }
+      });
+    }
+
+    // Wire 5-Theme Swatch Picker in Settings Modal
+    const themeSwatchBtns = document.querySelectorAll('[data-theme-select]');
+    themeSwatchBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTheme = btn.getAttribute('data-theme-select') || 'dark';
+        try {
+          localStorage.setItem('tuneflow_theme', targetTheme);
+        } catch (_e) {}
+        applyTheme(targetTheme);
+        if (typeof showToast === 'function' && THEME_META[targetTheme]) {
+          showToast(THEME_META[targetTheme].toast, 'info');
+        }
+      });
+    });
+
+    // Wire Compact Mode & Startup Auto-Load Preferences
+    const btnToggleCompact = document.getElementById('btn-toggle-compact');
+    if (btnToggleCompact) {
+      const syncCompactUI = (enabled) => {
+        document.body.classList.toggle('compact-mode', enabled);
+        btnToggleCompact.style.borderColor = enabled ? 'var(--accent-gold)' : 'var(--border-color)';
+        btnToggleCompact.style.color = enabled ? 'var(--accent-gold)' : '';
+        btnToggleCompact.textContent = enabled ? '📐 Bố Cục Gọn (BẬT)' : '📐 Bố Cục Gọn';
+      };
+      let isCompact = false;
+      try {
+        isCompact = localStorage.getItem('tuneflow_compact_mode') === 'true';
+      } catch (_e) {}
+      syncCompactUI(isCompact);
+      btnToggleCompact.addEventListener('click', () => {
+        isCompact = !document.body.classList.contains('compact-mode');
+        try {
+          localStorage.setItem('tuneflow_compact_mode', isCompact ? 'true' : 'false');
+        } catch (_e) {}
+        syncCompactUI(isCompact);
         if (typeof showToast === 'function') {
-          showToast(nextTheme === 'cream' ? '☀️ Đã bật giao diện Ngày Dịu (Nền kem chống lóa)' : '🌙 Đã bật giao diện Đêm Ấm (Tương phản cao)', 'info');
+          showToast(isCompact ? '📐 Đã bật Bố Cục Gọn (Hiển thị nhiều bài hát hơn trên màn hình)' : '📐 Đã chuyển về Bố Cục Tiêu Chuẩn', 'info');
+        }
+      });
+    }
+
+    const btnToggleAutoload = document.getElementById('btn-toggle-autoload');
+    if (btnToggleAutoload) {
+      const syncAutoloadUI = (enabled) => {
+        btnToggleAutoload.style.borderColor = enabled ? 'var(--accent-gold)' : 'var(--border-color)';
+        btnToggleAutoload.style.color = enabled ? 'var(--accent-gold)' : '';
+        btnToggleAutoload.textContent = enabled ? '⚡ Tự Mở Nhạc Đầu (BẬT)' : '⚡ Tự Mở Nhạc Đầu';
+      };
+      let isAutoload = false;
+      try {
+        isAutoload = localStorage.getItem('tuneflow_autoload_category') === 'true';
+      } catch (_e) {}
+      syncAutoloadUI(isAutoload);
+      btnToggleAutoload.addEventListener('click', () => {
+        isAutoload = !isAutoload;
+        try {
+          localStorage.setItem('tuneflow_autoload_category', isAutoload ? 'true' : 'false');
+        } catch (_e) {}
+        syncAutoloadUI(isAutoload);
+        if (typeof showToast === 'function') {
+          showToast(isAutoload ? '⚡ Đã bật Tự Mở Nhạc Đầu khi khởi động ứng dụng' : '⚡ Đã tắt Tự Mở Nhạc Đầu khi khởi động', 'info');
         }
       });
     }
