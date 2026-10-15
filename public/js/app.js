@@ -169,6 +169,16 @@ if (typeof document !== 'undefined') {
       .replace(/'/g, '&#039;');
   }
 
+  // Editorial Typography Helper: Tames screaming ALL-CAPS YouTube titles into gentle Title Case
+  const KEEP_ACRONYMS = new Set(['MP3', 'FLAC', 'WAV', 'HD', '4K', '8K', 'TV', 'MV', 'CD', 'DVD', 'LP', 'DJ', 'OST', 'VIP', 'II', 'III', 'IV', 'VI', 'VII', 'VIII', 'IX']);
+  function formatCalmTitle(raw) {
+    if (!raw) return '';
+    return String(raw).replace(/\p{Lu}[\p{Lu}\p{M}]{1,}/gu, (word) => {
+      if (KEEP_ACRONYMS.has(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    });
+  }
+
   // Persona buttons
   const btnPersonaMom = document.getElementById('btn-persona-mom');
   const btnPersonaDad = document.getElementById('btn-persona-dad');
@@ -824,10 +834,10 @@ if (typeof document !== 'undefined') {
       const fallbackBanner = document.getElementById('filial-fallback-banner');
       if (fallbackBanner) fallbackBanner.style.display = 'none';
       lastSearchResults = { results: cachedResults, genreLabel };
-      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):';
+      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : 'Tìm thấy {count} bài hát chọn lọc:';
       const foundMsg = foundTemplate.replace('{count}', cachedResults.length);
       resultsHeader.textContent = genreLabel
-        ? `📻 ${genreLabel} — ${foundMsg}`
+        ? `${genreLabel} • ${foundMsg}`
         : foundMsg;
       renderResults(cachedResults);
       prewarmTopTrack(cachedResults);
@@ -835,8 +845,8 @@ if (typeof document !== 'undefined') {
     }
 
     resultsHeader.textContent = genreLabel 
-      ? `📻 Đang mở thể loại: ${genreLabel} (Bố Mẹ chờ xíu nha...)`
-      : '⏳ Đang tìm kiếm các bài hát hay cho Bố Mẹ...';
+      ? `Đang mở thể loại: ${genreLabel} (Bố Mẹ chờ xíu nha...)`
+      : 'Đang tìm kiếm các bài hát hay cho Bố Mẹ...';
     resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 18px; color: var(--text-muted); grid-column: 1 / -1;">Đang tải danh sách bài hát, vui lòng chờ chút xíu ạ...</div>';
 
     if (currentSearchAbortController) {
@@ -882,10 +892,10 @@ if (typeof document !== 'undefined') {
 
       setCachedSearch(cacheKey, data.results);
       lastSearchResults = { results: data.results, genreLabel };
-      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):';
+      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : 'Tìm thấy {count} bài hát chọn lọc:';
       const foundMsg = foundTemplate.replace('{count}', data.results.length);
       resultsHeader.textContent = genreLabel
-        ? `📻 ${genreLabel} — ${foundMsg}`
+        ? `${genreLabel} • ${foundMsg}`
         : foundMsg;
       renderResults(data.results);
       prewarmTopTrack(data.results);
@@ -1146,14 +1156,15 @@ if (typeof document !== 'undefined') {
     activeTrackList = songs;
 
     const artistDefault = window.TuneFlowI18n ? window.TuneFlowI18n.t('artist_default') : 'Nghệ sĩ';
-    const playlistTypeBadge = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_type_badge') : '📻 Tuyển Tập / Album';
-    const playlistDuration = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_duration_badge') : '📁 Tuyển tập';
-    const btnOpenPlaylistText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_open_playlist') : '📂 Mở Tuyển Tập Nghe & Tải';
-    const btnPreviewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶️ Nghe Thử Trước';
-    const btnPauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_pause') : '⏸️ Tạm Dừng';
-    const btnDownloadText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnDownload') : '⬇️ Tải Về Máy (MP3)';
+    const playlistTypeBadge = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_type_badge') : 'Tuyển Tập / Album';
+    const playlistDuration = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_duration_badge') : 'Tuyển tập';
+    const btnOpenPlaylistText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_open_playlist') : '▶ Mở Tuyển Tập Nghe & Tải';
+    const btnPreviewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶ Nghe Thử Trước';
+    const btnPauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_pause') : '⏸ Tạm Dừng';
+    const btnDownloadText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnDownload') : '↓ Tải Về Máy (MP3)';
 
     songs.forEach(song => {
+      const displayTitle = formatCalmTitle(song.title);
       const isPlaylist = Boolean(song.isPlaylist || (song.id && String(song.id).startsWith('PL')));
       if (isPlaylist) {
         const card = document.createElement('div');
@@ -1161,22 +1172,22 @@ if (typeof document !== 'undefined') {
         card.id = `card-${escapeHtml(song.id)}`;
 
         card.innerHTML = `
-          <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để mở danh sách phát này" aria-label="Mở danh sách phát: ${escapeHtml(song.title)}">
-            <img class="song-thumbnail" src="${escapeHtml(getThumbnailSrc(song.thumbnail))}" data-original-thumb="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this)">
+          <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để mở danh sách phát này" aria-label="Mở danh sách phát: ${escapeHtml(displayTitle)}">
+            <img class="song-thumbnail" src="${escapeHtml(getThumbnailSrc(song.thumbnail))}" data-original-thumb="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(displayTitle)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this)">
             <div class="song-thumb-overlay" aria-hidden="true">
-              <span class="play-icon-overlay">📂</span>
+              <span class="play-icon-overlay">▶</span>
             </div>
-            <span class="song-duration" style="background: rgba(217, 119, 6, 0.9); font-weight: 700;">${playlistDuration}</span>
+            <span class="song-duration" style="background: rgba(217, 155, 67, 0.88); font-weight: 600;">${playlistDuration}</span>
           </div>
           <div class="song-info">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-              <h3 class="song-title" role="button" tabindex="0" title="Bấm để mở tuyển tập này" aria-label="Mở tuyển tập: ${escapeHtml(song.title)}">${escapeHtml(song.title)}</h3>
+              <h3 class="song-title" role="button" tabindex="0" title="Bấm để mở tuyển tập này" aria-label="Mở tuyển tập: ${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</h3>
             </div>
-            <p class="song-uploader">🎙️ ${escapeHtml(song.uploader || artistDefault)}</p>
-            <div style="margin-top: 6px; font-size: 13px; font-weight: 700; color: #f59e0b;">${playlistTypeBadge}</div>
+            <p class="song-uploader">${escapeHtml(song.uploader || artistDefault)}</p>
+            <div style="margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--accent-gold);">${playlistTypeBadge}</div>
           </div>
           <div class="song-actions" style="display: flex;">
-            <button class="btn-preview btn-open-playlist" id="btn-playlist-${escapeHtml(song.id)}" style="flex: 1; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 700; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer;">
+            <button class="btn-preview btn-open-playlist" id="btn-playlist-${escapeHtml(song.id)}">
               ${btnOpenPlaylistText}
             </button>
           </div>
@@ -1218,7 +1229,7 @@ if (typeof document !== 'undefined') {
 
         card.setAttribute('role', 'button');
         card.setAttribute('tabindex', '0');
-        card.setAttribute('title', `Bấm để mở danh sách phát: ${song.title}`);
+        card.setAttribute('title', `Bấm để mở danh sách phát: ${displayTitle}`);
         card.addEventListener('click', openPlaylistHandler);
         card.addEventListener('keydown', (e) => {
           if (e.target === card && (e.key === 'Enter' || e.key === ' ') && !e.target.closest('button')) {
@@ -1238,8 +1249,8 @@ if (typeof document !== 'undefined') {
       card.id = `card-${escapeHtml(song.id)}`;
 
       card.innerHTML = `
-        <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">
-          <img class="song-thumbnail" src="${escapeHtml(getThumbnailSrc(song.thumbnail))}" data-original-thumb="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(song.title)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this)">
+        <div class="song-thumbnail-wrapper" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(displayTitle)}">
+          <img class="song-thumbnail" src="${escapeHtml(getThumbnailSrc(song.thumbnail))}" data-original-thumb="${escapeHtml(song.thumbnail)}" alt="${escapeHtml(displayTitle)}" referrerpolicy="no-referrer" loading="lazy" onerror="handleImageFallback(this)">
           <div class="song-thumb-overlay" aria-hidden="true">
             <span class="play-icon-overlay">${isCurrentlyPlaying ? '⏸' : '▶'}</span>
           </div>
@@ -1247,14 +1258,14 @@ if (typeof document !== 'undefined') {
         </div>
         <div class="song-info">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-            <h3 class="song-title" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(song.title)}">${escapeHtml(song.title)}</h3>
-            <button class="btn-fav" id="btn-fav-${escapeHtml(song.id)}" title="Lưu bài hát yêu thích">${isFav ? '❤️' : '🤍'}</button>
+            <h3 class="song-title" role="button" tabindex="0" title="Bấm để nghe thử bài hát này" aria-label="Nghe thử bài hát: ${escapeHtml(displayTitle)}">${escapeHtml(displayTitle)}</h3>
+            <button class="btn-fav${isFav ? ' active' : ''}" id="btn-fav-${escapeHtml(song.id)}" title="Lưu bài hát yêu thích">${isFav ? '♥' : '♡'}</button>
           </div>
           <p class="song-uploader" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-            <span>🎙️ ${escapeHtml(song.uploader || artistDefault)}</span>
-            <span class="song-duration-badge" style="font-weight: 700; color: var(--accent-gold); background: rgba(245, 158, 11, 0.12); padding: 2px 8px; border-radius: 6px; font-size: 15px; display: inline-flex; align-items: center; gap: 4px;">⏱️ ${escapeHtml(song.duration_string || '00:00')}</span>
+            <span>${escapeHtml(song.uploader || artistDefault)}</span>
+            <span class="song-duration-badge" style="font-weight: 500; color: var(--text-sub); background: rgba(255, 255, 255, 0.04); padding: 2px 8px; border-radius: 6px; font-size: 13px; display: inline-flex; align-items: center; gap: 4px;">${escapeHtml(song.duration_string || '00:00')}</span>
           </p>
-          <div class="song-status-badge" id="status-${escapeHtml(song.id)}" style="margin-top: 8px; font-size: 16px; font-weight: 600; color: var(--accent-gold); display: none;"></div>
+          <div class="song-status-badge" id="status-${escapeHtml(song.id)}" style="margin-top: 6px; font-size: 14px; font-weight: 500; color: var(--accent-gold); display: none;"></div>
         </div>
         <div class="song-actions">
           <button class="btn-preview" id="btn-preview-${escapeHtml(song.id)}">
@@ -1321,7 +1332,7 @@ if (typeof document !== 'undefined') {
       // Make entire card clickable to play (Issue #70)
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
-      card.setAttribute('title', `Bấm để nghe thử bài hát: ${song.title}`);
+      card.setAttribute('title', `Bấm để nghe thử bài hát: ${displayTitle}`);
 
       card.addEventListener('click', (e) => {
         if (e.target.closest('.btn-download') || e.target.closest('.btn-fav')) {
@@ -1359,10 +1370,10 @@ if (typeof document !== 'undefined') {
   // Dynamic card re-render for i18n language toggle (Issue #121, Issue #126)
   window.reRenderActiveCards = function() {
     if (lastSearchResults && lastSearchResults.results && lastSearchResults.results.length > 0) {
-      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : '🎵 Tìm thấy {count} bài hát hay (Bố Mẹ bấm nghe thử rồi chọn tải nhé!):';
+      const foundTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('search_results_found') : 'Tìm thấy {count} bài hát chọn lọc:';
       const foundMsg = foundTemplate.replace('{count}', lastSearchResults.results.length);
       resultsHeader.textContent = lastSearchResults.genreLabel
-        ? `📻 ${lastSearchResults.genreLabel} — ${foundMsg}`
+        ? `${lastSearchResults.genreLabel} • ${foundMsg}`
         : foundMsg;
       renderResults(lastSearchResults.results);
       if (window.previewPlayer) {
@@ -1389,7 +1400,8 @@ if (typeof document !== 'undefined') {
     const idx = favorites.findIndex(f => f.id === song.id);
     if (idx >= 0) {
       favorites.splice(idx, 1);
-      btnEl.textContent = '🤍';
+      btnEl.textContent = '♡';
+      btnEl.classList.remove('active');
       showToast(`Đã xóa khỏi danh sách yêu thích: "${song.title}"`, 'info');
       if (window.authController && window.authController.user) {
         fetch(`/api/user/favorites/${encodeURIComponent(song.id)}`, { method: 'DELETE' })
@@ -1406,8 +1418,9 @@ if (typeof document !== 'undefined') {
         url: song.url
       };
       favorites.push(favItem);
-      btnEl.textContent = '❤️';
-      showToast(`❤️ Đã lưu bài "${song.title}" vào mục yêu thích của Bố Mẹ!`, 'success');
+      btnEl.textContent = '♥';
+      btnEl.classList.add('active');
+      showToast(`♥ Đã lưu bài "${song.title}" vào mục yêu thích của Bố Mẹ!`, 'success');
       if (window.authController && window.authController.user) {
         fetch('/api/user/favorites', {
           method: 'POST',

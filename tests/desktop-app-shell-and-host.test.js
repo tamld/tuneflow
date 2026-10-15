@@ -101,5 +101,25 @@ describe('SPEC-0016: 3-Zone Desktop App Shell, Instant Curated Shelf & Native Wi
       'app.js must implement L1 Client-Side LRU Query Cache (searchLruCache) for instant tab/category switching'
     );
   });
+
+  test('7. Low-Glare Vietnamese Typography (Be Vietnam Pro) & Editorial Title Normalization eliminate eye strain', () => {
+    assert.ok(
+      indexHtml.includes('/fonts/be-vietnam-pro.css'),
+      'index.html must load local /fonts/be-vietnam-pro.css for clean Vietnamese diacritic rendering'
+    );
+    assert.ok(
+      cssContent.includes("'Be Vietnam Pro'"),
+      'silver-melody.css must use Be Vietnam Pro as primary --font-family'
+    );
+    assert.ok(
+      cssContent.includes('--text-main: #e6e2d8;') && cssContent.includes('--accent-gold: #d99b43;'),
+      'silver-melody.css must use low-glare Warm Ivory (#e6e2d8) and Soft Champagne Gold (#d99b43)'
+    );
+    assert.ok(
+      appJs.includes('function formatCalmTitle('),
+      'app.js must normalize screaming ALL-CAPS YouTube titles via formatCalmTitle()'
+    );
+  });
 });
+
 

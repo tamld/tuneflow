@@ -624,8 +624,8 @@ class PreviewPlayer {
   }
 
   resetAllCards() {
-    const previewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶️ Nghe Thử Trước';
-    const previewShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_preview_short') : '▶️ Nghe';
+    const previewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶ Nghe Thử Trước';
+    const previewShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_preview_short') : '▶ Nghe';
     document.querySelectorAll('.song-card').forEach(card => {
       card.classList.remove('playing');
       card.classList.remove('loading');
@@ -648,11 +648,11 @@ class PreviewPlayer {
   }
 
   highlightCard(trackId, isPlaying, isLoading = false) {
-    const loadingText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_loading') : '⏳ Đang tải...';
-    const pauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause') : '⏸️ Tạm Dừng';
-    const resumeText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_resume') : '▶️ Tiếp Tục Nghe';
-    const pauseShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause_short') : '⏸️ Dừng';
-    const previewShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_preview_short') : '▶️ Nghe';
+    const loadingText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_loading') : 'Đang tải...';
+    const pauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause') : '⏸ Tạm Dừng';
+    const resumeText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_resume') : '▶ Tiếp Tục Nghe';
+    const pauseShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause_short') : '⏸ Dừng';
+    const previewShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_preview_short') : '▶ Nghe';
 
     const card = document.getElementById(`card-${trackId}`);
     if (card) {
@@ -1118,10 +1118,10 @@ class PreviewPlayer {
     if (this.btnPlayPause) {
       const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
       if (this.isLoading) {
-        this.btnPlayPause.innerHTML = '⏳';
+        this.btnPlayPause.innerHTML = '⋯';
         this.btnPlayPause.title = isEn ? 'Connecting audio stream...' : 'Đang kết nối luồng nhạc...';
       } else {
-        this.btnPlayPause.innerHTML = this.isPlaying ? '⏸️' : '▶️';
+        this.btnPlayPause.innerHTML = this.isPlaying ? '⏸' : '▶';
         this.btnPlayPause.title = this.isPlaying 
           ? (isEn ? 'Pause preview' : 'Tạm dừng nghe thử') 
           : (isEn ? 'Continue preview' : 'Tiếp tục nghe thử');
