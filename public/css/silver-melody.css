@@ -2763,6 +2763,7 @@ body.tv-mode .player-title {
   .app-header .header-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-auto-flow: dense;
     gap: 7px;
     width: 100%;
   }
@@ -2771,17 +2772,19 @@ body.tv-mode .player-title {
   .app-header .settings-trigger-btn,
   .app-header .floating-queue-btn,
   .app-header .help-btn {
-    min-height: 40px;
-    height: 40px;
-    padding: 0 10px;
-    font-size: 13px;
+    min-height: 38px;
+    height: 38px;
+    padding: 0 8px;
+    font-size: 12.5px;
     font-weight: 500;
+    gap: 5px;
     border-radius: 10px;
     background: var(--bg-elevated);
     border: 1px solid var(--border-color);
     color: var(--text-main);
     width: 100%;
     justify-content: center;
+    white-space: nowrap;
     box-sizing: border-box;
   }
 
@@ -2795,9 +2798,10 @@ body.tv-mode .player-title {
   }
 
   .app-header .font-scale-group {
+    order: 5;
     grid-column: 1 / -1;
-    min-height: 36px;
-    height: 36px;
+    min-height: 34px;
+    height: 34px;
     padding: 2px;
     border-radius: 10px;
     background: var(--bg-elevated);
@@ -2809,10 +2813,10 @@ body.tv-mode .player-title {
   }
 
   .app-header .font-scale-group .font-scale-btn {
-    height: 30px;
-    min-height: 30px;
+    height: 28px;
+    min-height: 28px;
     border-radius: 7px;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 500;
     width: 100%;
     justify-content: center;
@@ -2896,7 +2900,7 @@ body.tv-mode .player-title {
     font-size: 15px;
     border-radius: 11px;
     padding-left: 16px;
-    padding-right: 92px;
+    padding-right: 8px;
   }
 
   .search-card .search-btn {
@@ -2936,12 +2940,12 @@ body.tv-mode .player-title {
     border-radius: 8px;
   }
 
-  /* Zone 2 Row 2: Sleek Single-Row Category Tab Strip */
+  /* Zone 2 Row 2: Wrap-Safe Category Tab Strip (Zero Clipped or Hidden Pills) */
   .category-section {
     grid-column: 2;
     grid-row: 2;
     margin: 0;
-    padding: 7px 24px;
+    padding: 8px 24px;
     background: var(--bg-main);
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -2955,22 +2959,17 @@ body.tv-mode .player-title {
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 7px;
-    padding: 2px 0;
-    scrollbar-width: none;
-  }
-
-  .category-section .category-pills::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 6px;
+    padding: 0;
   }
 
   .category-section .pill-btn {
-    min-height: 34px;
-    height: 34px;
-    padding: 0 14px;
-    font-size: 13.5px;
+    min-height: 30px;
+    height: 30px;
+    padding: 0 12px;
+    font-size: 12.5px;
     font-weight: 400;
     border-radius: 999px;
     white-space: nowrap;
@@ -3131,9 +3130,10 @@ body.tv-mode .player-title {
     min-width: 0;
     height: 38px;
     min-height: 38px;
-    padding: 0 10px;
+    padding: 0 8px;
     font-size: 13px;
     font-weight: 500;
+    gap: 5px;
     border-radius: 10px;
     white-space: nowrap;
     overflow: hidden;
@@ -3228,9 +3228,9 @@ body.tv-mode .player-title {
   }
 
   .bottom-player .player-visualizer {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
   }
 }
 

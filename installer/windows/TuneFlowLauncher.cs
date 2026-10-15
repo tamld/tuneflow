@@ -77,6 +77,11 @@ namespace TuneFlow
                     }
                 }
                 OpenAppWindow();
+                for (int i = 0; i < 8; i++)
+                {
+                    Thread.Sleep(250);
+                    ApplyDwmDarkTitlebarToTuneFlowWindows();
+                }
                 return;
             }
 
@@ -196,9 +201,9 @@ namespace TuneFlow
             {
                 dwmStyleTicks++;
                 ApplyDwmDarkTitlebarToTuneFlowWindows();
-                if (dwmStyleTicks > 30 && dwmStyleTimer != null)
+                if (dwmStyleTicks > 40 && dwmStyleTimer != null)
                 {
-                    dwmStyleTimer.Interval = 2500;
+                    dwmStyleTimer.Interval = 1000;
                 }
             };
             dwmStyleTimer.Start();
@@ -209,6 +214,7 @@ namespace TuneFlow
         {
             try
             {
+                string portToken = "127.0.0.1:" + port.ToString();
                 EnumWindows(delegate(IntPtr hWnd, IntPtr lParam)
                 {
                     if (!IsWindowVisible(hWnd)) return true;
@@ -216,7 +222,9 @@ namespace TuneFlow
                     if (GetWindowText(hWnd, sb, sb.Capacity) > 0)
                     {
                         string title = sb.ToString();
-                        if (title.IndexOf("TuneFlow", StringComparison.OrdinalIgnoreCase) >= 0)
+                        if (title.IndexOf("TuneFlow", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            title.IndexOf("Nghe Thử", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            title.IndexOf(portToken, StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             int darkMode = 1;
                             int captionColor = CAPTION_COLOR_OBSIDIAN;

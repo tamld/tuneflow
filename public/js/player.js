@@ -624,7 +624,7 @@ class PreviewPlayer {
   }
 
   resetAllCards() {
-    const previewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶ Nghe Thử Trước';
+    const previewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶ Nghe Thử';
     const previewShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_preview_short') : '▶ Nghe';
     document.querySelectorAll('.song-card').forEach(card => {
       card.classList.remove('playing');
@@ -650,7 +650,7 @@ class PreviewPlayer {
   highlightCard(trackId, isPlaying, isLoading = false) {
     const loadingText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_loading') : 'Đang tải...';
     const pauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause') : '⏸ Tạm Dừng';
-    const resumeText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_resume') : '▶ Tiếp Tục Nghe';
+    const resumeText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_resume') : '▶ Tiếp Tục';
     const pauseShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause_short') : '⏸ Dừng';
     const previewShort = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_preview_short') : '▶ Nghe';
 

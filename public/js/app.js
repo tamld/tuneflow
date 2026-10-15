@@ -596,7 +596,7 @@ if (typeof document !== 'undefined') {
     cream: { icon: '☀️', i18nKey: 'theme_day', fallback: 'Ngày Dịu', chromeColor: '#fcf9f2', toast: '☀️ Đã bật giao diện Ngày Dịu (Nền giấy dó chống lóa)' },
     wood: { icon: '🪵', i18nKey: 'theme_wood', fallback: 'Gỗ Trầm', chromeColor: '#1a120e', toast: '🪵 Đã bật giao diện Gỗ Trầm (Phòng trà Bolero hoài cổ)' },
     jade: { icon: '🌿', i18nKey: 'theme_jade', fallback: 'Sen Xanh', chromeColor: '#0d1815', toast: '🌿 Đã bật giao diện Sen Xanh (Nhạc thiền tịnh tâm)' },
-    hc: { icon: '👁️', i18nKey: 'theme_hc', fallback: 'Rõ Nét (AAA)', chromeColor: '#000000', toast: '👁️ Đã bật giao diện Rõ Nét (Tương phản tối đa 21:1)' }
+    hc: { icon: '👁️', i18nKey: 'theme_hc', fallback: 'Rõ Nét', chromeColor: '#000000', toast: '👁️ Đã bật giao diện Rõ Nét (Tương phản tối đa 21:1)' }
   };
 
   function applyTheme(theme) {
@@ -1159,9 +1159,9 @@ if (typeof document !== 'undefined') {
     const playlistTypeBadge = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_type_badge') : 'Tuyển Tập / Album';
     const playlistDuration = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_duration_badge') : 'Tuyển tập';
     const btnOpenPlaylistText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_open_playlist') : '▶ Mở Tuyển Tập Nghe & Tải';
-    const btnPreviewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶ Nghe Thử Trước';
-    const btnPauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_pause') : '⏸ Tạm Dừng';
-    const btnDownloadText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnDownload') : '↓ Tải Về Máy (MP3)';
+    const btnPreviewText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnPreview') : '▶ Nghe Thử';
+    const btnPauseText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btn_pause') : '⏸ Tạm Dừng';
+    const btnDownloadText = window.TuneFlowI18n ? window.TuneFlowI18n.t('btnDownload') : '↓ Tải MP3';
 
     songs.forEach(song => {
       const displayTitle = formatCalmTitle(song.title);
@@ -1683,7 +1683,7 @@ if (typeof document !== 'undefined') {
                 statusBadge.textContent = `✅ Đã xong! File đang lưu vào máy tính Bố Mẹ.`;
                 statusBadge.style.color = 'var(--accent-green)';
                 if (downloadBtn) {
-                  downloadBtn.textContent = '✅ Đã Tải Xong';
+                  downloadBtn.textContent = '✓ Đã Tải';
                 }
 
                 if (!activeDownloadedIds.has(item.id)) {

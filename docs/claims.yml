@@ -42,3 +42,10 @@ claims:
       test: tests/open-source-asset-compliance.test.js
       source: public/fonts/be-vietnam-pro.css
 
+  - id: CLAIM-08
+    claim: "Desktop 3-zone app shell enforces zero button text clipping, wrap-safe category pills, and symmetrical 2x2 sidebar controls across viewports and font scales."
+    evidence:
+      test: tests/ui-layout-and-clipping.test.js
+      source: public/css/silver-melody.css
+
+
