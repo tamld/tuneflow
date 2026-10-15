@@ -48,40 +48,32 @@ if ($LASTEXITCODE -ne 0) {
 $smokeVer = & (Join-Path $unpackedDir "node.exe") (Join-Path $unpackedDir "bin\tuneflow.js") --version
 Write-Host "   Smoke-tested unpacked runtime: TuneFlow $smokeVer" -ForegroundColor Green
 
-Write-Host "==> [4/5] Creating Portable ZIP & compiling TuneFlow-Setup-$version.exe..." -ForegroundColor Cyan
+Write-Host "==> [4/5] Compiling native Inno Setup 6 installer (installer\windows\setup.iss) & Portable ZIP..." -ForegroundColor Cyan
 $portableZip = Join-Path $installerDir "TuneFlow-Portable-$version-win64.zip"
-$payloadZip = Join-Path $RepoRoot "dist\payload.zip"
 if (Test-Path $portableZip) { Remove-Item -Force $portableZip }
-if (Test-Path $payloadZip) { Remove-Item -Force $payloadZip }
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::CreateFromDirectory($unpackedDir, $payloadZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
-Copy-Item -Force $payloadZip $portableZip
+[System.IO.Compression.ZipFile]::CreateFromDirectory($unpackedDir, $portableZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
 
-$setupOut = Join-Path $installerDir "TuneFlow-Setup-$version.exe"
-if (Test-Path $setupOut) { Remove-Item -Force $setupOut }
-
-$isccPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-if (Test-Path $isccPath) {
-  Write-Host "   Found Inno Setup 6, compiling installer\windows\setup.iss..."
-  & $isccPath (Join-Path $RepoRoot "installer\windows\setup.iss")
-} else {
-  Write-Host "   Compiling self-contained WinForms Setup Wizard (TuneFlowSetupWizard.cs)..."
-  $wizardCs = Join-Path $RepoRoot "installer\windows\TuneFlowSetupWizard.cs"
-  & $cscPath /nologo /target:winexe "/win32icon:$iconPath" `
-    /r:System.Windows.Forms.dll `
-    /r:System.Drawing.dll `
-    /r:System.IO.Compression.dll `
-    /r:System.IO.Compression.FileSystem.dll `
-    "/res:$payloadZip,TuneFlow.Payload.zip" `
-    "/out:$setupOut" `
-    $wizardCs
-  if ($LASTEXITCODE -ne 0) {
-    throw "Failed to compile TuneFlow-Setup-$version.exe"
-  }
+$isccCandidates = @(
+  "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+  "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+  "C:\Program Files\Inno Setup 6\ISCC.exe"
+)
+$isccPath = $isccCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $isccPath) {
+  $cmd = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+  if ($cmd) { $isccPath = $cmd.Source }
+}
+if (-not $isccPath) {
+  throw "Inno Setup 6 (ISCC.exe) not found. Install via: winget install --id JRSoftware.InnoSetup -e"
 }
 
-if (Test-Path $payloadZip) { Remove-Item -Force $payloadZip }
+Write-Host "   Using Inno Setup Compiler: $isccPath"
+& $isccPath (Join-Path $RepoRoot "installer\windows\setup.iss")
+if ($LASTEXITCODE -ne 0) {
+  throw "ISCC.exe failed to compile installer\windows\setup.iss"
+}
 
 Write-Host "==> [5/5] Generating SHA256SUMS-windows.txt..." -ForegroundColor Cyan
 $checksumFile = Join-Path $installerDir "SHA256SUMS-windows.txt"
@@ -90,5 +82,5 @@ Get-ChildItem -Path $installerDir -File | Where-Object { $_.Extension -in ".exe"
   "$hash  $($_.Name)"
 } | Set-Content -Path $checksumFile -Encoding utf8
 
-Write-Host "`n✅ Windows Packaging Complete!" -ForegroundColor Green
+Write-Host "`nWindows Packaging Complete!" -ForegroundColor Green
 Get-ChildItem -Path $installerDir | Select-Object Name, @{N='SizeMB';E={[math]::Round($_.Length/1MB, 2)}}, FullName | Format-Table -AutoSize
