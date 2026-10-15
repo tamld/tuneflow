@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -14,6 +15,9 @@ namespace TuneFlow
         private static Mutex singleInstanceMutex = null;
         private static NotifyIcon trayIcon = null;
         private static int port = 3000;
+        private static string nodeExePath = null;
+        private static string scriptPathResolved = null;
+        private static string baseDirResolved = null;
 
         [STAThread]
         static void Main(string[] args)
@@ -21,41 +25,63 @@ namespace TuneFlow
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            string stateDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "TuneFlow"
+            );
+            string activePortFile = Path.Combine(stateDir, "active_port.txt");
+
             // 0. Single-instance guard: focus/re-open window if already running
             bool isNewInstance = false;
             singleInstanceMutex = new Mutex(true, "com.tamld.tuneflow.singleinstance", out isNewInstance);
             if (!isNewInstance)
             {
+                if (File.Exists(activePortFile))
+                {
+                    int savedPort;
+                    if (int.TryParse(File.ReadAllText(activePortFile).Trim(), out savedPort) && savedPort > 0)
+                    {
+                        port = savedPort;
+                    }
+                }
                 OpenAppWindow();
                 return;
             }
 
             AppDomain.CurrentDomain.ProcessExit += delegate { Cleanup(); };
 
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            baseDirResolved = AppDomain.CurrentDomain.BaseDirectory;
+            port = FindAvailablePort(3000, 10);
+
+            try
+            {
+                if (!Directory.Exists(stateDir)) Directory.CreateDirectory(stateDir);
+                File.WriteAllText(activePortFile, port.ToString());
+            }
+            catch { }
 
             // 1. Locate Node.js runtime executable
-            string nodeExe = Path.Combine(baseDir, "node.exe");
-            if (!File.Exists(nodeExe))
+            nodeExePath = Path.Combine(baseDirResolved, "node.exe");
+            if (!File.Exists(nodeExePath))
             {
-                nodeExe = Path.Combine(baseDir, "TuneFlowBackend.exe");
+                nodeExePath = Path.Combine(baseDirResolved, "TuneFlowBackend.exe");
             }
-            if (!File.Exists(nodeExe))
+            if (!File.Exists(nodeExePath))
             {
-                nodeExe = "node";
+                nodeExePath = "node";
             }
 
-            string scriptPath = Path.Combine(baseDir, "bin", "tuneflow.js");
-            if (!File.Exists(scriptPath))
+            scriptPathResolved = Path.Combine(baseDirResolved, "bin", "tuneflow.js");
+            if (!File.Exists(scriptPathResolved))
             {
                 // Fallback for development workspace layout
-                scriptPath = Path.Combine(baseDir, "..", "..", "bin", "tuneflow.js");
+                scriptPathResolved = Path.Combine(baseDirResolved, "..", "..", "bin", "tuneflow.js");
             }
 
-            if (!File.Exists(scriptPath))
+            if (!File.Exists(scriptPathResolved))
             {
                 MessageBox.Show(
-                    "TuneFlow entrypoint script not found at: " + scriptPath,
+                    "TuneFlow entrypoint script not found at: " + scriptPathResolved,
                     "TuneFlow Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
@@ -64,28 +90,8 @@ namespace TuneFlow
             }
 
             // 2. Start Node.js backend silently with NO black command window
-            ProcessStartInfo backendInfo = new ProcessStartInfo
+            if (!StartBackend())
             {
-                FileName = nodeExe,
-                Arguments = string.Format("\"{0}\" --daemon --no-browser --port {1}", scriptPath, port),
-                WorkingDirectory = baseDir,
-                CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
-                UseShellExecute = false
-            };
-
-            try
-            {
-                backendProcess = Process.Start(backendInfo);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    "Failed to launch TuneFlow backend engine: " + ex.Message,
-                    "TuneFlow Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
-                );
                 return;
             }
 
@@ -94,10 +100,10 @@ namespace TuneFlow
 
             // 4. Setup Windows Notification Area (System Tray) Icon & Menu
             trayIcon = new NotifyIcon();
-            string iconPath = Path.Combine(baseDir, "public", "icons", "favicon.ico");
+            string iconPath = Path.Combine(baseDirResolved, "public", "icons", "favicon.ico");
             if (!File.Exists(iconPath))
             {
-                iconPath = Path.Combine(baseDir, "..", "..", "public", "icons", "favicon.ico");
+                iconPath = Path.Combine(baseDirResolved, "..", "..", "public", "icons", "favicon.ico");
             }
 
             if (File.Exists(iconPath))
@@ -116,13 +122,16 @@ namespace TuneFlow
                 trayIcon.Icon = SystemIcons.Application;
             }
 
-            trayIcon.Text = "TuneFlow - YouTube Music Player";
+            trayIcon.Text = string.Format("TuneFlow v2.5.0 (127.0.0.1:{0})", port);
             trayIcon.Visible = true;
 
             ContextMenuStrip menu = new ContextMenuStrip();
             ToolStripMenuItem openItem = new ToolStripMenuItem("Open TuneFlow", null, delegate { OpenAppWindow(); });
             openItem.Font = new Font(openItem.Font, FontStyle.Bold);
             menu.Items.Add(openItem);
+
+            menu.Items.Add("Open Downloads Folder", null, delegate { OpenDownloadsFolder(); });
+            menu.Items.Add("Restart Engine", null, delegate { RestartBackend(); });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Exit TuneFlow", null, delegate
             {
@@ -133,6 +142,17 @@ namespace TuneFlow
             trayIcon.ContextMenuStrip = menu;
             trayIcon.DoubleClick += delegate { OpenAppWindow(); };
 
+            try
+            {
+                trayIcon.ShowBalloonTip(
+                    3000,
+                    "TuneFlow v2.5.0",
+                    string.Format("TuneFlow engine is running in the background (port {0}). Double-click the tray icon anytime to open.", port),
+                    ToolTipIcon.Info
+                );
+            }
+            catch { }
+
             // 5. Open Standalone Window (Zero Browser Residue) immediately on start
             OpenAppWindow();
 
@@ -140,6 +160,94 @@ namespace TuneFlow
             Application.Run();
 
             Cleanup();
+        }
+
+        private static int FindAvailablePort(int startPort, int maxAttempts)
+        {
+            for (int p = startPort; p < startPort + maxAttempts; p++)
+            {
+                TcpListener listener = null;
+                try
+                {
+                    listener = new TcpListener(IPAddress.Loopback, p);
+                    listener.Start();
+                    listener.Stop();
+                    return p;
+                }
+                catch
+                {
+                    if (listener != null)
+                    {
+                        try { listener.Stop(); } catch { }
+                    }
+                }
+            }
+            return startPort;
+        }
+
+        private static bool StartBackend()
+        {
+            ProcessStartInfo backendInfo = new ProcessStartInfo
+            {
+                FileName = nodeExePath,
+                Arguments = string.Format("\"{0}\" --daemon --no-browser --port {1}", scriptPathResolved, port),
+                WorkingDirectory = baseDirResolved,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                UseShellExecute = false
+            };
+
+            try
+            {
+                backendProcess = Process.Start(backendInfo);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Failed to launch TuneFlow backend engine: " + ex.Message,
+                    "TuneFlow Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+                return false;
+            }
+        }
+
+        private static void RestartBackend()
+        {
+            if (backendProcess != null && !backendProcess.HasExited)
+            {
+                try
+                {
+                    backendProcess.Kill();
+                    backendProcess.Dispose();
+                }
+                catch { }
+            }
+            if (StartBackend())
+            {
+                WaitForHealth();
+                OpenAppWindow();
+            }
+        }
+
+        private static void OpenDownloadsFolder()
+        {
+            string downloadsDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "TuneFlow",
+                "downloads"
+            );
+            if (!Directory.Exists(downloadsDir))
+            {
+                try { Directory.CreateDirectory(downloadsDir); } catch { }
+            }
+            try
+            {
+                Process.Start("explorer.exe", "\"" + downloadsDir + "\"");
+            }
+            catch { }
         }
 
         private static void WaitForHealth()
@@ -199,7 +307,7 @@ namespace TuneFlow
             if (appRunner != null)
             {
                 string appArgs = string.Format(
-                    "--app=\"{0}\" --window-size=1080,750 --user-data-dir=\"{1}\" --no-first-run --no-default-browser-check",
+                    "--app=\"{0}\" --window-size=1140,780 --user-data-dir=\"{1}\" --no-first-run --no-default-browser-check",
                     targetUrl,
                     profileDir
                 );

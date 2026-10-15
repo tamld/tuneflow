@@ -3,9 +3,12 @@ const fs = require('fs');
 const os = require('os');
 const { resolveStoragePaths } = require('./security/binary_guard');
 
-// Ensure standard binary directories are in PATH (GUI apps on macOS/Linux don't inherit shell PATH)
+const ROOT_DIR = path.resolve(__dirname, '..');
+
+// Ensure standard binary directories are in PATH (GUI apps on Windows/macOS/Linux may not inherit full shell PATH)
 if (process.platform !== 'win32') {
   const extraPaths = [
+    path.join(ROOT_DIR, 'bin'),
     '/opt/homebrew/bin',
     '/opt/homebrew/sbin',
     '/usr/local/bin',
@@ -22,9 +25,46 @@ if (process.platform !== 'win32') {
     }
   }
   process.env.PATH = current.join(path.delimiter);
+} else {
+  const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+  const extraWinPaths = [
+    path.join(ROOT_DIR, 'bin'),
+    ROOT_DIR,
+    path.join(localAppData, 'Microsoft', 'WinGet', 'Links'),
+    path.join(os.homedir(), 'scoop', 'shims'),
+    path.join(os.homedir(), '.local', 'bin')
+  ];
+  const pyRoot = path.join(localAppData, 'Programs', 'Python');
+  if (fs.existsSync(pyRoot)) {
+    try {
+      for (const entry of fs.readdirSync(pyRoot)) {
+        extraWinPaths.push(path.join(pyRoot, entry, 'Scripts'));
+      }
+    } catch (_e) {}
+  }
+  const wingetPkgRoot = path.join(localAppData, 'Microsoft', 'WinGet', 'Packages');
+  if (fs.existsSync(wingetPkgRoot)) {
+    try {
+      for (const pkg of fs.readdirSync(wingetPkgRoot)) {
+        if (pkg.toLowerCase().includes('ffmpeg') || pkg.toLowerCase().includes('yt-dlp')) {
+          const pkgDir = path.join(wingetPkgRoot, pkg);
+          extraWinPaths.push(pkgDir);
+          for (const sub of fs.readdirSync(pkgDir)) {
+            const subBin = path.join(pkgDir, sub, 'bin');
+            if (fs.existsSync(subBin)) extraWinPaths.push(subBin);
+          }
+        }
+      }
+    } catch (_e) {}
+  }
+  const current = (process.env.PATH || '').split(path.delimiter);
+  for (const p of extraWinPaths) {
+    if (p && fs.existsSync(p) && !current.includes(p)) {
+      current.unshift(p);
+    }
+  }
+  process.env.PATH = current.join(path.delimiter);
 }
-
-const ROOT_DIR = path.resolve(__dirname, '..');
 const storage = resolveStoragePaths(process.platform);
 const DOWNLOADS_DIR = process.env.DOWNLOADS_DIR || storage.downloadsDir;
 const TEMP_DIR = process.env.TEMP_DIR || path.join(DOWNLOADS_DIR, 'temp');
