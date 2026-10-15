@@ -308,6 +308,85 @@ if (typeof document !== 'undefined') {
     });
   }
 
+  function renderCuratedStarterShelf(personaKey) {
+    if (!resultsContainer) return;
+    const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage() === 'en';
+    const presets = window.TuneFlowI18n ? window.TuneFlowI18n.getPresets() : personaPresets;
+    const preset = presets[personaKey] || presets.mom;
+    if (!preset || !Array.isArray(preset.pills)) return;
+
+    const shelfSubtitlesVi = [
+      'Tuyển chọn những làn điệu ngọt ngào, ấm áp nghe mỗi ngày',
+      'Âm thanh thanh tịnh, nhẹ nhàng giúp thư thái tâm hồn',
+      'Giai điệu êm dịu giúp Bố Mẹ thư giãn và dễ đi vào giấc ngủ',
+      'Những ca khúc quê hương đi cùng năm tháng được yêu thích nhất',
+      'Tuyển tập chọn lọc chất lượng cao, bấm 1 chạm để mở ngay',
+      'Không gian âm nhạc hi-fi ấm cúng dành riêng cho gia đình'
+    ];
+    const shelfSubtitlesEn = [
+      'Warm, timeless melodies curated for daily family listening',
+      'Peaceful acoustic harmonies for calm relaxation',
+      'Gentle soothing instrumental & vocal tracks for restful sleep',
+      'Beloved homeland classics with high-clarity audio',
+      'Handpicked golden collection — click once to open shelf',
+      'Hi-Fi lounge atmosphere tailored for your home stereo'
+    ];
+
+    resultsContainer.innerHTML = '';
+    preset.pills.forEach((pillData, idx) => {
+      const card = document.createElement('div');
+      card.className = 'curated-shelf-card';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('data-shelf-query', pillData.query);
+
+      const badgeText = isEn ? `COLLECTION 0${idx + 1}` : `KỆ ĐĨA 0${idx + 1}`;
+      const subText = isEn
+        ? shelfSubtitlesEn[idx % shelfSubtitlesEn.length]
+        : shelfSubtitlesVi[idx % shelfSubtitlesVi.length];
+      const ctaText = isEn ? 'Open Shelf' : 'Mở Kệ Nhạc';
+
+      card.innerHTML = `
+        <div class="curated-shelf-disc" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"></circle>
+            <circle cx="12" cy="12" r="2.5"></circle>
+            <path d="M14.5 9.5 19 5"></path>
+          </svg>
+        </div>
+        <div class="curated-shelf-body">
+          <span class="curated-shelf-badge">${escapeHtml(badgeText)}</span>
+          <h3 class="curated-shelf-title">${escapeHtml(pillData.label)}</h3>
+          <p class="curated-shelf-sub">${escapeHtml(subText)}</p>
+        </div>
+        <button type="button" class="curated-shelf-cta">
+          <span>▶</span> <span>${escapeHtml(ctaText)}</span>
+        </button>
+      `;
+
+      const openShelfHandler = () => {
+        if (categoryPillsContainer) {
+          categoryPillsContainer.querySelectorAll('.pill-btn').forEach(p => {
+            p.classList.toggle('active', p.getAttribute('data-query') === pillData.query);
+          });
+        }
+        if (searchInput) searchInput.value = pillData.query;
+        if (btnClearSearch) btnClearSearch.style.display = 'flex';
+        executeSearch(pillData.query, pillData.label);
+      };
+
+      card.addEventListener('click', openShelfHandler);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openShelfHandler();
+        }
+      });
+
+      resultsContainer.appendChild(card);
+    });
+  }
+
   function switchPersona(type, autoSearch = true) {
     currentPersona = type;
     removeFavBatchBar();
@@ -339,10 +418,12 @@ if (typeof document !== 'undefined') {
       searchInput.value = preset.defaultQuery;
       if (btnClearSearch) btnClearSearch.style.display = 'flex';
       executeSearch(preset.defaultQuery, preset.pills[0].label);
+    } else if (!lastSearchResults || !lastSearchResults.results || lastSearchResults.results.length === 0) {
+      renderCuratedStarterShelf(type);
     }
   }
 
-  // Initial load: Check if user enabled auto-load initial category preference, otherwise bind cleanly without false active pill
+  // Initial load: Check if user enabled auto-load initial category preference, otherwise render Curated Starter Shelf
   let shouldAutoLoadInitial = false;
   try {
     shouldAutoLoadInitial = localStorage.getItem('tuneflow_autoload_category') === 'true';
@@ -501,11 +582,11 @@ if (typeof document !== 'undefined') {
   // 5c. 5-Theme System & Visual Ergonomics Engine (Issue #133 & Multi-Theme Expansion)
   const THEME_ORDER = ['dark', 'cream', 'wood', 'jade', 'hc'];
   const THEME_META = {
-    dark: { icon: '🌙', i18nKey: 'theme_night', fallback: 'Đêm Ấm', toast: '🌙 Đã bật giao diện Đêm Ấm (Đen hổ phách dịu mắt)' },
-    cream: { icon: '☀️', i18nKey: 'theme_day', fallback: 'Ngày Dịu', toast: '☀️ Đã bật giao diện Ngày Dịu (Nền giấy dó chống lóa)' },
-    wood: { icon: '🪵', i18nKey: 'theme_wood', fallback: 'Gỗ Trầm', toast: '🪵 Đã bật giao diện Gỗ Trầm (Phòng trà Bolero hoài cổ)' },
-    jade: { icon: '🌿', i18nKey: 'theme_jade', fallback: 'Sen Xanh', toast: '🌿 Đã bật giao diện Sen Xanh (Nhạc thiền tịnh tâm)' },
-    hc: { icon: '👁️', i18nKey: 'theme_hc', fallback: 'Rõ Nét (AAA)', toast: '👁️ Đã bật giao diện Rõ Nét (Tương phản tối đa 21:1)' }
+    dark: { icon: '🌙', i18nKey: 'theme_night', fallback: 'Đêm Ấm', chromeColor: '#121316', toast: '🌙 Đã bật giao diện Đêm Ấm (Đen hổ phách dịu mắt)' },
+    cream: { icon: '☀️', i18nKey: 'theme_day', fallback: 'Ngày Dịu', chromeColor: '#fcf9f2', toast: '☀️ Đã bật giao diện Ngày Dịu (Nền giấy dó chống lóa)' },
+    wood: { icon: '🪵', i18nKey: 'theme_wood', fallback: 'Gỗ Trầm', chromeColor: '#1a120e', toast: '🪵 Đã bật giao diện Gỗ Trầm (Phòng trà Bolero hoài cổ)' },
+    jade: { icon: '🌿', i18nKey: 'theme_jade', fallback: 'Sen Xanh', chromeColor: '#0d1815', toast: '🌿 Đã bật giao diện Sen Xanh (Nhạc thiền tịnh tâm)' },
+    hc: { icon: '👁️', i18nKey: 'theme_hc', fallback: 'Rõ Nét (AAA)', chromeColor: '#000000', toast: '👁️ Đã bật giao diện Rõ Nét (Tương phản tối đa 21:1)' }
   };
 
   function applyTheme(theme) {
@@ -524,6 +605,11 @@ if (typeof document !== 'undefined') {
     const activeLabel = (validTheme === 'dark' || validTheme === 'cream')
       ? baseLabel
       : (window.TuneFlowI18n ? window.TuneFlowI18n.t(meta.i18nKey) : meta.fallback);
+
+    const metaThemeColorEl = document.getElementById('meta-theme-color');
+    if (metaThemeColorEl && meta.chromeColor) {
+      metaThemeColorEl.setAttribute('content', meta.chromeColor);
+    }
 
     if (themeToggleIcon) themeToggleIcon.textContent = activeIcon;
     if (themeToggleText) themeToggleText.textContent = activeLabel;

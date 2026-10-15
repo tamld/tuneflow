@@ -7,7 +7,7 @@
   <title>TuneFlow - Nghe Thử & Tải Nhạc Cho Bố Mẹ</title>
   <link rel="stylesheet" href="/css/silver-melody.css">
   <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#f39c12">
+  <meta name="theme-color" id="meta-theme-color" content="#121316">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -824,7 +824,18 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch((_err) => {});
+        if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+          navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((r) => r.unregister());
+          }).catch(() => {});
+          if (window.caches && typeof window.caches.keys === 'function') {
+            window.caches.keys().then((keys) => {
+              keys.forEach((k) => window.caches.delete(k));
+            }).catch(() => {});
+          }
+        } else {
+          navigator.serviceWorker.register('/sw.js').catch((_err) => {});
+        }
       });
     }
   </script>

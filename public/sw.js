@@ -1,9 +1,10 @@
 /**
  * TuneFlow Progressive Web App (PWA) Service Worker
- * Strategy: Cache-first for UI shell & static assets; Network-only for /api/ streaming and downloads.
+ * Strategy: Bypass cache on local desktop engine (127.0.0.1 / localhost) to prevent stale UI lock-in;
+ * Network-first with offline fallback for remote mobile/tablet PWA clients.
  */
 
-const CACHE_NAME = 'tuneflow-v2.5.0';
+const CACHE_NAME = 'tuneflow-v2.6.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -40,12 +41,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Always network-first for backend API calls and streaming
-  if (url.pathname.startsWith('/api/')) {
+  // Always network-only for local desktop engine (127.0.0.1 / localhost) and backend API / streaming
+  if (url.hostname === '127.0.0.1' || url.hostname === 'localhost' || url.pathname.startsWith('/api/')) {
     return;
   }
 
-  // Network-first with offline cache fallback for scripts, styles, and shell
+  // Network-first with offline cache fallback for remote PWA clients
   event.respondWith(
     fetch(event.request).then((networkResponse) => {
       if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
