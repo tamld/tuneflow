@@ -64,6 +64,9 @@
     { "method": "POST", "path": "/api/usb/export", "source": "src/routes/api.js", "auth": "public", "summary": "Export tracks to USB FAT32 with 3-digit elderly indexing" },
     { "method": "GET", "path": "/api/usb/batch-zip", "source": "src/routes/api.js", "auth": "public", "summary": "Generate and download streaming ZIP archive of all tracks" },
     { "method": "GET", "path": "/api/engine/health", "source": "src/routes/api.js", "auth": "public", "summary": "Get engine health monitor error metrics and quick diagnostics" },
-    { "method": "POST", "path": "/api/engine/update", "source": "src/routes/api.js", "auth": "public", "summary": "Trigger engine self-healing binary update" }
+    { "method": "POST", "path": "/api/engine/update", "source": "src/routes/api.js", "auth": "public", "summary": "Trigger engine self-healing binary update" },
+    { "method": "GET", "path": "/api/system/doctor", "source": "src/routes/api.js", "auth": "public", "summary": "Self-diagnostic health check of sidecar binaries, disk writability, network reachability, and process telemetry" },
+    { "method": "GET", "path": "/api/library/local", "source": "src/routes/api.js", "auth": "public", "summary": "List downloaded local MP3/M4A/WebM audio files in the downloads directory" },
+    { "method": "GET", "path": "/api/library/local/stream/:filename", "source": "src/routes/api.js", "auth": "public", "summary": "Stream local downloaded audio file with HTTP Range support" }
   ]
 }

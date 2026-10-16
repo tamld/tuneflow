@@ -8,6 +8,7 @@
 :root[data-theme="dark"],
 body.theme-dark {
   /* Theme 1: Đêm Ấm (Low-Glare Warm Ivory & Soft Champagne Gold - Default) */
+  --bg-obsidian: #121316;
   --bg-main: #131417;
   --bg-card: #1a1c21;
   --bg-card-hover: #21242b;
@@ -2898,8 +2899,8 @@ body.tv-mode .player-title {
   }
 
   .search-card .search-input {
-    height: 44px;
-    min-height: 44px;
+    height: 50px;
+    min-height: 50px;
     font-size: 15px;
     border-radius: 11px;
     padding-left: 16px;
@@ -2907,8 +2908,8 @@ body.tv-mode .player-title {
   }
 
   .search-card .search-btn {
-    height: 44px;
-    min-height: 44px;
+    height: 50px;
+    min-height: 50px;
     padding: 0 22px;
     font-size: 14.5px;
     font-weight: 600;

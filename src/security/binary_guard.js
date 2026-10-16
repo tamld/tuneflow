@@ -139,9 +139,9 @@ function getSanitizedEnv(baseEnv = process.env) {
   delete sanitized.RUBYOPT;
   delete sanitized.PERL5OPT;
 
-  // Ensure running node.exe directory is in PATH so yt-dlp --js-runtimes node:node always resolves
+  // Ensure running node.exe directory is in PATH at runtime so yt-dlp --js-runtimes node:node always resolves
   try {
-    if (process.execPath) {
+    if (baseEnv === process.env && process.execPath) {
       const nodeDir = path.dirname(process.execPath);
       const pathKey = Object.keys(sanitized).find(k => k.toLowerCase() === 'path') || 'PATH';
       const currentPath = sanitized[pathKey] || '';
