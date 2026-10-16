@@ -52,8 +52,11 @@ function resolveStoragePaths(platform, env = process.env, isPortableOverride = n
   };
 }
 
+const binaryHashMemo = new Map();
+
 /**
  * Computes SHA-256 and verifies executable integrity before execution.
+ * Memoizes digest by (binaryPath, mtimeMs, size) to avoid re-reading 85MB+ sidecars on every spawn.
  * Throws on failure (Fail-Closed).
  */
 function verifyBinaryIntegrity(binaryPath, expectedSha256) {
@@ -61,8 +64,14 @@ function verifyBinaryIntegrity(binaryPath, expectedSha256) {
     throw new Error('BINARY_NOT_FOUND: Sidecar binary missing at ' + binaryPath);
   }
 
-  const fileBuffer = fs.readFileSync(binaryPath);
-  const actualHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+  const stat = fs.statSync(binaryPath);
+  const memoKey = `${binaryPath}:${stat.mtimeMs}:${stat.size}`;
+  let actualHash = binaryHashMemo.get(memoKey);
+  if (!actualHash) {
+    const fileBuffer = fs.readFileSync(binaryPath);
+    actualHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    binaryHashMemo.set(memoKey, actualHash);
+  }
 
   if (actualHash.toLowerCase() !== expectedSha256.toLowerCase()) {
     throw new Error(
@@ -129,35 +138,58 @@ function getSanitizedEnv(baseEnv = process.env) {
   delete sanitized.PYTHONSTARTUP;
   delete sanitized.RUBYOPT;
   delete sanitized.PERL5OPT;
+
+  // Ensure running node.exe directory is in PATH so yt-dlp --js-runtimes node:node always resolves
+  try {
+    if (process.execPath) {
+      const nodeDir = path.dirname(process.execPath);
+      const pathKey = Object.keys(sanitized).find(k => k.toLowerCase() === 'path') || 'PATH';
+      const currentPath = sanitized[pathKey] || '';
+      if (!currentPath.toLowerCase().includes(nodeDir.toLowerCase())) {
+        sanitized[pathKey] = currentPath ? `${nodeDir}${path.delimiter}${currentPath}` : nodeDir;
+      }
+    }
+  } catch (_e) {}
+
   return sanitized;
 }
 
 /**
- * Resolves path to a sidecar binary, preferring local bin/ directory if present,
- * and verifies integrity against SHA256SUMS.json when present.
+ * Resolves path to a sidecar binary, preferring local bin/ or bin/<platform>-<arch>/ directory
+ * if present, and verifies integrity against SHA256SUMS.json when present.
  */
 function resolveSidecarBinary(name, customBinDir = null) {
   const ext = process.platform === 'win32' ? '.exe' : '';
-  const binDir = customBinDir || path.join(process.cwd(), 'bin');
-  const candidatePath = path.join(binDir, `${name}${ext}`);
+  const baseBinDir = customBinDir || path.join(process.cwd(), 'bin');
 
-  if (fs.existsSync(candidatePath)) {
-    // Check if manifest exists for verification
-    const manifestPath = path.join(binDir, 'SHA256SUMS.json');
-    if (fs.existsSync(manifestPath)) {
-      try {
-        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-        const expectedHash = manifest[`${name}${ext}`] || manifest[name];
-        if (expectedHash) {
-          verifyBinaryIntegrity(candidatePath, expectedHash);
-        }
-      } catch (err) {
-        if (err.message && err.message.startsWith('SECURITY_INTEGRITY_VIOLATION')) {
-          throw err;
+  const searchDirs = customBinDir
+    ? [customBinDir]
+    : [
+        baseBinDir,
+        path.join(baseBinDir, `${process.platform}-${process.arch}`)
+      ];
+
+  for (const binDir of searchDirs) {
+    const candidatePath = path.join(binDir, `${name}${ext}`);
+    if (fs.existsSync(candidatePath)) {
+      const manifestPath = path.join(binDir, 'SHA256SUMS.json');
+      if (fs.existsSync(manifestPath)) {
+        try {
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+          const filesMap = manifest.binaries || manifest.files || manifest;
+          const entry = filesMap[`${name}${ext}`] || filesMap[name];
+          const expectedHash = typeof entry === 'string' ? entry : (entry && entry.sha256 ? entry.sha256 : null);
+          if (expectedHash) {
+            verifyBinaryIntegrity(candidatePath, expectedHash);
+          }
+        } catch (err) {
+          if (err.message && err.message.startsWith('SECURITY_INTEGRITY_VIOLATION')) {
+            throw err;
+          }
         }
       }
+      return candidatePath;
     }
-    return candidatePath;
   }
 
   // Check known standard candidate locations if not found in default local bin/

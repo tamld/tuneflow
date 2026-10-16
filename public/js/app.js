@@ -183,10 +183,23 @@ if (typeof document !== 'undefined') {
   const btnPersonaMom = document.getElementById('btn-persona-mom');
   const btnPersonaDad = document.getElementById('btn-persona-dad');
   const btnPersonaFavs = document.getElementById('btn-persona-favorites');
+  const btnPersonaDownloaded = document.getElementById('btn-persona-downloaded');
+  const downloadedCountEl = document.getElementById('downloaded-count');
 
   // Filter chips
-  const filterChips = document.querySelectorAll('.filter-chip:not([data-search-type]):not([data-search-sort])');
+  const filterChips = document.querySelectorAll('.filter-chip:not([data-search-type]):not([data-search-sort]):not(#btn-toggle-search-filters)');
   let currentFilter = 'all';
+
+  // Search Filters Toggle (SPEC-0017 / REQ-PKG-04)
+  const btnToggleSearchFilters = document.getElementById('btn-toggle-search-filters');
+  const searchFiltersRow = document.getElementById('search-filters-row') || document.querySelector('.search-filters-row');
+  if (btnToggleSearchFilters && searchFiltersRow) {
+    btnToggleSearchFilters.addEventListener('click', () => {
+      const isCollapsed = searchFiltersRow.style.display === 'none';
+      searchFiltersRow.style.display = isCollapsed ? 'flex' : 'none';
+      btnToggleSearchFilters.textContent = isCollapsed ? 'Bộ Lọc ▾' : 'Bộ Lọc ▸';
+    });
+  }
 
   // Search Filters State (Issue #80)
   let currentSearchType = 'all';
@@ -217,15 +230,45 @@ if (typeof document !== 'undefined') {
   });
 
   // Playlist Batch Panel
+  const resultsSection = document.querySelector('.results-section');
   const playlistPanel = document.getElementById('playlist-panel');
   const playlistPanelTitle = document.getElementById('playlist-panel-title');
   const playlistPanelMeta = document.getElementById('playlist-panel-meta');
   const playlistItemsList = document.getElementById('playlist-items-list');
+  const btnClosePlaylist = document.getElementById('btn-close-playlist');
   const btnSelectAll = document.getElementById('btn-select-all');
   const btnPlayPlaylist = document.getElementById('btn-play-playlist');
   const batchPlayCountEl = document.getElementById('batch-play-count');
   const btnDownloadBatch = document.getElementById('btn-download-batch');
   const batchSelectedCountEl = document.getElementById('batch-selected-count');
+
+  function showPlaylistPanel() {
+    if (playlistPanel) {
+      playlistPanel.style.display = 'block';
+      playlistPanel.scrollTop = 0;
+    }
+    if (resultsSection && typeof window !== 'undefined' && window.innerWidth >= 960) {
+      resultsSection.style.display = 'none';
+    }
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function' && window.innerWidth >= 960) {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function hidePlaylistPanel() {
+    if (playlistPanel) {
+      playlistPanel.style.display = 'none';
+    }
+    if (resultsSection) {
+      resultsSection.style.display = '';
+    }
+  }
+
+  if (btnClosePlaylist) {
+    btnClosePlaylist.addEventListener('click', () => {
+      hidePlaylistPanel();
+    });
+  }
 
   let activeDownloadedIds = new Set();
   let currentPlaylistTracks = [];
@@ -276,6 +319,9 @@ if (typeof document !== 'undefined') {
   btnPersonaMom.addEventListener('click', () => switchPersona('mom', true));
   btnPersonaDad.addEventListener('click', () => switchPersona('dad', true));
   btnPersonaFavs.addEventListener('click', showFavoritesView);
+  if (btnPersonaDownloaded) {
+    btnPersonaDownloaded.addEventListener('click', showDownloadedView);
+  }
 
   const btnLangToggle = document.getElementById('btn-lang-toggle');
   if (btnLangToggle && window.TuneFlowI18n) {
@@ -403,7 +449,8 @@ if (typeof document !== 'undefined') {
     btnPersonaMom.classList.toggle('active', type === 'mom');
     btnPersonaDad.classList.toggle('active', type === 'dad');
     btnPersonaFavs.classList.remove('active');
-    playlistPanel.style.display = 'none';
+    if (btnPersonaDownloaded) btnPersonaDownloaded.classList.remove('active');
+    hidePlaylistPanel();
 
     const presets = window.TuneFlowI18n ? window.TuneFlowI18n.getPresets() : personaPresets;
     const preset = presets[type];
@@ -798,13 +845,16 @@ if (typeof document !== 'undefined') {
 
   function prewarmTopTrack(songs) {
     if (!Array.isArray(songs) || songs.length === 0) return;
-    const firstPlayable = songs.find(s => s && s.id && !s.isPlaylist && !String(s.id).startsWith('PL'));
-    if (!firstPlayable) return;
-    fetch('/api/preview/prewarm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: firstPlayable.id })
-    }).catch(() => {});
+    const playable = songs.filter(s => s && s.id && !s.isPlaylist && !String(s.id).startsWith('PL')).slice(0, 2);
+    playable.forEach((track, idx) => {
+      setTimeout(() => {
+        fetch('/api/preview/prewarm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: track.id })
+        }).catch(() => {});
+      }, idx * 250);
+    });
   }
 
   async function executeSearch(query, genreLabel = null) {
@@ -822,7 +872,7 @@ if (typeof document !== 'undefined') {
       return;
     }
 
-    playlistPanel.style.display = 'none';
+    hidePlaylistPanel();
 
     let finalQuery = trimmed;
     if (currentFilter === 'vocal') finalQuery += ' có lời ca sĩ hát';
@@ -918,8 +968,8 @@ if (typeof document !== 'undefined') {
 
     const loadingText = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_loading') : '⏳ Đang bóc tách danh sách phát...';
     resultsHeader.textContent = loadingText;
-    playlistPanel.style.display = 'block';
-    if (typeof playlistPanel.scrollIntoView === 'function') {
+    showPlaylistPanel();
+    if (typeof playlistPanel.scrollIntoView === 'function' && (typeof window === 'undefined' || window.innerWidth < 960)) {
       playlistPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     playlistPanelTitle.textContent = loadingText;
@@ -936,7 +986,7 @@ if (typeof document !== 'undefined') {
 
       if (!data.success || !data.items || data.items.length === 0) {
         showToast('⚠️ Không thể đọc danh sách phát này hoặc danh sách đang để chế độ riêng tư', 'warn');
-        playlistPanel.style.display = 'none';
+        hidePlaylistPanel();
         return;
       }
 
@@ -946,11 +996,19 @@ if (typeof document !== 'undefined') {
       playlistPanelTitle.textContent = `📻 ${data.title || defaultTitle}`;
       playlistPanelMeta.textContent = `Tuyển tập gồm ${data.count} bài hát của "${data.uploader || defaultArtist}"`;
       renderPlaylistBatch(data.items);
+      prewarmTopTrack(data.items);
       const displayTemplate = window.TuneFlowI18n ? window.TuneFlowI18n.t('playlist_display_all') : '✨ Đã hiển thị toàn bộ tuyển tập gồm {count} bài hát.';
       resultsHeader.textContent = displayTemplate.replace('{count}', data.count);
+
+      // Immediately start playing the first track when user opens a playlist
+      if (window.previewPlayer && data.items[0]) {
+        activeTrackList = data.items;
+        window.previewPlayer.playTrack(data.items[0]);
+        updatePlaylistPlayButtonState();
+      }
     } catch (err) {
       showToast('❌ Lỗi khi đọc danh sách phát', 'error');
-      playlistPanel.style.display = 'none';
+      hidePlaylistPanel();
     } finally {
       if (triggerBtn) {
         triggerBtn.disabled = false;
@@ -1198,7 +1256,7 @@ if (typeof document !== 'undefined') {
         const openPlaylistHandler = (e) => {
           if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
           const targetUrl = song.url || `https://www.youtube.com/playlist?list=${song.id}`;
-          handlePlaylistUrl(targetUrl, btnPl || card);
+          handlePlaylistUrl(targetUrl, btnPl);
         };
 
         const thumbWrapper = card.querySelector('.song-thumbnail-wrapper');
@@ -1272,7 +1330,7 @@ if (typeof document !== 'undefined') {
             ${isCurrentlyPlaying ? btnPauseText : btnPreviewText}
           </button>
           <button class="btn-download" id="btn-download-${escapeHtml(song.id)}">
-            ${btnDownloadText}
+            ${song.isLocalDownloaded ? '✓ Đã Tải' : btnDownloadText}
           </button>
         </div>
       `;
@@ -1351,6 +1409,7 @@ if (typeof document !== 'undefined') {
       // Speculative stream prewarm on pointer hover (debounced 150ms)
       let prewarmTimer = null;
       card.addEventListener('pointerenter', () => {
+        if (song.isLocalDownloaded) return;
         prewarmTimer = setTimeout(() => {
           fetch('/api/preview/prewarm', {
             method: 'POST',
@@ -1477,7 +1536,8 @@ if (typeof document !== 'undefined') {
     btnPersonaMom.classList.remove('active');
     btnPersonaDad.classList.remove('active');
     btnPersonaFavs.classList.add('active');
-    playlistPanel.style.display = 'none';
+    if (btnPersonaDownloaded) btnPersonaDownloaded.classList.remove('active');
+    hidePlaylistPanel();
 
     if (favorites.length === 0) {
       resultsHeader.textContent = '❤️ Danh Sách Bài Hát Yêu Thích';
@@ -1536,10 +1596,60 @@ if (typeof document !== 'undefined') {
     });
   }
 
+  // 8b. Offline Downloaded Library Channel (SPEC-0017 / REQ-PKG-03)
+  async function refreshDownloadedCount() {
+    if (!downloadedCountEl) return;
+    try {
+      const res = await fetch('/api/library/local');
+      const data = await res.json();
+      if (data && data.ok && typeof data.count === 'number') {
+        downloadedCountEl.textContent = String(data.count);
+      }
+    } catch (_e) {
+      // Ignore offline count error
+    }
+  }
+
+  async function showDownloadedView() {
+    removeFavBatchBar();
+    btnPersonaMom.classList.remove('active');
+    btnPersonaDad.classList.remove('active');
+    btnPersonaFavs.classList.remove('active');
+    if (btnPersonaDownloaded) btnPersonaDownloaded.classList.add('active');
+    hidePlaylistPanel();
+
+    resultsHeader.textContent = '📁 Đang mở kho Nhạc Đã Tải trong máy tính Bố Mẹ...';
+    resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 18px; color: var(--text-muted); grid-column: 1 / -1;">Đang đọc các bài hát MP3 trong ổ cứng...</div>';
+
+    try {
+      const res = await fetch('/api/library/local');
+      const data = await res.json();
+      if (!data || !data.ok || !Array.isArray(data.results) || data.results.length === 0) {
+        if (downloadedCountEl) downloadedCountEl.textContent = '0';
+        resultsHeader.textContent = '📁 Kho Nhạc Đã Tải Về Máy (Nghe Không Cần Mạng)';
+        resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 18px; color: var(--text-muted); grid-column: 1 / -1;">Trong máy tính chưa có bài hát nào tải sẵn. Khi nghe bài nào ưng ý, Bố Mẹ bấm nút <strong>↓ Tải MP3</strong> để lưu vào đây nghe bất cứ lúc nào kể cả khi mất mạng nhé!</div>';
+        return;
+      }
+
+      if (downloadedCountEl) downloadedCountEl.textContent = String(data.results.length);
+      resultsHeader.textContent = `📁 Nhạc Đã Tải Sẵn Trong Máy (${data.results.length} bài • Nghe Offline):`;
+      renderResults(data.results);
+    } catch (_e) {
+      resultsHeader.textContent = '📁 Kho Nhạc Đã Tải Về Máy';
+      resultsContainer.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 18px; color: var(--accent-red); grid-column: 1 / -1;">Không thể đọc thư mục nhạc đã tải. Bố Mẹ vui lòng thử lại nhé!</div>';
+    }
+  }
+
+  refreshDownloadedCount();
+
   // 9. Single Download Queue with In-Flight Spam Guard (ck:scenario Dimension 3)
   const pendingDownloadRequests = new Set();
 
   async function queueDownload(song) {
+    if (song && song.isLocalDownloaded) {
+      showToast(`✅ Bài "${song.title}" đã có sẵn trong máy tính Bố Mẹ!`, 'info');
+      return;
+    }
     if (pendingDownloadRequests.has(song.id)) {
       showToast(`⏳ Bài hát "${song.title}" đang được đưa vào hàng đợi, Bố Mẹ đợi một chút nhé!`, 'info');
       return;
@@ -1731,10 +1841,19 @@ if (typeof document !== 'undefined') {
     });
   }
 
-  // 11. Direct Client Browser Download Trigger
+  // 11. Direct Client Browser Download Trigger (Suppresses duplicate save dialog in local Desktop Shell)
   function triggerClientBrowserDownload(item) {
+    refreshDownloadedCount();
+    const isDesktopApp = (typeof window !== 'undefined' && window.location && window.location.search.includes('desktop=1')) ||
+      (typeof document !== 'undefined' && document.documentElement.classList.contains('tuneflow-desktop'));
+
+    if (isDesktopApp) {
+      showToast(`🎉 Đã lưu bài "${item.title}" vào mục Nhạc Đã Tải trên máy tính Bố Mẹ!`, 'success');
+      return;
+    }
+
     showToast(`🎉 Đã tải xong bài "${item.title}"! File đang được lưu vào máy tính của Bố Mẹ.`, 'success');
-    
+
     const resolve = (typeof window !== 'undefined' && window.TUNEFLOW_RESOLVE_URL) ? window.TUNEFLOW_RESOLVE_URL : (p => p);
     const a = document.createElement('a');
     a.style.display = 'none';

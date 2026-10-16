@@ -167,6 +167,10 @@ namespace TuneFlow
             menu.Items.Add(openItem);
 
             menu.Items.Add("Mở Thư Mục Nhạc Đã Tải", null, delegate { OpenDownloadsFolder(); });
+            menu.Items.Add("Kiểm Tra Hệ Thống (Doctor)", null, delegate
+            {
+                try { Process.Start(string.Format("http://127.0.0.1:{0}/api/system/doctor", port)); } catch { }
+            });
             menu.Items.Add("Khởi Động Lại Máy Chủ Nhạc", null, delegate { RestartBackend(); });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Thoát Hoàn Toàn TuneFlow", null, delegate

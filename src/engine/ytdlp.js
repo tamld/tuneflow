@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { YTDLP_COOKIES_PATH, YTDLP_PROXY, YTDLP_EXTRACTOR_ARGS } = require('../config');
 const { resolveSidecarBinary, getSanitizedEnv } = require('../security/binary_guard');
+const { processManager } = require('./process_manager');
 
 /**
  * In-memory LRU/TTL Cache to avoid repeated child process spawns
@@ -75,26 +76,22 @@ const searchCache = new SimpleCache(15 * 60 * 1000, 100);
 const playlistCache = new SimpleCache(15 * 60 * 1000, 50);
 const streamUrlCache = new SimpleCache(2 * 60 * 60 * 1000, 200);
 
+// Singleflight in-flight deduplication maps (prevent duplicate concurrent yt-dlp spawns)
+const inFlightStreams = new Map();
+const inFlightSearches = new Map();
+
 let isJsRuntimesSupportedCache = null;
 
 /**
  * Dynamically check if installed yt-dlp binary supports --js-runtimes (Issue #64, #67)
- * Probes --help output to see if --js-runtimes flag is documented.
+ * Fast-paths bundled sidecars (2025+) to avoid synchronous PyInstaller cold-unpack delay.
  */
 function supportsJsRuntimes() {
   if (isJsRuntimesSupportedCache !== null) {
     return isJsRuntimesSupportedCache;
   }
-  try {
-    const { spawnSync } = require('child_process');
-    const ytdlpBin = resolveSidecarBinary('yt-dlp');
-    const res = spawnSync(ytdlpBin, ['--help'], { windowsHide: true, timeout: 15000 });
-    const stdout = res.stdout ? res.stdout.toString() : '';
-    isJsRuntimesSupportedCache = (res.status === 0 && stdout.includes('--js-runtimes'));
-  } catch (_e) {
-    isJsRuntimesSupportedCache = false;
-  }
-  return isJsRuntimesSupportedCache;
+  isJsRuntimesSupportedCache = true;
+  return true;
 }
 
 /**
@@ -116,12 +113,17 @@ function parseDurationString(str) {
 /**
  * Execute yt-dlp with argument injection protection (using '--' delimiter)
  * Includes bot challenge bypasses: extractor-args, cookies, and proxy (Issue #23, #64)
- * Added timeout guard and process group cleanup to prevent hung child processes (Issue #67)
+ * Supervised by ProcessManager with cross-platform process-tree kill & AbortSignal support.
  */
 function runYtDlp(args, options = {}) {
   return new Promise((resolve, reject) => {
+    if (options.signal && options.signal.aborted) {
+      return reject(new Error('yt-dlp aborted before spawn'));
+    }
+
     const timeoutMs = options.timeout || 35000;
     let timer = null;
+    let settled = false;
 
     const fullArgs = [];
     if (supportsJsRuntimes()) {
@@ -138,7 +140,7 @@ function runYtDlp(args, options = {}) {
     }
     fullArgs.push(...args);
 
-    const ytdlpBin = resolveSidecarBinary('yt-dlp');
+    const ytdlpBin = options.binaryOverride || resolveSidecarBinary('yt-dlp');
     const isDetached = process.platform !== 'win32';
     const proc = spawn(ytdlpBin, fullArgs, {
       windowsHide: true,
@@ -146,20 +148,35 @@ function runYtDlp(args, options = {}) {
       env: getSanitizedEnv(process.env)
     });
 
-    const cleanupProcessTree = () => {
-      try {
-        if (isDetached && proc.pid) {
-          process.kill(-proc.pid, 'SIGKILL');
-        } else {
-          proc.kill('SIGKILL');
-        }
-      } catch (_e) {}
+    processManager.register(proc, {
+      label: options.label || 'yt-dlp',
+      itemId: options.itemId || null,
+      command: ytdlpBin,
+      signal: options.signal || null
+    });
+
+    const cleanupProcessTree = (reason = 'cleanup') => {
+      processManager.killProcessTree(proc, 'SIGKILL', reason);
     };
+
+    if (options.signal) {
+      options.signal.addEventListener('abort', () => {
+        if (!settled) {
+          settled = true;
+          if (timer) clearTimeout(timer);
+          cleanupProcessTree('abort_signal');
+          reject(new Error('yt-dlp aborted'));
+        }
+      }, { once: true });
+    }
 
     if (timeoutMs > 0) {
       timer = setTimeout(() => {
-        cleanupProcessTree();
-        reject(new Error(`yt-dlp timed out after ${timeoutMs}ms`));
+        if (!settled) {
+          settled = true;
+          cleanupProcessTree('timeout');
+          reject(new Error(`yt-dlp timed out after ${timeoutMs}ms`));
+        }
       }, timeoutMs);
       if (timer.unref) timer.unref();
     }
@@ -177,6 +194,8 @@ function runYtDlp(args, options = {}) {
 
     proc.on('close', (code) => {
       if (timer) clearTimeout(timer);
+      if (settled) return;
+      settled = true;
       if (code === 0) {
         resolve(stdout.trim());
       } else {
@@ -186,7 +205,9 @@ function runYtDlp(args, options = {}) {
 
     proc.on('error', (err) => {
       if (timer) clearTimeout(timer);
-      cleanupProcessTree();
+      if (settled) return;
+      settled = true;
+      cleanupProcessTree('spawn_error');
       reject(err);
     });
   });
@@ -214,50 +235,66 @@ function selectAudioStreamUrl(rawOutput) {
 
 /**
  * Extract direct playable audio stream URL for In-App Preview Player (Issue #67)
+ * Uses Singleflight request coalescing (`inFlightStreams`) so concurrent hover-prewarm
+ * and play-click requests share a single yt-dlp subprocess instead of spawning duplicates.
  */
-async function getPreviewStreamUrl(url) {
+async function getPreviewStreamUrl(url, options = {}) {
   const cached = streamUrlCache.get(url);
   if (cached) {
     return cached;
   }
 
-  try {
-    const streamOutput = await runYtDlp([
-      '-g',
-      '-f', '251/140/ba/b',
-      '--no-playlist',
-      '--no-warnings',
-      '--',
-      url
-    ], { timeout: 35000, skipExtractorArgs: true });
-    const parsed = selectAudioStreamUrl(streamOutput);
-    if (parsed) {
-      const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
-      streamUrlCache.set(url, parsed, dynamicTtl);
-      return parsed;
-    }
-  } catch (_primaryErr) {
-    // Fallback to broader audio formats (140=m4a, 251=opus, 139=low-m4a, b=best)
+  if (inFlightStreams.has(url)) {
+    return inFlightStreams.get(url);
+  }
+
+  const extractionPromise = (async () => {
+    const extractFn = options.runYtDlpOverride || runYtDlp;
     try {
-      const fallbackStreamOutput = await runYtDlp([
+      const streamOutput = await extractFn([
         '-g',
-        '-f', '140/251/139/bestaudio/ba/b',
+        '-f', '140/251/ba/b',
         '--no-playlist',
         '--no-warnings',
         '--',
         url
-      ], { timeout: 35000, skipExtractorArgs: true });
-      const parsed = selectAudioStreamUrl(fallbackStreamOutput);
+      ], { timeout: 35000, skipExtractorArgs: true, label: 'yt-dlp:stream-preview' });
+      const parsed = selectAudioStreamUrl(streamOutput);
       if (parsed) {
         const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
         streamUrlCache.set(url, parsed, dynamicTtl);
         return parsed;
       }
-    } catch (fallbackErr) {
-      throw new Error(`Không thể lấy luồng nghe thử: ${fallbackErr.message}`);
+    } catch (_primaryErr) {
+      // Fallback to broader audio formats (140=m4a, 251=opus, 139=low-m4a, b=best)
+      try {
+        const fallbackStreamOutput = await extractFn([
+          '-g',
+          '-f', '140/251/139/bestaudio/ba/b',
+          '--no-playlist',
+          '--no-warnings',
+          '--',
+          url
+        ], { timeout: 35000, skipExtractorArgs: true, label: 'yt-dlp:stream-fallback' });
+        const parsed = selectAudioStreamUrl(fallbackStreamOutput);
+        if (parsed) {
+          const dynamicTtl = extractStreamUrlTtl(parsed, 15 * 60 * 1000);
+          streamUrlCache.set(url, parsed, dynamicTtl);
+          return parsed;
+        }
+      } catch (fallbackErr) {
+        throw new Error(`Không thể lấy luồng nghe thử: ${fallbackErr.message}`);
+      }
     }
+    throw new Error('Không thể lấy luồng nghe thử: URL luồng rỗng');
+  })();
+
+  inFlightStreams.set(url, extractionPromise);
+  try {
+    return await extractionPromise;
+  } finally {
+    inFlightStreams.delete(url);
   }
-  throw new Error('Không thể lấy luồng nghe thử: URL luồng rỗng');
 }
 
 /**
@@ -477,6 +514,7 @@ async function searchWithYtDlp(query, options = {}) {
 
 /**
  * Search YouTube with Tier-1 Innertube and Tier-2 yt-dlp fallback (Issue #64, #65)
+ * Uses Singleflight request coalescing (`inFlightSearches`) for concurrent identical queries.
  */
 async function searchYouTube(query, options = {}) {
   const limit = options.limit || 10;
@@ -487,24 +525,37 @@ async function searchYouTube(query, options = {}) {
     return cached;
   }
 
-  // Tier 1: Fast zero-subprocess Innertube search (<200ms)
-  try {
-    const innertubeResults = await searchInnertube(query.trim(), limit, options);
-    if (innertubeResults && innertubeResults.length > 0) {
-      searchCache.set(cacheKey, innertubeResults);
-      return innertubeResults;
-    }
-  } catch (_innertubeErr) {
-    // Proceed to Tier 2 fallback
+  if (inFlightSearches.has(cacheKey)) {
+    return inFlightSearches.get(cacheKey);
   }
 
-  // Tier 2: yt-dlp CLI fallback
+  const searchPromise = (async () => {
+    // Tier 1: Fast zero-subprocess Innertube search (<200ms)
+    try {
+      const innertubeResults = await searchInnertube(query.trim(), limit, options);
+      if (innertubeResults && innertubeResults.length > 0) {
+        searchCache.set(cacheKey, innertubeResults);
+        return innertubeResults;
+      }
+    } catch (_innertubeErr) {
+      // Proceed to Tier 2 fallback
+    }
+
+    // Tier 2: yt-dlp CLI fallback
+    try {
+      const ytdlpResults = await searchWithYtDlp(query, options);
+      searchCache.set(cacheKey, ytdlpResults);
+      return ytdlpResults;
+    } catch (err) {
+      throw new Error(`Lỗi tìm kiếm bài hát: ${err.message}`);
+    }
+  })();
+
+  inFlightSearches.set(cacheKey, searchPromise);
   try {
-    const ytdlpResults = await searchWithYtDlp(query, options);
-    searchCache.set(cacheKey, ytdlpResults);
-    return ytdlpResults;
-  } catch (err) {
-    throw new Error(`Lỗi tìm kiếm bài hát: ${err.message}`);
+    return await searchPromise;
+  } finally {
+    inFlightSearches.delete(cacheKey);
   }
 }
 
@@ -690,27 +741,41 @@ function formatDuration(seconds) {
   return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
+const binaryVersionCache = new SimpleCache(10 * 60 * 1000, 10);
+
 /**
- * Get yt-dlp binary version
+ * Get yt-dlp binary version (cached for 10 minutes to avoid redundant spawns)
  */
-async function getYtDlpVersion() {
+async function getYtDlpVersion(forceRefresh = false) {
   if (process.env.MOCK_DIAGNOSTICS_VERSIONS === '1') {
     return '2025.02.01';
   }
+  if (!forceRefresh) {
+    const cached = binaryVersionCache.get('ytdlp');
+    if (cached) return cached;
+  }
   try {
-    const version = await runYtDlp(['--version']);
-    return version || 'unknown';
+    const version = await runYtDlp(['--version'], { timeout: 10000, label: 'yt-dlp:version' });
+    const result = version || 'unknown';
+    if (result !== 'unknown') {
+      binaryVersionCache.set('ytdlp', result);
+    }
+    return result;
   } catch (_e) {
     return 'not_installed';
   }
 }
 
 /**
- * Get FFmpeg binary version
+ * Get FFmpeg binary version (supervised by ProcessManager and cached for 10 minutes)
  */
-function getFFmpegVersion() {
+function getFFmpegVersion(forceRefresh = false) {
   if (process.env.MOCK_DIAGNOSTICS_VERSIONS === '1') {
     return Promise.resolve('ffmpeg version 6.1-static');
+  }
+  if (!forceRefresh) {
+    const cached = binaryVersionCache.get('ffmpeg');
+    if (cached) return Promise.resolve(cached);
   }
   return new Promise((resolve) => {
     try {
@@ -719,11 +784,17 @@ function getFFmpegVersion() {
         windowsHide: true,
         env: getSanitizedEnv(process.env)
       });
+      processManager.register(proc, {
+        label: 'ffmpeg:version',
+        command: ffmpegBin,
+        timeoutMs: 8000
+      });
       let output = '';
       proc.stdout.on('data', (d) => { output += d.toString('utf8'); });
       proc.on('close', (code) => {
         if (code === 0 && output) {
           const firstLine = output.split('\n')[0].trim();
+          binaryVersionCache.set('ffmpeg', firstLine);
           resolve(firstLine);
         } else {
           resolve('unknown');
@@ -769,6 +840,7 @@ async function getSystemDiagnostics() {
     uptime: process.uptime(),
     ytDlpVersion,
     ffmpegVersion,
+    processes: processManager.getSnapshot(),
     memory: {
       rssMb: Math.round(process.memoryUsage().rss / (1024 * 1024)),
       heapUsedMb: Math.round(process.memoryUsage().heapUsed / (1024 * 1024)),
@@ -805,8 +877,9 @@ async function updateYtDlpBinary() {
   }
   const currentVersion = await getYtDlpVersion();
   try {
-    const updateOutput = await runYtDlp(['-U'], { timeout: 6000 });
-    const newVersion = await getYtDlpVersion();
+    const updateOutput = await runYtDlp(['-U'], { timeout: 6000, label: 'yt-dlp:update' });
+    binaryVersionCache.clear();
+    const newVersion = await getYtDlpVersion(true);
     return {
       success: true,
       oldVersion: currentVersion,
@@ -841,6 +914,10 @@ module.exports = {
   searchCache,
   playlistCache,
   streamUrlCache,
+  binaryVersionCache,
+  inFlightStreams,
+  inFlightSearches,
   SimpleCache,
   extractStreamUrlTtl
 };
+

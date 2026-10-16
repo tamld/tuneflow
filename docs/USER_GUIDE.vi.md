@@ -101,3 +101,15 @@ Mở trình duyệt tại `http://<ip-máy-chủ>:3000` và đăng nhập bằng
 2. Nhấp vào nút **👑 Quản trị** ở góc trên thanh tiêu đề.
 3. Chọn **Đổi mật khẩu** để cập nhật mật khẩu cá nhân an toàn.
 4. Mở tab **Tài khoản** để tạo tài khoản cho các thành viên trong gia đình hoặc điều chỉnh hạn ngạch khách.
+
+---
+
+## 6. Ứng dụng Desktop Bản Địa, Kênh Nhạc Đã Tải Offline & Công Cụ Chẩn Đoán System Doctor
+> **Mục tiêu:** Sử dụng TuneFlow trên máy tính Windows/macOS/Linux, nghe nhạc MP3 offline và tự động chẩn đoán hệ thống.  
+> **Thời gian dự tính:** 1 phút.
+
+1. **Kênh Nhạc Đã Tải (`Nhạc Đã Tải`):** Nhấp vào nút **Nhạc Đã Tải** ở thanh điều hướng bên trái (`#btn-persona-downloaded`) để mở và phát ngay toàn bộ các bài hát `.mp3` / `.m4a` đã lưu trong ổ cứng mà không cần kết nối mạng Internet.
+2. **Mở Tuyển Tập Tự Phát Nhạc & Chế Độ Xem Riêng Biệt:** Khi bấm **`▶ Mở Tuyển Tập Nghe & Tải`** trên thẻ Playlist, ứng dụng tự động chuyển sang khung danh sách phát riêng biệt (không đè lên kết quả tìm kiếm) và phát ngay bài hát đầu tiên. Bấm **`← Quay Lại`** (`#btn-close-playlist`) để trở về danh sách thẻ bài hát.
+3. **Công Cụ Chẩn Đoán System Doctor (`--doctor`):** Chạy `pnpm run doctor` (`node bin/tuneflow.js --doctor`) hoặc gọi `GET /api/system/doctor` để kiểm tra sức khỏe Node.js, cơ sở dữ liệu SQLite, quyền ghi thư mục nhạc, trạng thái tiến trình con (`ProcessManager`) và các bộ giải mã `yt-dlp` / `ffmpeg`.
+4. **Đồng Bộ Bản Chạy Trực Tiếp (Windows):** Chạy `pnpm run desktop:sync` (`powershell -ExecutionPolicy Bypass -File scripts/sync_local_install.ps1`) để tự động đóng gói sidecar, đồng bộ mã nguồn sang `dist\win-unpacked` và `%LOCALAPPDATA%\Programs\TuneFlow`.
+

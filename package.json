@@ -19,6 +19,8 @@
     "sync-versions": "node scripts/sync-versions.js",
     "sync-versions:check": "node scripts/sync-versions.js --check",
     "package:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package_windows.ps1",
+    "desktop:sync": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync_local_install.ps1",
+    "doctor": "node bin/tuneflow.js --doctor",
     "package:macos": "bash scripts/package_macos.sh",
     "package:macos:thin": "bash scripts/package_macos.sh --thin-client",
     "install:macos": "bash scripts/install_macos.sh",

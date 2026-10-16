@@ -41,6 +41,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 │ Phase 17 │ Desktop In-App Update & Multi-Arch Dist  │ v3.1.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
 │ Phase 18 │ Filial Physical Bridge & TV Casting      │ v3.2.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
 │ Phase 19 │ 1-Click Zero-Friction Community Ship     │ v3.3.0                  │ Code-complete on master (Unreleased — latest release tag v2.5.0)│
+│ Phase 20 │ 3-Zone Desktop Shell, Doctor & Sidecars  │ v2.5.0+                 │ Code-complete on master (SPEC-0016, SPEC-0017, ADR-0019/0020)  │
 └──────────┴──────────────────────────────────────────┴─────────────────────────┴───────────────────────────────────────────────────────────────┘
 ```
 
@@ -232,6 +233,17 @@ Each phase is designed independently with a complete quality assurance dossier:
 
 ---
 
+### Phase 20: 3-Zone Desktop App Shell, Open-Source Asset Governance, Process Lifecycle Supervision, System Doctor & Offline Library (v2.5.0+ — Code-complete on master)
+- **Scope**:
+  - **3-Zone Desktop Application Shell & Isolated Playlist Stage (`SPEC-0016`, `ADR-0019`)**: Left Sidebar (`260px`) + Scrollable Main Stage + Docked Bottom Player (`74px`) with 5 curated visual themes (`dark`, `cream`, `wood`, `jade`, `hc`), native Win32 DWM Dark Titlebar (`TuneFlowLauncher.cs`), isolated Desktop playlist view (`#btn-close-playlist` `← Quay Lại`, zero card overlap, locked `100vh` viewport), and instant Track #1 playlist auto-play.
+  - **Open-Source Asset Governance (`ADR-0020`)**: Bundled `Be Vietnam Pro` (`OFL-1.1`) WOFF2 Vietnamese typography (`public/fonts/`), Lucide SVG stroke icons (`MIT`), and automated SPDX compliance checks (`tests/open-source-asset-compliance.test.js`).
+  - **Self-Contained Sidecar Bundler, System Doctor & Offline Downloaded Library (`SPEC-0017`)**: `scripts/bundle-sidecars.js`, `node bin/tuneflow.js --doctor`, `GET /api/system/doctor`, and `#btn-persona-downloaded` (`GET /api/library/local` & `/api/library/local/stream/:filename`) for 1-click offline MP3 playback.
+  - **Process Lifecycle Supervision & Performance Optimization (`src/engine/process_manager.js`)**: Centralized child process registry, cross-platform process-tree termination (`taskkill /T /F /PID` on Windows, `-pgid` process group kill on POSIX), PID lockfile (`data/tuneflow.pid`), watchdog timeouts (`15s` stream / `30s` search / `15m` transcode), Singleflight stream coalescing, fast-start M4A (`itag=140`) stream priority, and immutable 1-year `.woff2` font caching.
+- **SSoT Deliverables**: `docs/spec/SPEC-0016-desktop-app-shell-and-native-windows-host.md`, `docs/spec/SPEC-0017-self-contained-packaging-doctor-and-ux-refinement.md`, `docs/adr/ADR-0019-desktop-app-shell-and-native-chromium-host.md`, `docs/adr/ADR-0020-open-source-asset-and-font-licensing-governance.md`.
+- **Verification**: `tests/desktop-app-shell-and-host.test.js`, `tests/open-source-asset-compliance.test.js`, `tests/ui-layout-and-clipping.test.js`, `tests/phase20-packaging-doctor-and-offline-library.test.js`, and `tests/process-lifecycle-and-performance.test.js`.
+
+---
+
 ## 📋 Traceability Matrix
 
 | Requirement | Scope Description | SSoT Specification | Test Suite / Verification |
@@ -283,4 +295,7 @@ Each phase is designed independently with a complete quality assurance dossier:
 | **RM-45** | Autonomous Self-Healing yt-dlp Daemon, Gerontechnology Fallback & Platform OpSec | Issue #136 | `tests/engine-health.test.js`, `tests/connect-usb-health-api.test.js` |
 | **RM-46** | Community Homelab AppStore Manifests & Turnkey 1-Click Packaging | Phase 19 | `tests/community-homelab-templates.test.js` |
 | **RM-47** | Native Windows Test Parity, Cross-Platform POSIX Guards & Windows CI Matrix | Issue #137 | `tests/windows-desktop-packaging.test.js`, `.github/workflows/ci.yml` |
-
+| **RM-48** | 3-Zone Desktop App Shell, 5-Theme System & Native DWM Titlebar | SPEC-0016, ADR-0019 | `tests/desktop-app-shell-and-host.test.js`, `tests/ui-layout-and-clipping.test.js` |
+| **RM-49** | Open-Source Asset Governance (Be Vietnam Pro OFL-1.1 & Lucide MIT) | ADR-0020 | `tests/open-source-asset-compliance.test.js` |
+| **RM-50** | Self-Contained Sidecar Bundler, System Doctor & Offline Downloaded Library | SPEC-0017, Phase 20 | `tests/phase20-packaging-doctor-and-offline-library.test.js` |
+| **RM-51** | ProcessManager Anti-Orphan Tree-Kill, PID Lockfile Hygiene, Watchdog Timeouts & Singleflight Stream Coalescing | SPEC-0017, Phase 20 | `tests/process-lifecycle-and-performance.test.js` |

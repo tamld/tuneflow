@@ -19,6 +19,8 @@ AppSupportURL={#MyAppURL}/issues
 AppUpdatesURL={#MyAppURL}/releases
 DefaultDirName={localappdata}\Programs\{#MyAppName}
 DisableProgramGroupPage=yes
+AppMutex=com.tamld.tuneflow.singleinstance
+CloseApplications=yes
 ; Zero-Admin User-Level Installation: No UAC elevation required
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog

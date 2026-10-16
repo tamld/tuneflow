@@ -6,6 +6,7 @@ const { TEMP_DIR, DOWNLOADS_DIR, MAX_DOWNLOADS, MAX_RETRIES, DOWNLOAD_TTL_HOURS,
 const { convertToMp3 } = require('./ffmpeg');
 const { supportsJsRuntimes } = require('./ytdlp');
 const { resolveSidecarBinary, getSanitizedEnv } = require('../security/binary_guard');
+const { processManager } = require('./process_manager');
 
 /**
  * Sanitize titles for all operating systems (Windows, Linux, macOS)
@@ -63,6 +64,7 @@ class DownloadQueue {
     this.isProcessing = false;
     this.lastBroadcast = 0;
     this.broadcastTimer = null;
+    this.libraryVersion = 1;
 
     // Periodic storage cleanup and quota enforcement (runs every hour)
     setInterval(() => this.cleanupOldFiles(), 60 * 60 * 1000).unref();
@@ -70,12 +72,15 @@ class DownloadQueue {
 
   shutdown() {
     console.log(`🛑 DownloadQueue: Gracefully terminating ${this.activeProcesses.size} active download processes and ${this.sseClients.size} SSE client streams...`);
+    if (this.broadcastTimer) {
+      clearTimeout(this.broadcastTimer);
+      this.broadcastTimer = null;
+    }
     for (const [_id, proc] of this.activeProcesses.entries()) {
-      try {
-        proc.kill('SIGTERM');
-      } catch (_e) {}
+      processManager.killProcessTree(proc, 'SIGKILL', 'queue_shutdown');
     }
     this.activeProcesses.clear();
+    processManager.killAll('queue_shutdown');
     for (const client of this.sseClients) {
       try {
         client.end();
@@ -241,11 +246,10 @@ class DownloadQueue {
 
     if (this.activeProcesses.has(id)) {
       const proc = this.activeProcesses.get(id);
-      try {
-        proc.kill('SIGTERM');
-      } catch (e) {}
+      processManager.killProcessTree(proc, 'SIGKILL', `cancel:${id}`);
       this.activeProcesses.delete(id);
     }
+    processManager.killByItemId(id);
 
     item.status = 'cancelled';
     this.broadcast();
@@ -380,9 +384,15 @@ class DownloadQueue {
         const ytdlpBin = resolveSidecarBinary('yt-dlp');
         const proc = spawn(ytdlpBin, args, {
           windowsHide: true,
+          detached: process.platform !== 'win32',
           env: getSanitizedEnv(process.env)
         });
         this.activeProcesses.set(item.id, proc);
+        processManager.register(proc, {
+          label: 'yt-dlp:download',
+          itemId: item.id,
+          command: ytdlpBin
+        });
 
         proc.stdout.on('data', (data) => {
           const line = data.toString('utf8');
@@ -412,9 +422,12 @@ class DownloadQueue {
 
         proc.on('error', (err) => {
           this.activeProcesses.delete(item.id);
+          processManager.killProcessTree(proc, 'SIGKILL', 'download_spawn_error');
           reject(err);
         });
       });
+
+      if (item.status === 'cancelled') return;
 
       // Find the downloaded temp audio file
       const tempFiles = fs.readdirSync(TEMP_DIR).filter(f => f.startsWith(item.id) && !f.endsWith('.part') && !f.endsWith('.ytdl'));
@@ -429,10 +442,20 @@ class DownloadQueue {
       item.progress = 90;
       this.broadcast(true);
 
-      await convertToMp3(downloadedTempFile, finalMp3Path, {
-        title: item.title,
-        artist: item.uploader
-      });
+      try {
+        await convertToMp3(downloadedTempFile, finalMp3Path, {
+          title: item.title,
+          artist: item.uploader,
+          itemId: item.id,
+          onProcess: (ffmpegProc) => {
+            this.activeProcesses.set(item.id, ffmpegProc);
+          }
+        });
+      } finally {
+        this.activeProcesses.delete(item.id);
+      }
+
+      if (item.status === 'cancelled') return;
 
       // Step 3: Success! Mark completed & calculate SHA-256 checksum
       try {
@@ -447,6 +470,7 @@ class DownloadQueue {
       item.progress = 100;
       item.completedFilePath = finalMp3Path;
       item.checksum = checksum;
+      this.libraryVersion++;
       this.broadcast(true);
 
       // Enforce storage quota after new file completion

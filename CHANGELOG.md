@@ -1,9 +1,17 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
-## [2.5.0] - 2026-09-11
+## [2.5.0] - 2026-10-16
 
 ### Đã Thêm (Added)
+- **Quản Lý Vòng Đời Tiến Trình Con, Chống Tiến Trình Ma (Orphan/Zombie PID) & Tối Ưu Hiệu Năng Luồng Phát (`src/engine/process_manager.js`, `tests/process-lifecycle-and-performance.test.js`)**:
+  - Xây dựng bộ giám sát tiến trình tập trung `ProcessManager` (`src/engine/process_manager.js`) theo dõi toàn bộ tiến trình con `yt-dlp` và `ffmpeg`, tự động diệt trọn cây tiến trình (`taskkill /T /F /PID` trên Windows, `-pgid` process group kill trên Linux/macOS) khi hủy hàng đợi (`queue.cancel()`), hết hạn hẹn giờ watchdog (`15s` stream / `30s` search / `15m` transcode) hoặc tắt máy chủ, triệt tiêu 100% tiến trình ma (orphan/zombie PIDs).
+  - Quản lý khóa định danh `data/tuneflow.pid` (`writePidFile`, `cleanStalePidFile`, `removePidFile`) và tích hợp thống kê tiến trình đang chạy trực tiếp vào `GET /api/system/doctor` (`processes` check).
+  - Tối ưu hóa hiệu năng phát nhạc: hợp nhất truy vấn trùng lặp qua cơ chế **Singleflight Coalescing**, giới hạn kích thước bộ nhớ đệm LRU (`MAX_SEARCH_CACHE_ENTRIES = 100`, `MAX_STREAM_CACHE_ENTRIES = 200`), ưu tiên luồng âm thanh khởi phát nhanh `M4A (itag=140)` và phục vụ phông chữ `.woff2` với header `Cache-Control: public, max-age=31536000, immutable`.
+- **Kiến Trúc 3-Zone Desktop App Shell, Hệ Thống 5 Giao Diện, Chẩn Đoán Doctor & Kho Nhạc Đã Tải Offline (Phase 20 - SPEC-0016, SPEC-0017, ADR-0019, ADR-0020)**:
+  - Thiết kế lại bố cục Desktop 3 vùng (`Sidebar 260px` + `Main Stage` + `Docked Player Bar 74px`), tích hợp 5 chủ đề màu (`Đêm Ấm`, `Ngày Dịu`, `Gỗ Trầm`, `Sen Xanh`, `Rõ Nét`) và bộ phông chữ mã nguồn mở `Be Vietnam Pro` (`OFL-1.1`) đóng gói sẵn (`public/fonts/`).
+  - Bổ sung kênh thứ 4 trên thanh điều hướng: **Nhạc Đã Tải (`#btn-persona-downloaded`)** kết nối với `GET /api/library/local` và `GET /api/library/local/stream/:filename`, cho phép Bố Mẹ mở và nghe trực tiếp các tệp MP3/M4A trong ổ cứng không cần mạng Internet, đồng thời tự động ghi nhớ bài hát nghe gần nhất (`tuneflow_last_track`).
+  - Xây dựng công cụ chẩn đoán hệ thống tự động **System Doctor** (`node bin/tuneflow.js --doctor` & `GET /api/system/doctor`) và trình đóng gói sidecar tự thân (`scripts/bundle-sidecars.js`, `scripts/sync_local_install.ps1`).
 - **Đóng Gói Ứng Dụng Bản Địa macOS (DMG), Linux Portable & Bộ Khởi Chạy Desktop Đa Nền Tảng (Cross-Platform Native Desktop Packaging & DMG Suite - SPEC-0010)**:
   - Xây dựng động cơ khởi chạy desktop hợp nhất `src/desktop/launcher.js` và CLI executable `bin/tuneflow.js`: tự động dò tìm cổng khả dụng (port scanning 3000..3010), khởi động server an toàn và tự động kích hoạt trình duyệt mặc định trên Windows (`start`), macOS (`open`), và Linux (`xdg-open`).
   - Xây dựng bộ đóng gói macOS hoàn chỉnh:
@@ -73,6 +81,10 @@ Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi c
   - Ban hành `docs/superpowers/plans/2026-09-11-superpowers-tuneflow-mandatory-steps.md` quy định 8 bước bắt buộc và cơ chế chống stale docs.
 
 ### Đã Sửa (Fixed)
+- **Khắc Phục Triệt Để Lỗi Đè Khung Playlist, Cắt Mép Trên Desktop & Tự Động Phát Nhạc Tức Thì (`public/index.html`, `public/css/silver-melody.css`, `public/js/app.js`, `public/js/player.js`, `src/engine/ytdlp.js`)**:
+  - Khắc phục lỗi thẻ bài hát và khung `#playlist-panel` đè chồng lên nhau trên Desktop (`>= 960px`): khi mở một Tuyển Tập, lưới `.results-section` tự động ẩn hoàn toàn và bổ sung nút **`← Quay Lại`** (`#btn-close-playlist`) để quay về danh sách thẻ bài hát.
+  - Khắc phục lỗi vỡ mép trên (`top clipping 48px`) khi gọi `scrollIntoView()` trên Desktop bằng cách khóa `max-height: 100vh; margin: 0 !important; padding: 0 !important;` cho `html, body` và chỉ gọi `scrollIntoView` trên màn hình di động (`< 960px`).
+  - Khắc phục lỗi bấm mở Tuyển Tập hoặc bấm nút Play không phát nhạc: tự động phát ngay bài đầu tiên khi mở Tuyển Tập, kích hoạt `AudioContext.resume()` đồng bộ trong sự kiện click của người dùng, bổ sung thư mục `node.exe` vào `PATH` của `yt-dlp`, và prewarm sẵn bài hát lưu gần nhất (`tuneflow_last_track`) khi khởi động.
 - **Đồng Bộ Kiểm Thử Bản Địa Windows, Bọc Chặn POSIX & Bổ Sung Windows Runner Cho GitHub Actions CI (Native Windows Test Parity, POSIX Guards & Windows CI Matrix - Issue #137)**:
   - Bổ sung bộ kiểm thử đóng gói chuyên biệt cho Windows `tests/windows-desktop-packaging.test.js` kiểm định Inno Setup 6 (`setup.iss`), AppUserModelID, URL Protocol `tuneflow://`, App Paths và các manifest WinGet / Scoop.
   - Khắc phục lỗi kiểm tra quyền thực thi `stat.mode & 0o111` trên hệ thống tập tin NTFS của Windows trong `tests/macos-desktop-packaging.test.js` và `tests/linux-desktop-packaging.test.js`.

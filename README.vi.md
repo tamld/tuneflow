@@ -48,12 +48,12 @@ TuneFlow được sinh ra với một sứ mệnh duy nhất: **Giúp người c
 
 ## ⚡ 6 Điểm Đột Phá Chính
 
-1. 👴👵 **Giao diện "SilverMelody" Thân Thiện Người Cao Tuổi**: Nút bấm to ($\ge 56$px), chữ lớn, tương phản cao chống chói mắt (WCAG 2.2 AAA), hỗ trợ 2 giao diện (Đêm Ấm và Ngày Dịu Warm Cream).
+1. 👴👵 **Giao diện "SilverMelody" 3-Zone Desktop Shell & 5 Chủ Đề Màu**: Nút bấm to ($\ge 56$px), phông chữ mã nguồn mở `Be Vietnam Pro` (`OFL-1.1`) đóng gói sẵn, và 5 giao diện dịu mắt (`Đêm Ấm`, `Ngày Dịu`, `Gỗ Trầm`, `Sen Xanh`, `Rõ Nét WCAG AAA`).
 2. 📡 **TuneFlow Connect (Phát Lên TV Không Cần Gõ Chữ)**: Màn hình TV chỉ hiện mã PIN 4 số to rõ. Bố Mẹ hoặc con cái chọn bài trên điện thoại và bấm "Phát Lên TV" — giải phóng hoàn toàn khỏi cực hình gõ bàn phím remote TV!
 3. 💾 **Cầu Nối USB / Thẻ Nhớ Vật Lý (Physical Hardware Bridge)**: Tự động phát hiện USB đang cắm, chép nhạc với thứ tự số `001 - Ca Si - Ten Bai Hat.mp3`, dọn sạch file rác macOS (`.DS_Store`, `._*`) giúp loa đài Craven/BKK, đài tụng kinh và đầu đĩa ô tô đọc 100% mượt mà. Cung cấp cả gói tải ZIP cho thiết bị từ xa.
-4. 🎧 **Nghe Thử Trực Tiếp Không Tốn Ổ Cứng (Zero-Disk)**: Bấm vào bài hát nghe thử ngay lập tức với cơ chế nạp luồng trước, ưng ý mới bấm tải về máy.
+4. 🎧 **Nghe Thử Trực Tiếp Tức Thì, Mở Tuyển Tập Tự Phát Nhạc & Kênh "Nhạc Đã Tải" Offline 1 Chạm**: Bấm nghe thử tức thì nhờ hợp nhất truy vấn Singleflight và ưu tiên luồng `M4A (itag=140)` khởi phát nhanh. Khi bấm mở bất kỳ thẻ Tuyển Tập nào, ứng dụng chuyển sang màn hình danh sách phát riêng biệt (có nút `← Quay Lại`) và tự động phát ngay bài đầu tiên, hoặc chuyển sang kênh **Nhạc Đã Tải (`#btn-persona-downloaded`)** để nghe các bài MP3/M4A trong ổ cứng không cần Internet.
 5. 🎛️ **Bộ Lọc Âm Thanh Web Audio DSP**: Bộ lọc 3 dải âm (Giọng Trong Trẻo, Nhạc Vàng Bolero Trầm Ấm) và khuếch đại âm lượng 125%–150% chống rè cho người lớn tuổi lãng tai.
-6. 🌸 **Tự Phục Hồi yt-dlp & Lời Báo Lỗi Ấm Áp**: Tự động vá lỗi khi YouTube cập nhật botguard. Tuyệt đối không hiện lỗi kỹ thuật tiếng Anh gây sợ hãi; chuyển hướng mượt mà sang Thư Viện bài hát đã tải sẵn.
+6. 🌸 **Tự Phục Hồi yt-dlp, Giám Sát Tiến Trình Chống Orphan PID & Công Cụ Chẩn Đoán System Doctor**: Tự động vá lỗi khi YouTube cập nhật botguard, quản lý vòng đời tiến trình con qua `ProcessManager` (dọn sạch cây tiến trình `taskkill /T /F /PID` & `-pgid`, khóa `tuneflow.pid`, hẹn giờ watchdog chống treo), tích hợp công cụ chẩn đoán (`pnpm run doctor` / `GET /api/system/doctor`) kiểm tra toàn diện Node, SQLite DB, thư mục nhạc và các bộ giải mã âm thanh.
 
 ---
 
@@ -131,7 +131,7 @@ Sao chép [`installer/unraid/tuneflow.xml`](installer/unraid/tuneflow.xml) vào 
 
 ### Lựa chọn D: Desktop 1-Click (Cài đặt máy tính cho con cái & bố mẹ)
 * **macOS**: Tải [`TuneFlow.dmg`](https://github.com/tamld/tuneflow/releases/latest), kéo vào thư mục `/Applications`, bấm đúp chuột để mở.
-* **Windows**: Tải [`TuneFlow-Setup.exe`](https://github.com/tamld/tuneflow/releases/latest), chạy trình cài đặt thân thiện, icon ứng dụng sẽ xuất hiện trên màn hình desktop.
+* **Windows**: Tải [`TuneFlow-Setup.exe`](https://github.com/tamld/tuneflow/releases/latest), chạy trình cài đặt thân thiện, icon ứng dụng sẽ xuất hiện trên màn hình desktop. Có thể chạy `pnpm run doctor` (`node bin/tuneflow.js --doctor`) bất cứ lúc nào để kiểm tra sức khỏe hệ thống, hoặc chạy `pnpm run desktop:sync` (`scripts/sync_local_install.ps1`) để đồng bộ tức thì vào thư mục chạy trực tiếp.
 
 ---
 
@@ -140,7 +140,7 @@ Sao chép [`installer/unraid/tuneflow.xml`](installer/unraid/tuneflow.xml) vào 
 * 📖 **[Cẩm Nang Sử Dụng (Tiếng Việt)](docs/USER_GUIDE.vi.md)**: Hướng dẫn cài đặt từng bước cho iOS PWA, Android, Android TV và Docker.
 * ⚙️ **[Cấu Hình Biến Môi Trường](docs/CONFIG.md)**: Bảng chi tiết toàn bộ biến môi trường, hạn mức và cơ chế bảo mật.
 * 🌐 **[Mẫu Cấu Hình Reverse Proxy](docs/REVERSE_PROXY.md)**: Hướng dẫn cấu hình sẵn cho Traefik v3, Nginx, Caddy 2 và Cloudflare Tunnel.
-* 🗺️ **[Lộ Trình Phát Triển](docs/ROADMAP.md)**: Chi tiết các giai đoạn phát triển tính năng từ Phase 1 đến Phase 11.
+* 🗺️ **[Lộ Trình Phát Triển](docs/ROADMAP.md)**: Chi tiết các giai đoạn phát triển tính năng từ Phase 1 đến Phase 20.
 * 📜 **[Lịch Sử Phát Hành](CHANGELOG.md)**: Nhật ký cập nhật phiên bản, sửa lỗi và cải tiến hệ thống.
 * 🏛️ **[Đặc Tả & Thiết Kế Kiến Trúc](docs/PRD.md)**: Toàn bộ hồ sơ kỹ thuật PRD, SRS, FSM và tuân thủ bản quyền.
 

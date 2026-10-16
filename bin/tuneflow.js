@@ -31,6 +31,7 @@ Options:
   --port <number>     Port to bind (default: 3000, auto-increments if busy)
   --no-browser        Do not automatically open default browser on start
   --daemon            Run as background/system service daemon (detach stdin lifeline)
+  --doctor            Run system health & sidecar diagnostics and exit
   --version, -v       Print current version and exit
   --help, -h          Show this help message and exit
 `);
@@ -40,6 +41,18 @@ Options:
 if (args.includes('--version') || args.includes('-v')) {
   console.log(`v${pkg.version}`);
   process.exit(0);
+}
+
+if (args.includes('--doctor')) {
+  const { runSystemDoctor } = require('../src/engine/doctor');
+  runSystemDoctor().then((report) => {
+    console.log(JSON.stringify(report, null, 2));
+    process.exit(report.ok ? 0 : 1);
+  }).catch((err) => {
+    console.error(JSON.stringify({ ok: false, error: err.message }));
+    process.exit(1);
+  });
+  return;
 }
 
 let port = null;
@@ -55,11 +68,29 @@ if (portIdx !== -1 && args[portIdx + 1]) {
 const autoOpenBrowser = !args.includes('--no-browser');
 const isDaemon = args.includes('--daemon') || process.env.TUNEFLOW_DAEMON === '1';
 
+function gracefulDesktopExit(reason = 'exit') {
+  try {
+    const queue = require('../src/engine/queue');
+    if (queue && typeof queue.shutdown === 'function') {
+      queue.shutdown();
+    }
+  } catch (_e) {}
+  try {
+    const { processManager } = require('../src/engine/process_manager');
+    processManager.killAll(reason);
+    processManager.removePidFile();
+  } catch (_e) {}
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulDesktopExit('SIGTERM'));
+process.on('SIGINT', () => gracefulDesktopExit('SIGINT'));
+
 // Sidecar lifeline: Auto-exit cleanly if parent desktop UI process pipe terminates
 if (!autoOpenBrowser && !isDaemon) {
   process.stdin.resume();
   process.stdin.on('end', () => {
-    process.exit(0);
+    gracefulDesktopExit('stdin_eof');
   });
 }
 
@@ -68,3 +99,4 @@ launch({ port, autoOpenBrowser }).catch((err) => {
   console.error(`💥 Failed to launch TuneFlow Desktop:`, err.message);
   process.exit(1);
 });
+

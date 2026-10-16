@@ -890,5 +890,124 @@ router.post('/engine/update', async (_req, res) => {
   }
 });
 
+// =============================================================================
+// BUILT-IN SYSTEM DOCTOR & OFFLINE DOWNLOADED LIBRARY (SPEC-0017 / Phase 20)
+// =============================================================================
+const { runSystemDoctor } = require('../engine/doctor');
+
+router.get('/system/doctor', async (_req, res) => {
+  try {
+    const report = await runSystemDoctor({ writeLog: true });
+    res.json(report);
+  } catch (err) {
+    res.status(500).json({ ok: false, success: false, error: err.message });
+  }
+});
+
+let localLibraryCache = {
+  dirMtimeMs: 0,
+  libraryVersion: 0,
+  fileCount: -1,
+  payload: null
+};
+
+router.get('/library/local', (_req, res) => {
+  try {
+    if (!fs.existsSync(DOWNLOADS_DIR)) {
+      return res.json({ ok: true, success: true, count: 0, results: [] });
+    }
+
+    const dirStat = fs.statSync(DOWNLOADS_DIR);
+    const entries = fs.readdirSync(DOWNLOADS_DIR)
+      .filter(f => /\.(mp3|m4a)$/i.test(f));
+
+    if (
+      localLibraryCache.payload &&
+      localLibraryCache.dirMtimeMs === dirStat.mtimeMs &&
+      localLibraryCache.libraryVersion === (queue.libraryVersion || 1) &&
+      localLibraryCache.fileCount === entries.length
+    ) {
+      return res.json(localLibraryCache.payload);
+    }
+
+    const tracks = [];
+    for (const filename of entries) {
+      const fullPath = path.join(DOWNLOADS_DIR, filename);
+      try {
+        const stat = fs.statSync(fullPath);
+        if (!stat.isFile()) continue;
+        const ext = path.extname(filename);
+        const rawTitle = path.basename(filename, ext).replace(/_/g, ' ');
+        const sizeMb = Math.round((stat.size / (1024 * 1024)) * 10) / 10;
+        const safeId = 'local_' + Buffer.from(filename).toString('base64url').slice(0, 22);
+        tracks.push({
+          id: safeId,
+          filename,
+          title: rawTitle,
+          uploader: `Đã tải về máy (${sizeMb} MB)`,
+          duration: 0,
+          duration_string: 'MP3 Offline',
+          thumbnail: '',
+          url: `/api/library/local/stream/${encodeURIComponent(filename)}`,
+          localStreamUrl: `/api/library/local/stream/${encodeURIComponent(filename)}`,
+          isLocalDownloaded: true,
+          mtimeMs: stat.mtimeMs,
+          sizeBytes: stat.size
+        });
+      } catch (_e) {
+        // Skip unreadable file entry
+      }
+    }
+
+    tracks.sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+    const payload = {
+      ok: true,
+      success: true,
+      count: tracks.length,
+      results: tracks
+    };
+
+    localLibraryCache = {
+      dirMtimeMs: dirStat.mtimeMs,
+      libraryVersion: queue.libraryVersion || 1,
+      fileCount: entries.length,
+      payload
+    };
+
+    res.json(payload);
+  } catch (err) {
+    res.status(500).json({ ok: false, success: false, error: err.message });
+  }
+});
+
+router.get('/library/local/stream/:filename', (req, res) => {
+  try {
+    const rawName = String(req.params.filename || '');
+    const safeBase = path.basename(rawName);
+    if (!rawName || safeBase !== rawName || rawName.includes('..') || !/\.(mp3|m4a)$/i.test(safeBase)) {
+      return res.status(400).json({ error: 'Tên tệp nhạc không hợp lệ' });
+    }
+
+    const fullPath = path.resolve(DOWNLOADS_DIR, safeBase);
+    const resolvedDownloadsDir = path.resolve(DOWNLOADS_DIR);
+    if (!fullPath.startsWith(resolvedDownloadsDir + path.sep) && fullPath !== path.join(resolvedDownloadsDir, safeBase)) {
+      return res.status(400).json({ error: 'Truy cập tệp bị từ chối' });
+    }
+
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ error: 'Không tìm thấy tệp nhạc trên ổ cứng' });
+    }
+
+    const isM4a = /\.m4a$/i.test(safeBase);
+    res.setHeader('Content-Type', isM4a ? 'audio/mp4' : 'audio/mpeg');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.sendFile(fullPath);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+
 

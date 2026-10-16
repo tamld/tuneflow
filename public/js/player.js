@@ -82,6 +82,33 @@ class PreviewPlayer {
     this.lastPipProgressRender = 0;
     this.lastPositionSyncTime = 0;
 
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const savedTrack = JSON.parse(localStorage.getItem('tuneflow_last_track') || 'null');
+        if (savedTrack && savedTrack.id && savedTrack.title && !savedTrack.isPlaylist && !String(savedTrack.id).startsWith('PL')) {
+          this.currentTrack = savedTrack;
+          if (this.trackTitle) {
+            this.trackTitle.textContent = `${savedTrack.title} - ${savedTrack.uploader || ''}`;
+          }
+          if (this.trackStatus) {
+            this.trackStatus.textContent = 'Bấm ▶ để nghe tiếp bài hát lần trước';
+          }
+          if (this.timeTotal && (savedTrack.duration_string || savedTrack.duration)) {
+            this.timeTotal.textContent = savedTrack.duration_string || this.formatTime(savedTrack.duration);
+          }
+          if (typeof fetch === 'function') {
+            setTimeout(() => {
+              fetch('/api/preview/prewarm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: savedTrack.id })
+              }).catch(() => {});
+            }, 300);
+          }
+        }
+      }
+    } catch (_e) {}
+
     this.bindEvents();
   }
 
@@ -153,11 +180,22 @@ class PreviewPlayer {
     }
 
     this.audio.addEventListener('timeupdate', () => {
-      if (!isNaN(this.audio.duration)) {
-        const pct = (this.audio.currentTime / this.audio.duration) * 100;
+      const hasNativeDuration = !isNaN(this.audio.duration) && isFinite(this.audio.duration) && this.audio.duration > 0;
+      const fallbackDuration = (this.currentTrack && this.currentTrack.duration) ? Number(this.currentTrack.duration) : 0;
+      const effectiveDuration = hasNativeDuration ? this.audio.duration : fallbackDuration;
+
+      if (this.timeCurrent) {
+        this.timeCurrent.textContent = this.formatTime(this.audio.currentTime);
+      }
+
+      if (effectiveDuration > 0) {
+        const pct = (this.audio.currentTime / effectiveDuration) * 100;
         if (this.progressBar) this.progressBar.value = pct || 0;
-        if (this.timeCurrent) this.timeCurrent.textContent = this.formatTime(this.audio.currentTime);
-        if (this.timeTotal) this.timeTotal.textContent = this.formatTime(this.audio.duration);
+        if (this.timeTotal) {
+          this.timeTotal.textContent = hasNativeDuration
+            ? this.formatTime(this.audio.duration)
+            : (this.currentTrack && this.currentTrack.duration_string ? this.currentTrack.duration_string : this.formatTime(effectiveDuration));
+        }
 
         // Throttle position state update for Lock Screen & Control Center
         const now = Date.now();
@@ -176,8 +214,11 @@ class PreviewPlayer {
 
     if (this.progressBar) {
       this.progressBar.addEventListener('input', () => {
-        if (!isNaN(this.audio.duration)) {
-          this.audio.currentTime = (this.progressBar.value / 100) * this.audio.duration;
+        const hasNativeDuration = !isNaN(this.audio.duration) && isFinite(this.audio.duration) && this.audio.duration > 0;
+        const fallbackDuration = (this.currentTrack && this.currentTrack.duration) ? Number(this.currentTrack.duration) : 0;
+        const effectiveDuration = hasNativeDuration ? this.audio.duration : fallbackDuration;
+        if (effectiveDuration > 0) {
+          this.audio.currentTime = (this.progressBar.value / 100) * effectiveDuration;
         }
       });
     }
@@ -491,7 +532,12 @@ class PreviewPlayer {
   }
 
   playTrack(track) {
-    if (this.currentTrack && this.currentTrack.id === track.id) {
+    if (!track || !track.id) return;
+    if (this.audioCtx) {
+      this.resumeAudioContext();
+    }
+
+    if (this.currentTrack && this.currentTrack.id === track.id && this.audio.src) {
       if (this.isLoading) {
         // Prevent double-click disruption during stream handshake (Issue #70)
         return;
@@ -504,6 +550,12 @@ class PreviewPlayer {
     this.isLoading = true;
     this.isPlaying = false;
 
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('tuneflow_last_track', JSON.stringify(track));
+      }
+    } catch (_e) {}
+
     // Dispatch to paired TV receiver if TuneFlow Connect is active (Issue #134)
     if (typeof window !== 'undefined' && window.tuneflowConnect && window.tuneflowConnect.activeReceiver) {
       window.tuneflowConnect.castCommand('playTrack', track);
@@ -512,6 +564,13 @@ class PreviewPlayer {
     if (this.playerContainer) this.playerContainer.classList.add('visible');
     if (this.trackTitle) this.trackTitle.textContent = `${track.title} - ${track.uploader || ''}`;
     if (this.trackStatus) this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_stream_connecting') : '⏳ Đang kết nối luồng nhạc...';
+    if (this.timeCurrent) this.timeCurrent.textContent = '00:00';
+    if (this.progressBar) this.progressBar.value = 0;
+    if (this.timeTotal) {
+      this.timeTotal.textContent = (track.duration_string && track.duration_string !== '00:00')
+        ? track.duration_string
+        : (track.duration ? this.formatTime(track.duration) : '00:00');
+    }
 
     // Highlight loading card on UI & reset other cards immediately
     this.resetAllCards();
@@ -553,9 +612,15 @@ class PreviewPlayer {
       }
     }, 25000);
 
-    // Load stream from backend preview route (HTML5 audio auto-loads on src assignment)
+    try {
+      this.audio.pause();
+    } catch (_e) {}
+
+    // Load stream from local disk route or backend preview route (HTML5 audio auto-loads on src assignment)
     const resolve = (typeof window !== 'undefined' && window.TUNEFLOW_RESOLVE_URL) ? window.TUNEFLOW_RESOLVE_URL : (p => p);
-    this.audio.src = resolve(`/api/preview/${track.id}`);
+    this.audio.src = track.localStreamUrl
+      ? resolve(track.localStreamUrl)
+      : resolve(`/api/preview/${track.id}`);
 
     this.audio.play().then(() => {
       if (this.connectionTimeoutTimer) {
@@ -592,7 +657,17 @@ class PreviewPlayer {
   }
 
   togglePlay() {
-    if (!this.audio.src) return;
+    if (this.audioCtx) {
+      this.resumeAudioContext();
+    }
+    if (!this.audio.src) {
+      if (this.currentTrack) {
+        const trackToResume = this.currentTrack;
+        this.currentTrack = null;
+        this.playTrack(trackToResume);
+      }
+      return;
+    }
     if (this.isPlaying) {
       this.audio.pause();
       this.isPlaying = false;
@@ -629,7 +704,7 @@ class PreviewPlayer {
     document.querySelectorAll('.song-card').forEach(card => {
       card.classList.remove('playing');
       card.classList.remove('loading');
-      const btn = card.querySelector('.btn-preview');
+      const btn = card.querySelector('.btn-preview:not(.btn-open-playlist)');
       if (btn) btn.innerHTML = previewText;
       const icon = card.querySelector('.play-icon-overlay');
       if (icon) icon.textContent = '▶';

@@ -23,7 +23,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static assets: aggressive revalidation for scripts/html, cached images/fonts
+// Serve static assets: aggressive revalidation for scripts/html, immutable cache for self-hosted fonts
 app.use(express.static(path.join(ROOT_DIR, 'public'), {
   maxAge: 0,
   setHeaders: (res, filePath) => {
@@ -31,6 +31,8 @@ app.use(express.static(path.join(ROOT_DIR, 'public'), {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
       res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else if (filePath.endsWith('.woff2') || filePath.endsWith('.woff') || filePath.endsWith('.ttf')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     } else {
       res.setHeader('Cache-Control', 'public, max-age=86400');
     }
@@ -48,6 +50,9 @@ app.get('*', (req, res) => {
 
 let server = null;
 if (require.main === module) {
+  const { processManager } = require('./engine/process_manager');
+  processManager.writePidFile();
+
   // Global Crash Shield (Issue #25)
   process.on('uncaughtException', (err) => {
     console.error('💥 Uncaught Exception caught by TuneFlow server shield:', err);
@@ -69,7 +74,7 @@ if (require.main === module) {
     }
   });
 
-  // Graceful shutdown (Issue #22, #56, #103)
+  // Graceful shutdown (Issue #22, #56, #103, SPEC-0018)
   const gracefulShutdown = () => {
     console.log('\n🛑 TuneFlow shutting down safely...');
     try {
@@ -84,6 +89,11 @@ if (require.main === module) {
       if (queue && typeof queue.shutdown === 'function') {
         queue.shutdown();
       }
+    } catch (_e) {}
+
+    try {
+      processManager.killAll('server_shutdown');
+      processManager.removePidFile();
     } catch (_e) {}
 
     // Fallback safety timeout to prevent hanging on orphaned processes
@@ -108,3 +118,4 @@ if (require.main === module) {
 }
 
 module.exports = { app, server };
+

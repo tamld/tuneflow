@@ -101,3 +101,15 @@ Open `http://<your-server-ip>:3000` and sign in with `admin` and your bootstrap 
 2. Click **👑 Admin** in the top header bar.
 3. Click **Change Password** to set a new personal password.
 4. Go to **Accounts** tab to invite family members or manage guest quotas.
+
+---
+
+## 6. Desktop Native App, Offline Downloaded Library & System Doctor
+> **Goal:** Run TuneFlow on Windows/macOS/Linux Desktop, play offline MP3s, and diagnose environment health.  
+> **Estimated Time:** 1 minute.
+
+1. **Offline Downloaded Library (`Nhạc Đã Tải`):** Click the **Nhạc Đã Tải** channel in the left sidebar (`#btn-persona-downloaded`) to browse and play all `.mp3` and `.m4a` tracks stored in your local `downloads/` directory without an internet connection.
+2. **Playlist Isolated Stage & Auto-Play:** Clicking **`▶ Mở Tuyển Tập Nghe & Tải`** on any Playlist card opens an isolated playlist view and automatically plays Track #1. Click **`← Quay Lại`** (`#btn-close-playlist`) to return to search results.
+3. **Built-In System Doctor (`--doctor`):** Run `pnpm run doctor` (`node bin/tuneflow.js --doctor`) or query `GET /api/system/doctor` to inspect Node runtime, SQLite database, downloads directory writability, active child process telemetry (`ProcessManager`), and `yt-dlp` / `ffmpeg` sidecar binaries.
+4. **Direct-Run Sync (Windows Developers):** Run `pnpm run desktop:sync` (`powershell -ExecutionPolicy Bypass -File scripts/sync_local_install.ps1`) to bundle sidecars, sync `dist\win-unpacked` and `%LOCALAPPDATA%\Programs\TuneFlow`, and rebuild the Inno Setup installer.
+

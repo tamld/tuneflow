@@ -48,12 +48,12 @@ TuneFlow exists for a singular mission: **Empowering adult children to support t
 
 ## ⚡ 6 Breakthrough Pillars
 
-1. 👴👵 **Senior-First UX ("SilverMelody")**: Giant touch targets ($\ge 56$px), ultra-high contrast (WCAG 2.2 AAA), Dual Day (Warm Cream) and Night modes.
+1. 👴👵 **Senior-First UX ("SilverMelody" 3-Zone Desktop Shell & 5 Themes)**: Giant touch targets ($\ge 56$px), bundled open-source `Be Vietnam Pro` (`OFL-1.1`) typography, and 5 curated themes (`Warm Obsidian`, `Warm Rice Paper`, `Vintage Rosewood`, `Calm Lotus Jade`, `WCAG AAA High Contrast`).
 2. 📡 **TuneFlow Connect (Living Room TV Remote-Free Casting)**: The TV displays a prominent 4-digit PIN (`8888`). Family members or seniors choose songs on their mobile device and tap "Cast to TV" — eliminating frustrating TV remote on-screen typing.
 3. 💾 **Physical USB / SD Card Bridge**: Automatically discovers connected USB flash drives, copies songs with strict 3-digit zero-padded numbering (`001 - Artist - Title.mp3`), purges macOS metadata junk (`.DS_Store`, `._*`) from FAT32 filesystems, and outputs standard `playlist.m3u` for car stereos, portable FM radios, and chanting boxes. Includes offline batch ZIP exports.
-4. 🎧 **Zero-Disk In-App Audio Preview**: Stream and preview tracks instantly with speculative prewarming before downloading.
+4. 🎧 **Zero-Disk In-App Audio Preview, Instant Playlist Auto-Play & 1-Click Offline Downloaded Library**: Stream and preview tracks instantly via Singleflight request coalescing and fast-start M4A (`itag=140`) stream prioritization. Clicking any Playlist card opens an isolated full-stage view (`← Quay Lại`) and auto-plays Track #1 immediately, or switch to the dedicated **Downloaded Music (`Nhạc Đã Tải`)** channel to play saved MP3/M4A tracks offline anytime.
 5. 🎛️ **Web Audio DSP Equalizer**: 3-band presets (Vocal Clarity, Warm Bolero) and 125%–150% volume boost with dynamic range compression for hearing-impaired seniors.
-6. 🌸 **Autonomous Engine Self-Healing & Filial Advice**: Automatic daemon updates (`yt-dlp -U`) upon YouTube cipher updates. No intimidating English terminal error traces; gentle 1-click fallback to local library.
+6. 🌸 **Autonomous Engine Self-Healing, Anti-Orphan Process Supervision & Built-In System Doctor**: Automatic daemon updates (`yt-dlp -U`) upon YouTube cipher updates, centralized `ProcessManager` lifecycle supervision (cross-platform process-tree termination with zero orphan/zombie PIDs, PID lockfile hygiene, and watchdog timeouts), plus a built-in diagnostic doctor (`pnpm run doctor` / `GET /api/system/doctor`) verifying Node runtime, SQLite DB, Downloads folder writability, and sidecar binaries.
 
 ---
 
@@ -131,7 +131,7 @@ Copy [`installer/unraid/tuneflow.xml`](installer/unraid/tuneflow.xml) into `/boo
 
 ### Option D: Desktop 1-Click (Mac & Windows)
 * **macOS**: Download [`TuneFlow.dmg`](https://github.com/tamld/tuneflow/releases/latest), drag to `/Applications`, double-click to launch.
-* **Windows**: Download [`TuneFlow-Setup.exe`](https://github.com/tamld/tuneflow/releases/latest), follow zero-admin wizard, desktop shortcut launches automatically.
+* **Windows**: Download [`TuneFlow-Setup.exe`](https://github.com/tamld/tuneflow/releases/latest), follow zero-admin wizard, desktop shortcut launches automatically. Run `pnpm run doctor` (`node bin/tuneflow.js --doctor`) anytime to verify system, process telemetry, and sidecar health, or `pnpm run desktop:sync` (`scripts/sync_local_install.ps1`) during development to sync direct-run builds in place.
 
 ---
 
@@ -140,7 +140,7 @@ Copy [`installer/unraid/tuneflow.xml`](installer/unraid/tuneflow.xml) into `/boo
 * 📖 **[User Guide](docs/USER_GUIDE.md)**: Action-first installation manual for iOS PWA, Android, Android TV, and Docker.
 * ⚙️ **[Configuration Reference](docs/CONFIG.md)**: Full list of environment variables, quotas, and security flags.
 * 🌐 **[Reverse Proxy Recipes](docs/REVERSE_PROXY.md)**: Ready-to-use configurations for Traefik v3, Nginx, Caddy 2, and Cloudflare Tunnel.
-* 🗺️ **[Roadmap](docs/ROADMAP.md)**: Product development roadmap across Phase 1 through Phase 11.
+* 🗺️ **[Roadmap](docs/ROADMAP.md)**: Product development roadmap across Phase 1 through Phase 20.
 * 📜 **[Changelog](CHANGELOG.md)**: Release history, upgrade notes, and bug fixes.
 * 🏛️ **[Architecture & Specs](docs/PRD.md)**: Full PRD, SRS, FSM, and compliance documents.
 

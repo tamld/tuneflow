@@ -20,6 +20,12 @@ Copy-Item -Recurse -Force (Join-Path $RepoRoot "public") (Join-Path $unpackedDir
 Copy-Item -Recurse -Force (Join-Path $RepoRoot "bin") (Join-Path $unpackedDir "bin")
 Copy-Item -Force (Join-Path $RepoRoot "package.json") (Join-Path $unpackedDir "package.json")
 
+Write-Host "==> [1.5/5] Bundling self-contained sidecar binaries & SHA256SUMS.json..." -ForegroundColor Cyan
+node (Join-Path $RepoRoot "scripts\bundle-sidecars.js") --target (Join-Path $unpackedDir "bin")
+if ($LASTEXITCODE -ne 0) {
+  throw "Failed to bundle sidecar binaries"
+}
+
 Write-Host "==> [2/5] Bundling flat production node_modules (zero devDependencies, zero symlinks)..." -ForegroundColor Cyan
 node (Join-Path $RepoRoot "scripts\bundle-prod-deps.js")
 if ($LASTEXITCODE -ne 0) {

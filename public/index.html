@@ -92,6 +92,16 @@
         </span>
         <span class="persona-text">Bài Bố Mẹ Thích (<span id="fav-count">0</span>)</span>
       </button>
+      <button id="btn-persona-downloaded" class="persona-btn" data-persona="downloaded">
+        <span class="persona-icon" aria-hidden="true">
+          <svg class="ui-icon" viewBox="0 0 24 24">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            <path d="M12 11v6"></path>
+            <path d="m9 14 3 3 3-3"></path>
+          </svg>
+        </span>
+        <span class="persona-text">Nhạc Đã Tải (<span id="downloaded-count">0</span>)</span>
+      </button>
     </div>
 
     <!-- Category Recommendations for Parents -->
@@ -117,7 +127,10 @@
 
     <!-- Search Section -->
     <section class="search-card">
-      <label for="search-input" class="search-label">Tìm bài hát, ca sĩ hoặc dán link danh sách phát (Playlist) tại đây:</label>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+        <label for="search-input" class="search-label" style="margin-bottom: 0;">Tìm bài hát, ca sĩ hoặc dán link danh sách phát (Playlist) tại đây:</label>
+        <button type="button" id="btn-toggle-search-filters" class="filter-chip" style="min-height: 28px; padding: 3px 10px; font-size: 12px;" title="Ẩn / Hiện bộ lọc tìm kiếm nâng cao">Bộ Lọc ▾</button>
+      </div>
       <div class="search-input-group">
         <input 
           type="text" 
@@ -140,7 +153,7 @@
         </button>
       </div>
       <!-- Search Filters: Type & Sort (Issue #80) -->
-      <div class="search-filters-row" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color);">
+      <div id="search-filters-row" class="search-filters-row" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color);">
         <div class="search-filter-group" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
           <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">Nội dung:</span>
           <button type="button" class="filter-chip active" data-search-type="all">Tất Cả</button>
@@ -164,6 +177,7 @@
           <p id="playlist-panel-meta" class="playlist-panel-meta">Tích chọn các bài Bố Mẹ ưng ý để tải về máy nhé!</p>
         </div>
         <div class="playlist-panel-actions">
+          <button id="btn-close-playlist" type="button" class="btn-panel-secondary" title="Quay lại danh sách bài hát tìm kiếm" aria-label="Quay lại danh sách bài hát tìm kiếm">← Quay Lại</button>
           <button id="btn-select-all" class="btn-panel-secondary">Đánh Dấu Tất Cả</button>
           <button id="btn-play-playlist" class="btn-panel-play" title="Phát liên tục các bài đã chọn trong tuyển tập" aria-label="Phát liên tục các bài đã chọn trong tuyển tập">▶️ Phát Danh Sách (<span id="batch-play-count">0</span>)</button>
           <button id="btn-download-batch" class="btn-panel-primary">⬇️ Tải Các Bài Đã Chọn (<span id="batch-selected-count">0</span>)</button>

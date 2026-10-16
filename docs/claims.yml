@@ -48,4 +48,16 @@ claims:
       test: tests/ui-layout-and-clipping.test.js
       source: public/css/silver-melody.css
 
+  - id: CLAIM-09
+    claim: "System doctor CLI and API verify Node runtime, SQLite database, downloads directory writability, and sidecar binaries while providing offline downloaded library playback."
+    evidence:
+      test: tests/phase20-packaging-doctor-and-offline-library.test.js
+      source: src/engine/doctor.js
+
+  - id: CLAIM-10
+    claim: "ProcessManager standardizes child process lifecycle tracking, cross-platform process-tree termination (zero orphan/zombie PIDs), PID lockfile hygiene, and Singleflight in-flight request coalescing."
+    evidence:
+      test: tests/process-lifecycle-and-performance.test.js
+      source: src/engine/process_manager.js
+
 

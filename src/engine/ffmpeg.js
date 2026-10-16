@@ -1,9 +1,11 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const { resolveSidecarBinary, getSanitizedEnv } = require('../security/binary_guard');
+const { processManager } = require('./process_manager');
 
 /**
  * Convert any media file to pristine 320kbps MP3 with embedded metadata
+ * Supervised by ProcessManager with itemId tracking for cancellation during transcode.
  */
 function convertToMp3(inputPath, outputPath, metadata = {}) {
   return new Promise((resolve, reject) => {
@@ -51,11 +53,24 @@ function convertToMp3(inputPath, outputPath, metadata = {}) {
 
     args.push(outputPath);
 
-    const ffmpegBin = resolveSidecarBinary('ffmpeg');
+    const ffmpegBin = metadata.binaryOverride || resolveSidecarBinary('ffmpeg');
     const proc = spawn(ffmpegBin, args, {
       windowsHide: true,
+      detached: process.platform !== 'win32',
       env: getSanitizedEnv(process.env)
     });
+
+    processManager.register(proc, {
+      label: 'ffmpeg:transcode',
+      itemId: metadata.itemId || null,
+      command: ffmpegBin,
+      timeoutMs: metadata.timeoutMs || 180000,
+      signal: metadata.signal || null
+    });
+
+    if (typeof metadata.onProcess === 'function') {
+      metadata.onProcess(proc);
+    }
 
     let stderr = '';
 
@@ -76,6 +91,7 @@ function convertToMp3(inputPath, outputPath, metadata = {}) {
     });
 
     proc.on('error', (err) => {
+      processManager.killProcessTree(proc, 'SIGKILL', 'ffmpeg_error');
       try {
         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
       } catch (_e) {}
@@ -126,11 +142,20 @@ function pipeToMp3(inputStream, outputPath, metadata = {}) {
 
     args.push(outputPath);
 
-    const ffmpegBin = resolveSidecarBinary('ffmpeg');
+    const ffmpegBin = metadata.binaryOverride || resolveSidecarBinary('ffmpeg');
     const proc = spawn(ffmpegBin, args, {
       windowsHide: true,
+      detached: process.platform !== 'win32',
       stdio: ['pipe', 'ignore', 'pipe'],
       env: getSanitizedEnv(process.env)
+    });
+
+    processManager.register(proc, {
+      label: 'ffmpeg:pipe',
+      itemId: metadata.itemId || null,
+      command: ffmpegBin,
+      timeoutMs: metadata.timeoutMs || 180000,
+      signal: metadata.signal || null
     });
 
     let stderr = '';
@@ -151,6 +176,7 @@ function pipeToMp3(inputStream, outputPath, metadata = {}) {
     });
 
     proc.on('error', (err) => {
+      processManager.killProcessTree(proc, 'SIGKILL', 'ffmpeg_pipe_error');
       try {
         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
       } catch (_e) {}
@@ -162,7 +188,7 @@ function pipeToMp3(inputStream, outputPath, metadata = {}) {
     }
     inputStream.pipe(proc.stdin);
     inputStream.on('error', (err) => {
-      try { proc.kill('SIGTERM'); } catch (_e) {}
+      processManager.killProcessTree(proc, 'SIGTERM', 'input_stream_error');
       try {
         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
       } catch (_e) {}
@@ -175,3 +201,4 @@ module.exports = {
   convertToMp3,
   pipeToMp3
 };
+

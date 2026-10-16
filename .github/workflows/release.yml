@@ -60,19 +60,19 @@ jobs:
             exit 0
           fi
 
-          if echo "$CHANGED" | grep -qE '^(packages/core|packages/web|packages/contract|distros/selfhost|src/|public/|Dockerfile|package\.json|pnpm-lock\.yaml)'; then
+          if echo "$CHANGED" | grep -qE '^(src/|public/|bin/|Dockerfile|package\.json|pnpm-lock\.yaml)'; then
             echo "container=true" >> "$GITHUB_OUTPUT"
           else
             echo "container=false" >> "$GITHUB_OUTPUT"
           fi
 
-          if echo "$CHANGED" | grep -qE '^(apps/android|packages/web|android/|public/)'; then
+          if echo "$CHANGED" | grep -qE '^(android/|public/)'; then
             echo "android=true" >> "$GITHUB_OUTPUT"
           else
             echo "android=false" >> "$GITHUB_OUTPUT"
           fi
 
-          if echo "$CHANGED" | grep -qE '^(apps/desktop|src-tauri/|src/desktop/|installer/|scripts/package_)'; then
+          if echo "$CHANGED" | grep -qE '^(src-tauri/|src/desktop/|installer/|scripts/package_|scripts/bundle-)'; then
             echo "desktop=true" >> "$GITHUB_OUTPUT"
           else
             echo "desktop=false" >> "$GITHUB_OUTPUT"

@@ -2698,6 +2698,9 @@ body.tv-mode .player-title {
   html,
   body {
     height: 100vh;
+    max-height: 100vh;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden;
     user-select: none;
   }
@@ -3006,7 +3009,7 @@ body.tv-mode .player-title {
     white-space: nowrap;
   }
 
-  /* Zone 2 Row 3-4: Independently Scrollable Music Stage */
+  /* Zone 2 Row 3-4: Independently Scrollable Music Stage (Mutual Exclusion between Playlist & Results) */
   #playlist-panel,
   .results-section {
     grid-column: 2;
@@ -3018,6 +3021,23 @@ body.tv-mode .player-title {
     padding: 16px 24px 28px 24px;
     margin: 0;
     box-sizing: border-box;
+    background: var(--bg-main);
+  }
+
+  #playlist-panel {
+    z-index: 5;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  #playlist-panel .playlist-items-list {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .container:has(#playlist-panel:not([style*="display: none"])) .results-section {
+    display: none !important;
   }
 
   .results-header {

@@ -192,9 +192,11 @@ async function launch({ port: requestedPort, autoOpenBrowser = true } = {}) {
 
   // Require Express app after setting process.env.PORT
   const { app } = require('../server');
+  const { processManager } = require('../engine/process_manager');
 
   return new Promise((resolve, reject) => {
     const server = app.listen(port, '0.0.0.0', async () => {
+      processManager.writePidFile();
       const url = `http://localhost:${port}`;
       console.log(`\n🎶 TuneFlow Desktop App running at: ${url}`);
       console.log('📂 Press Ctrl+C to stop.\n');
@@ -219,6 +221,11 @@ async function launch({ port: requestedPort, autoOpenBrowser = true } = {}) {
       resolve({ port, url, server });
     });
 
+    server.once('close', () => {
+      processManager.killAll('desktop_server_close');
+      processManager.removePidFile();
+    });
+
     server.once('error', reject);
   });
 }
@@ -233,3 +240,4 @@ module.exports = {
   launch,
   ROOT_DIR
 };
+
