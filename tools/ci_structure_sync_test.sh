@@ -145,7 +145,46 @@ cat > "$NON_GO_ROOT/README.md" <<'EOF'
 EOF
 run_test "non-Go repo without go.mod skips gracefully" pass \
     "$SYNC_SCRIPT" --repo-root "$NON_GO_ROOT" --readme "$NON_GO_ROOT/README.md"
+
+# 8. Non-Go repository with docs/README.md enforces first-level docs/ taxonomy.
+mkdir -p "$NON_GO_ROOT/docs/adr" "$NON_GO_ROOT/docs/openspec"
+cat > "$NON_GO_ROOT/docs/README.md" <<'EOF'
+# Docs Index
+- `adr/` — Architecture decisions
+- `openspec/` — Living capability specs
+EOF
+run_test "non-Go repo with complete docs/README.md passes" pass \
+    "$SYNC_SCRIPT" --repo-root "$NON_GO_ROOT" --readme "$NON_GO_ROOT/README.md"
+
+mkdir -p "$NON_GO_ROOT/docs/undocumented_lane"
+run_test "non-Go repo with undocumented docs/ subdir fails" fail \
+    "$SYNC_SCRIPT" --repo-root "$NON_GO_ROOT" --readme "$NON_GO_ROOT/README.md"
 rm -rf "$NON_GO_ROOT"
+
+# 9. Non-Go polyglot repo with package.json + src/ subdirs passes when README.md documents them.
+POLYGLOT_ROOT="$(mktemp -d)"
+mkdir -p "$POLYGLOT_ROOT/src/engine" "$POLYGLOT_ROOT/src/security"
+cat > "$POLYGLOT_ROOT/package.json" <<'EOF'
+{
+  "name": "fake-polyglot",
+  "version": "1.0.0"
+}
+EOF
+cat > "$POLYGLOT_ROOT/README.md" <<'EOF'
+# Polyglot Repo
+
+Modules:
+- `engine`: core runtime
+- `security`: boundaries and checks
+EOF
+run_test "polyglot repo with documented src/ subdirs passes" pass \
+    "$SYNC_SCRIPT" --repo-root "$POLYGLOT_ROOT" --readme "$POLYGLOT_ROOT/README.md"
+
+# 10. Non-Go polyglot repo fails when an undocumented src/ directory is added.
+mkdir -p "$POLYGLOT_ROOT/src/undocumented_mod"
+run_test "polyglot repo with undocumented src/ subdir fails" fail \
+    "$SYNC_SCRIPT" --repo-root "$POLYGLOT_ROOT" --readme "$POLYGLOT_ROOT/README.md"
+rm -rf "$POLYGLOT_ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
     echo ""
@@ -154,3 +193,4 @@ if [ "$FAILURES" -gt 0 ]; then
 fi
 echo ""
 echo "STRUCTURE SYNC GATE TEST SUITE: all tests passed."
+

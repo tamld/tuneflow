@@ -48,7 +48,7 @@ WARN=0
 
 for spec in "$SPEC_ROOT"/*.md "$SPEC_ROOT"/*/*.md; do
     [ -e "$spec" ] || continue
-    status=$(grep -m1 '^\*\*Status\*\*:' "$spec" || true)
+    status=$(grep -m1 -E '^(\* )?\*\*Status\*\*:' "$spec" || true)
     enforced=0
     case "$status" in
         *APPLIED*|*ACCEPTED*|*Applied*|*Accepted*) enforced=1 ;;
@@ -105,12 +105,24 @@ for spec in "$SPEC_ROOT"/*.md "$SPEC_ROOT"/*/*.md; do
             name=$(echo "$name" | tr -d ' ')
             [ -n "$name" ] || continue
             pin_found=0
-            if grep -rq "func ${name}(" "$GO_ROOT" --include='*.go' 2>/dev/null; then
+            if [ -x "./bin/g8s" ] && ./bin/g8s search -q -F "func ${name}(" -g '*.go' "$GO_ROOT" 2>/dev/null; then
                 pin_found=1
-            elif [ -f "$GO_ROOT/$name" ] || [ -f "$GO_ROOT/tests/$name" ]; then
-                pin_found=1
-            elif [ -d "$GO_ROOT/tests" ] && find "$GO_ROOT/tests" -name "$name" 2>/dev/null | grep -q .; then
-                pin_found=1
+            elif command -v rg >/dev/null 2>&1; then
+                if rg -q -F "func ${name}(" -g '*.go' "$GO_ROOT" 2>/dev/null; then
+                    pin_found=1
+                elif [ -f "$GO_ROOT/$name" ] || [ -f "$GO_ROOT/tests/$name" ]; then
+                    pin_found=1
+                elif [ -d "$GO_ROOT/tests" ] && rg --files -g "**/$name" -g "$name" "$GO_ROOT/tests" 2>/dev/null | grep -q .; then
+                    pin_found=1
+                fi
+            else
+                if grep -rqF "func ${name}(" "$GO_ROOT" --include='*.go' 2>/dev/null; then
+                    pin_found=1
+                elif [ -f "$GO_ROOT/$name" ] || [ -f "$GO_ROOT/tests/$name" ]; then
+                    pin_found=1
+                elif [ -d "$GO_ROOT/tests" ] && find "$GO_ROOT/tests" -name "$name" 2>/dev/null | grep -q .; then
+                    pin_found=1
+                fi
             fi
             if [ "$pin_found" -eq 0 ]; then
                 echo "::error::spec-code sync: $spec:$line_no scenario \"$title\" pins test \"$name\" which does not exist under $GO_ROOT (#420 G1)"
