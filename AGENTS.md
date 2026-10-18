@@ -69,9 +69,11 @@ tuneflow/
 │   │   └── zip_util.js        # Batch download streaming ZIP packaging
 │   ├── db/                # SQLite database, schema migrations & repositories
 │   ├── auth/              # Authentication service & cryptographic utilities
+│   ├── domain/            # Domain models, role permissions & business rules
 │   ├── middleware/        # Express guards (authenticate, authorize, guest_guard)
 │   ├── desktop/           # Native desktop launcher, client config & FSM
 │   ├── security/          # Binary integrity guard & Ed25519 update verifier
+│   ├── utils/             # Helper utilities (rate limiting, URL & ID validation)
 │   └── routes/api.js      # REST API endpoints (/search, /download, /preview, /queue)
 ├── public/                # Static assets (HTML, CSS, Vanilla JS player)
 ├── tests/                 # Native Node.js test suites (*.test.js)

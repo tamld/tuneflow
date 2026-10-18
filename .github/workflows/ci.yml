@@ -59,6 +59,13 @@ jobs:
           bash tools/ci_structure_sync.sh
           bash tools/ci_link_integrity.sh
 
+      - name: Run g8s offer governance gates
+        shell: bash
+        run: |
+          bash tools/ci_spec_code_sync.sh
+          bash tools/ci_structure_sync.sh
+          bash tools/ci_link_integrity.sh
+
       - name: Install Puppeteer Chrome
         run: npx puppeteer browsers install chrome
 

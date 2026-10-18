@@ -146,6 +146,32 @@ Copy [`installer/unraid/tuneflow.xml`](installer/unraid/tuneflow.xml) into `/boo
 
 ---
 
+## 📂 Repository Structure
+
+```text
+tuneflow/
+├── src/
+│   ├── server.js          # Express app entry point, security headers, middleware
+│   ├── config.js          # Configuration (port, paths, download limits)
+│   ├── engine/            # Modularized core download & media engine
+│   ├── db/                # SQLite database, schema migrations & repositories
+│   ├── auth/              # Authentication service & cryptographic utilities
+│   ├── domain/            # Domain models, role permissions & business rules
+│   ├── middleware/        # Express guards (authenticate, authorize, guest_guard)
+│   ├── desktop/           # Native desktop launcher, client config & FSM
+│   ├── security/          # Binary integrity guard & Ed25519 update verifier
+│   ├── utils/             # Helper utilities (rate limiting, URL & ID validation)
+│   └── routes/api.js      # REST API endpoints (/search, /download, /preview, /queue)
+├── public/                # Static assets (HTML, CSS, Vanilla JS player)
+├── tests/                 # Native Node.js test suites (*.test.js)
+├── docker-compose.yml     # Self-hosted homelab container spec (Traefik labels)
+├── Dockerfile             # Alpine/Debian slim Node container definition
+├── package.json           # Scripts and dependencies
+└── AGENTS.md              # AI agent directives & operational invariants
+```
+
+---
+
 ## 📄 License
 
 TuneFlow is licensed under the [MIT License](LICENSE).

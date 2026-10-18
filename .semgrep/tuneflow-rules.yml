@@ -1,0 +1,20 @@
+rules:
+  - id: tuneflow-no-eval
+    languages:
+      - javascript
+      - typescript
+    message: "Avoid using eval() or new Function() as it can lead to arbitrary code execution."
+    severity: ERROR
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+
+  - id: tuneflow-no-exec-concat
+    languages:
+      - javascript
+      - typescript
+    message: "Avoid template interpolation in child_process.exec() to prevent command injection."
+    severity: WARNING
+    pattern-either:
+      - pattern: child_process.exec(`...${$X}...`, ...)
+      - pattern: exec(`...${$X}...`, ...)

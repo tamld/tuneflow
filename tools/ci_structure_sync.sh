@@ -45,11 +45,13 @@ static_entry() {
         offer) echo "├── offer/                  # Pull-bundle for sibling projects (profiles, onboarding, seeds)" ;;
         plans) echo "├── plans/                  # Campaign ledgers (dated, session-type marked)" ;;
         reference) echo "├── reference/              # JIT-only Python baseline (read, never import)" ;;
-        spec) echo "├── spec/openspec/          # OpenSpec deltas (DELTA-01..22)" ;;
+        spec) echo "├── spec/openspec/          # OpenSpec deltas (DELTA-01..24)" ;;
         schemas) echo "├── schemas/                # JSON schemas (task, receipt, result)" ;;
         scripts) echo "├── scripts/                # Public installer (scripts/install.sh curl entrypoint)" ;;
-        tools) echo "├── tools/                  # CI helper scripts (pre-push gates, release)" ;;
-        workflows) echo "└── .github/workflows/      # CI/CD pipelines" ;;
+        tools) echo "├── tools/                  # CI helper scripts (pre-push gates, SAST, release)" ;;
+        g8s_dir) echo "├── .g8s/                   # Declarative governance registries (models, effort, lanes, trust)" ;;
+        semgrep) echo "├── .semgrep/               # Offline AST security & explicit-error rules (g8s-rules.yml)" ;;
+        workflows) echo "└── .github/workflows/      # CI/CD pipelines (ci, quality, codeql, govulncheck, fuzz, release)" ;;
         *) return 1 ;;
     esac
 }
@@ -88,8 +90,10 @@ render() {
     done
     echo "│   └── ...                 # supporting packages"
     static_entry offer_go
-    for entry in assets offer docs examples packaging plans reference schemas scripts skills spec tools workflows; do
+    for entry in assets offer docs examples packaging plans reference schemas scripts skills spec tools g8s_dir semgrep workflows; do
         case "$entry" in
+            g8s_dir) [ -d ".g8s" ] && static_entry g8s_dir ;;
+            semgrep) [ -d ".semgrep" ] && static_entry semgrep ;;
             workflows) [ -d ".github/workflows" ] && static_entry workflows ;;
             *) [ -d "$entry" ] && static_entry "$entry" ;;
         esac
@@ -117,23 +121,65 @@ fi
 
 # --- gate mode -------------------------------------------------------------
 if [ ! -f "go.mod" ]; then
+    missing=0
+    checked_any=0
     if [ -f "docs/README.md" ]; then
-        missing=0
-        count=0
+        checked_any=1
         for d in docs/*/; do
             [ -d "$d" ] || continue
             sub=$(basename "$d")
-            count=$((count + 1))
             if ! grep -qF "$sub" "docs/README.md"; then
                 echo "::error::structure sync: docs/$sub/ is not documented in docs/README.md (#420 G2)"
                 missing=$((missing + 1))
             fi
         done
-        if [ "$missing" -gt 0 ]; then
-            echo "STRUCTURE SYNC GATE: $missing undocumented docs/ subdirectory(ies)."
-            exit 1
+    fi
+    if [ -d "src" ] || [ -d "rust" ]; then
+        if [ -f "package.json" ] || [ -f "Cargo.toml" ] || [ -f "dist-workspace.toml" ]; then
+            if [ -d "src" ]; then
+                for d in src/*/; do
+                    [ -d "$d" ] || continue
+                    sub=$(basename "$d")
+                    checked_any=1
+                    found=0
+                    for doc in "$README" "AGENTS.md" "docs/README.md"; do
+                        if [ -f "$doc" ] && grep -qF "$sub" "$doc"; then
+                            found=1
+                            break
+                        fi
+                    done
+                    if [ "$found" -eq 0 ]; then
+                        echo "::error::structure sync: src/$sub/ is not documented in $README or AGENTS.md (#420 G2)"
+                        missing=$((missing + 1))
+                    fi
+                done
+            fi
+            if [ -d "rust" ]; then
+                for d in rust/*/; do
+                    [ -d "$d" ] || continue
+                    sub=$(basename "$d")
+                    checked_any=1
+                    found=0
+                    for doc in "$README" "AGENTS.md" "docs/README.md"; do
+                        if [ -f "$doc" ] && grep -qF "$sub" "$doc"; then
+                            found=1
+                            break
+                        fi
+                    done
+                    if [ "$found" -eq 0 ]; then
+                        echo "::error::structure sync: rust/$sub/ is not documented in $README or AGENTS.md (#420 G2)"
+                        missing=$((missing + 1))
+                    fi
+                done
+            fi
         fi
-        echo "STRUCTURE SYNC GATE: OK — docs/README.md covers all $count first-level docs/ directories."
+    fi
+    if [ "$missing" -gt 0 ]; then
+        echo "STRUCTURE SYNC GATE: $missing undocumented subdirectory(ies)."
+        exit 1
+    fi
+    if [ "$checked_any" -eq 1 ]; then
+        echo "STRUCTURE SYNC GATE: OK — polyglot structure verified."
         exit 0
     fi
     echo "STRUCTURE SYNC GATE: SKIP — no go.mod found (Go-project structure gate)."
