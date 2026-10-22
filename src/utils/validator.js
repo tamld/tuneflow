@@ -10,6 +10,8 @@ const ALLOWED_YOUTUBE_HOSTS = new Set([
 
 const VIDEO_ID_REGEX = /^[a-zA-Z0-9_-]{11}$/;
 
+const PRIVATE_OR_LOCAL_HOST_REGEX = /^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|169\.254\.|localhost|::1$|\[::1\]|fe80:|\[fe80:|::ffff:|\[::ffff:)/i;
+
 /**
  * Validates whether a given URL string belongs strictly to official YouTube domains.
  * Prevents SSRF attacks against internal network or unsupported protocols.
@@ -23,6 +25,13 @@ function isValidYouTubeUrl(urlStr) {
   try {
     const parsed = new URL(urlStr.trim());
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    // Reject userinfo (e.g. user:pass@host)
+    if (parsed.username || parsed.password) return false;
+    // Reject non-standard ports (allow explicit 80 for http, 443 for https, or default omitted)
+    if (parsed.port) {
+      if (parsed.protocol === 'https:' && parsed.port !== '443') return false;
+      if (parsed.protocol === 'http:' && parsed.port !== '80') return false;
+    }
     const host = parsed.hostname.toLowerCase();
     return ALLOWED_YOUTUBE_HOSTS.has(host);
   } catch (err) {
@@ -59,15 +68,20 @@ function isSafeRemoteStreamUrl(urlStr) {
     const parsed = new URL(urlStr.trim());
 
     // Allow test harness mock audio server on loopback
-    if (parsed.pathname.includes('mock-audio') && (parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost')) {
+    if (parsed.pathname.includes('mock-audio') && (parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost' || parsed.hostname === '::1' || parsed.hostname === '[::1]')) {
       return true;
     }
 
     if (parsed.protocol !== 'https:') return false;
+    // Reject userinfo
+    if (parsed.username || parsed.password) return false;
+    // Reject non-standard ports
+    if (parsed.port && parsed.port !== '443') return false;
+
     const host = parsed.hostname.toLowerCase();
 
-    // Disallow IP literals and loopback/internal hosts
-    if (/^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.|169\.254\.|localhost)/.test(host)) {
+    // Disallow IP literals and loopback/internal hosts (IPv4 & IPv6)
+    if (PRIVATE_OR_LOCAL_HOST_REGEX.test(host)) {
       return false;
     }
 

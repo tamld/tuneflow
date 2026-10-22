@@ -25,6 +25,8 @@ The table below lists every first-level directory under `docs/` along with its a
 | `assets/` | Diagrams, architecture schemas, and visual documentation assets | [docs/assets/](assets/) |
 | `fsm/` | Finite State Machine specifications for media queue and player lifecycles | [docs/fsm/](fsm/) |
 | `goals/` | Campaign goals, milestone deliverables, and target outcome definitions | [docs/goals/](goals/) |
+| `handoffs/` | Multi-agent F1/F2 sealed evidence handoffs and verification reports | [docs/handoffs/](handoffs/) |
+| `lessons/` | Ratified operational lesson ledger for verifier-driven remediation | [docs/lessons/](lessons/) |
 | `openspec/` | OpenSpec formal change proposals, capability schemas, and specs | [docs/openspec/](openspec/) |
 | `prd/` | Product Requirements Documents detailing user stories and functional scope | [docs/prd/](prd/) |
 | `spec/` | Technical specifications, protocol contracts, and component interfaces | [docs/spec/](spec/) |

@@ -55,6 +55,33 @@ async function calculateChecksum(filePath) {
   });
 }
 
+const ELDERLY_STATUS_MAP = {
+  queued: {
+    vi: 'Đang chờ tải',
+    en: 'Waiting to download'
+  },
+  downloading: {
+    vi: 'Đang tải về máy...',
+    en: 'Downloading to device...'
+  },
+  converting: {
+    vi: 'Đang chuẩn bị bản nhạc MP3...',
+    en: 'Converting to MP3...'
+  },
+  completed: {
+    vi: 'Đã tải xong hoàn tất',
+    en: 'Successfully downloaded'
+  },
+  failed: {
+    vi: 'Chưa tải được (Bố Mẹ bấm Thử lại nhé)',
+    en: 'Failed (tap Retry to try again)'
+  },
+  cancelled: {
+    vi: 'Đã dừng tải',
+    en: 'Download cancelled'
+  }
+};
+
 class DownloadQueue {
   constructor() {
     this.items = new Map(); // id -> item
@@ -255,6 +282,130 @@ class DownloadQueue {
     this.broadcast();
     this.processNext();
     return true;
+  }
+
+  /**
+   * Safely retries a failed or cancelled queue item.
+   * Resets retry counters and progresses back to queued state.
+   * @param {string} id
+   * @returns {{ ok: boolean, reason?: string, currentStatus?: string, item?: object }}
+   */
+  retryQueueItem(id) {
+    const item = this.items.get(id);
+    if (!item) {
+      return { ok: false, reason: 'not_found' };
+    }
+
+    if (!['failed', 'cancelled'].includes(item.status)) {
+      return { ok: false, reason: 'invalid_state', currentStatus: item.status };
+    }
+
+    item.status = 'queued';
+    item.progress = 0;
+    item.error = null;
+    item.retries = 0; // Fresh start for manual retry requested by user
+    item.speed = '';
+    item.eta = '';
+
+    this.broadcast(true);
+    this.processNext();
+    return { ok: true, item };
+  }
+
+  /**
+   * Returns a friendly elderly-oriented label and details for a specific item.
+   * @param {string} id
+   * @param {'vi'|'en'} [lang='vi']
+   * @returns {{ ok: boolean, label: string, status: string|null, error?: string|null }}
+   */
+  getElderlyStatus(id, lang = 'vi') {
+    const item = this.items.get(id);
+    if (!item) {
+      return {
+        ok: false,
+        label: lang === 'en' ? 'Song not found in queue' : 'Không tìm thấy bài hát trong hàng đợi',
+        status: null
+      };
+    }
+    const locale = lang === 'en' ? 'en' : 'vi';
+    const entry = ELDERLY_STATUS_MAP[item.status] || {
+      vi: item.status,
+      en: item.status
+    };
+    return {
+      ok: true,
+      label: entry[locale] || entry.vi,
+      status: item.status,
+      error: item.error || null
+    };
+  }
+
+  /**
+   * Summarizes current queue health into an elderly-friendly digestible message.
+   * Does NOT mutate the wire protocol or broadcast payloads.
+   * @param {'vi'|'en'} [lang='vi']
+   * @returns {{
+   *   total: number,
+   *   active: number,
+   *   queued: number,
+   *   completed: number,
+   *   failed: number,
+   *   cancelled: number,
+   *   headline: string,
+   *   details: string
+   * }}
+   */
+  getElderlySummary(lang = 'vi') {
+    const locale = lang === 'en' ? 'en' : 'vi';
+    const all = Array.from(this.items.values());
+    const total = all.length;
+    const completed = all.filter(i => i.status === 'completed').length;
+    const failed = all.filter(i => i.status === 'failed').length;
+    const cancelled = all.filter(i => i.status === 'cancelled').length;
+    const active = all.filter(i => i.status === 'downloading' || i.status === 'converting').length;
+    const queued = all.filter(i => i.status === 'queued').length;
+
+    let headline = '';
+    let details = '';
+
+    if (total === 0) {
+      headline = locale === 'en' ? 'Queue is empty' : 'Hàng đợi đang trống';
+      details = locale === 'en'
+        ? 'No songs have been added yet. Tap [Save MP3] to add songs!'
+        : 'Chưa có bài hát nào được chọn. Bố Mẹ bấm [Tải Về Máy] để bắt đầu tải nhé!';
+    } else if (failed > 0) {
+      headline = locale === 'en' ? 'Attention needed' : 'Cần chú ý';
+      details = locale === 'en'
+        ? `${failed} download(s) could not finish. You can tap [Retry] to try again.`
+        : `Có ${failed} bài tải chưa thành công. Bố Mẹ có thể bấm nút [Thử Lại] để máy tải lại nhé!`;
+    } else if (active > 0 || queued > 0) {
+      headline = locale === 'en' ? 'Downloading in progress' : 'Đang xử lý tải nhạc';
+      const inFlight = active + queued;
+      details = locale === 'en'
+        ? `Currently processing ${inFlight} song(s). Please wait a moment.`
+        : `Đang tải ${inFlight} bài hát về máy. Bố Mẹ vui lòng đợi giây lát nhé!`;
+    } else if (completed === total) {
+      headline = locale === 'en' ? 'All done' : 'Đã tải xong toàn bộ';
+      details = locale === 'en'
+        ? `All ${completed} song(s) downloaded successfully.`
+        : `Tất cả ${completed} bài hát đã được tải xong an toàn về máy của Bố Mẹ.`;
+    } else {
+      headline = locale === 'en' ? 'Queue updated' : 'Trạng thái hàng đợi';
+      details = locale === 'en'
+        ? `${completed} finished, ${cancelled} cancelled.`
+        : `Đã hoàn tất ${completed} bài, đã dừng ${cancelled} bài.`;
+    }
+
+    return {
+      total,
+      active,
+      queued,
+      completed,
+      failed,
+      cancelled,
+      headline,
+      details
+    };
   }
 
   clearCompleted() {
@@ -505,5 +656,6 @@ const queueInstance = new DownloadQueue();
 queueInstance.sanitizeTitle = sanitizeTitle;
 queueInstance.calculateChecksum = calculateChecksum;
 queueInstance.DownloadQueue = DownloadQueue;
+queueInstance.ELDERLY_STATUS_MAP = ELDERLY_STATUS_MAP;
 
 module.exports = queueInstance;

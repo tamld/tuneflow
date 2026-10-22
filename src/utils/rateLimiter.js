@@ -5,8 +5,12 @@
 function createRateLimiter(options = {}) {
   const windowMs = options.windowMs || 60 * 1000;
   const max = options.max || 60;
+  const maxUniqueIps = (typeof options.maxUniqueIps === 'number' && options.maxUniqueIps > 0)
+    ? options.maxUniqueIps
+    : 10000;
   const message = options.message || 'Dạ Bố Mẹ hoặc hệ thống đang gửi yêu cầu quá nhanh, vui lòng chờ một lát nhé!';
   const hits = new Map();
+  let evictedCount = 0;
 
   // Periodic cleanup of expired timestamps
   const cleanupTimer = setInterval(() => {
@@ -37,11 +41,32 @@ function createRateLimiter(options = {}) {
     }
 
     valid.push(now);
+
+    // Evict least-recently-used IP if capacity reached and ip is new
+    if (!hits.has(ip) && hits.size >= maxUniqueIps) {
+      const oldestIp = hits.keys().next().value;
+      if (oldestIp !== undefined) {
+        hits.delete(oldestIp);
+        evictedCount++;
+      }
+    }
+
+    // Refresh LRU order: delete and re-insert
+    hits.delete(ip);
     hits.set(ip, valid);
     next();
   };
 
-  middleware.reset = () => hits.clear();
+  middleware.reset = () => {
+    hits.clear();
+    evictedCount = 0;
+  };
+  middleware.has = (ip) => hits.has(ip);
+  middleware.getStats = () => ({
+    size: hits.size,
+    maxUniqueIps,
+    evictedCount
+  });
   return middleware;
 }
 
