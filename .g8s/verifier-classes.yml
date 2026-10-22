@@ -27,3 +27,7 @@ classes:
         run: tools/ci_structure_sync.sh
       - type: script
         run: tools/ci_spec_code_sync.sh
+      - type: script
+        run: node scripts/ci-sast-gate.js
+      - type: script
+        run: node scripts/ci-dast-gate.js

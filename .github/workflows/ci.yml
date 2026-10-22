@@ -51,6 +51,12 @@ jobs:
       - name: Run ESLint static code analysis
         run: pnpm run lint
 
+      - name: Run SAST Static Security Gate
+        run: node scripts/ci-sast-gate.js
+
+      - name: Run DAST Dynamic Security Gate
+        run: node scripts/ci-dast-gate.js
+
       - name: Verify Governance & Spec-Code Sync Gates
         shell: bash
         run: |
@@ -89,4 +95,5 @@ jobs:
           docker run -d --name tuneflow-test -p 3000:3000 tuneflow:test
           sleep 5
           curl --fail http://localhost:3000/api/health || exit 1
+          curl --fail http://localhost:3000/api/system/doctor || exit 1
           docker rm -f tuneflow-test

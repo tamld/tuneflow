@@ -296,6 +296,7 @@
         <h3>📥 Hàng Đợi Tải Nhạc (<span id="drawer-count">0</span>)</h3>
         <button id="btn-close-drawer" class="modal-close-btn" aria-label="Đóng ngăn tải nhạc">✕</button>
       </div>
+      <div id="drawer-elderly-summary" class="drawer-elderly-summary" style="padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--accent-gold); border-bottom: 1px solid var(--border-color); background: rgba(245, 158, 11, 0.08);">✨ Hàng đợi tải nhạc đang trống</div>
       <div id="drawer-queue-list" class="drawer-queue-list">
         <div style="text-align: center; color: var(--text-muted); padding: 40px 10px; font-size: 16px;">
           Chưa có bài hát nào trong hàng đợi tải.<br>Bố Mẹ bấm [Tải Về Máy] ở bài hát để theo dõi tiến độ tại đây nhé!
@@ -672,10 +673,16 @@
           <h3 style="margin: 0 0 8px 0; font-weight: 700; font-size: 15px; color: var(--accent-blue);">Máy Chủ &amp; Đường Truyền</h3>
           <nav style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <span style="font-size: 14px; color: var(--text-sub);">Máy chủ phát nhạc &amp; tải về (Homelab / LAN / VPS):</span>
-            <button id="btn-server-endpoint-trigger" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 16px; border: 1px solid var(--accent-blue); border-radius: var(--radius-pill); background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" title="Cài đặt máy chủ TuneFlow">
-              🌐 <span style="font-size: 14px;">Cấu Hình Máy Chủ</span>
-            </button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="btn-server-endpoint-trigger" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 16px; border: 1px solid var(--accent-blue); border-radius: var(--radius-pill); background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" title="Cài đặt máy chủ TuneFlow">
+                🌐 <span style="font-size: 14px;">Cấu Hình Máy Chủ</span>
+              </button>
+              <button id="btn-run-system-doctor" class="font-scale-btn" style="min-height: 40px; font-size: 15px; padding: 6px 16px; border: 1px solid var(--accent-gold); border-radius: var(--radius-pill); background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" title="Kiểm tra toàn diện tình trạng máy chủ">
+                🩺 <span style="font-size: 14px;">Kiểm Tra Sức Khỏe Máy Chủ</span>
+              </button>
+            </div>
           </nav>
+          <div id="system-doctor-panel" style="display: none; margin-top: 10px; padding: 12px; border-radius: 10px; background: var(--bg-main); border: 1px solid var(--border-color); font-size: 13px; line-height: 1.6;"></div>
         </section>
 
         <!-- Group 3: Tài Khoản & Quản Trị -->

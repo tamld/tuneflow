@@ -1735,6 +1735,42 @@ if (typeof document !== 'undefined') {
         if (queueBadgeCountEl) queueBadgeCountEl.textContent = activeCount;
         if (drawerCountEl) drawerCountEl.textContent = items.length;
 
+        // Update Elderly Summary Banner in Queue Drawer
+        const drawerElderlySummaryEl = document.getElementById('drawer-elderly-summary');
+        if (drawerElderlySummaryEl) {
+          const isEn = window.TuneFlowI18n && window.TuneFlowI18n.getLanguage && window.TuneFlowI18n.getLanguage() === 'en';
+          const failedCount = items.filter(i => i.status === 'failed').length;
+          const activeCountTotal = items.filter(i => ['downloading', 'converting', 'queued'].includes(i.status)).length;
+          const completedCount = items.filter(i => i.status === 'completed').length;
+
+          if (items.length === 0) {
+            drawerElderlySummaryEl.textContent = isEn
+              ? '✨ Queue is currently empty'
+              : '✨ Hàng đợi tải nhạc đang trống';
+            drawerElderlySummaryEl.style.color = 'var(--accent-gold)';
+          } else if (failedCount > 0) {
+            drawerElderlySummaryEl.textContent = isEn
+              ? `⚠️ ${failedCount} download(s) need attention - Tap [Retry]`
+              : `⚠️ Có ${failedCount} bài tải chưa xong - Bố Mẹ bấm [Thử Lại] nhé`;
+            drawerElderlySummaryEl.style.color = 'var(--accent-red, #ef4444)';
+          } else if (activeCountTotal > 0) {
+            drawerElderlySummaryEl.textContent = isEn
+              ? `⏳ Processing ${activeCountTotal} song(s) in background...`
+              : `⏳ Đang tải ${activeCountTotal} bài hát về máy...`;
+            drawerElderlySummaryEl.style.color = 'var(--accent-gold)';
+          } else if (completedCount === items.length) {
+            drawerElderlySummaryEl.textContent = isEn
+              ? `✅ All ${completedCount} song(s) downloaded successfully!`
+              : `✅ Đã tải xong toàn bộ ${completedCount} bài hát an toàn!`;
+            drawerElderlySummaryEl.style.color = 'var(--accent-green, #10b981)';
+          } else {
+            drawerElderlySummaryEl.textContent = isEn
+              ? `📋 ${completedCount}/${items.length} songs completed`
+              : `📋 Đã hoàn tất ${completedCount}/${items.length} bài hát`;
+            drawerElderlySummaryEl.style.color = 'var(--accent-gold)';
+          }
+        }
+
         // Update Persistent Queue Slide-Over Drawer
         if (drawerQueueList) {
           if (items.length === 0) {
@@ -1756,12 +1792,23 @@ if (typeof document !== 'undefined') {
               } else if (item.status === 'failed') {
                 statusText = '❌ Lỗi tải';
                 statusColor = 'var(--accent-red)';
+              } else if (item.status === 'cancelled') {
+                statusText = '⏹️ Đã dừng';
+                statusColor = 'var(--text-muted, #888)';
+              }
+
+              let retryBtnHtml = '';
+              if (item.status === 'failed' || item.status === 'cancelled') {
+                retryBtnHtml = `<button type="button" class="btn-queue-retry" data-retry-id="${escapeHtml(item.id)}" onclick="window.retryQueueDownload && window.retryQueueDownload('${escapeHtml(item.id)}')" style="margin-left: 8px; padding: 2px 8px; font-size: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent-gold); color: var(--accent-gold); background: rgba(245, 158, 11, 0.1);">🔄 Tải Lại</button>`;
               }
 
               div.innerHTML = `
                 <div class="drawer-item-header">
                   <span class="drawer-item-title">${escapeHtml(item.title)}</span>
-                  <span class="drawer-item-status" style="color: ${statusColor};">${statusText}</span>
+                  <div style="display: flex; align-items: center;">
+                    <span class="drawer-item-status" style="color: ${statusColor};">${statusText}</span>
+                    ${retryBtnHtml}
+                  </div>
                 </div>
                 ${item.status === 'downloading' || item.status === 'converting' ? `
                   <div style="background: #090a0d; border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px;">
@@ -1800,9 +1847,12 @@ if (typeof document !== 'undefined') {
                   activeDownloadedIds.add(item.id);
                   triggerClientBrowserDownload(item);
                 }
-              } else if (item.status === 'failed') {
-                statusBadge.textContent = `⚠️ Bài này bị lỗi tải, Bố Mẹ chọn bài khác nhé!`;
-                statusBadge.style.color = 'var(--accent-red)';
+              } else if (item.status === 'failed' || item.status === 'cancelled') {
+                const label = item.status === 'failed'
+                  ? '⚠️ Bài này bị lỗi tải, Bố Mẹ thử lại nhé!'
+                  : '⏹️ Đã dừng tải bài hát này.';
+                statusBadge.innerHTML = `${label} <button type="button" class="btn-queue-retry" data-retry-id="${escapeHtml(item.id)}" onclick="window.retryQueueDownload && window.retryQueueDownload('${escapeHtml(item.id)}')" style="margin-left: 6px; padding: 2px 8px; font-size: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent-gold); color: var(--accent-gold); background: rgba(245, 158, 11, 0.1);">🔄 Tải Lại</button>`;
+                statusBadge.style.color = item.status === 'failed' ? 'var(--accent-red)' : 'var(--accent-gold)';
               }
             }
           }
@@ -1825,14 +1875,17 @@ if (typeof document !== 'undefined') {
 
   initSSE();
 
-  // Wire Drawer Clear Handled Items Button
+  // Wire Drawer Clear Handled Items Button (calls API endpoint & cleans DOM)
   if (btnDrawerClearDone) {
-    btnDrawerClearDone.addEventListener('click', () => {
+    btnDrawerClearDone.addEventListener('click', async () => {
+      try {
+        await fetch('/api/queue/clear', { method: 'POST' });
+      } catch (_e) {}
       if (!drawerQueueList) return;
       const completedCards = drawerQueueList.querySelectorAll('.drawer-queue-item');
       let count = 0;
       completedCards.forEach(c => {
-        if (c.textContent.includes('Đã tải xong') || c.textContent.includes('Lỗi tải')) {
+        if (c.textContent.includes('Đã tải xong') || c.textContent.includes('Lỗi tải') || c.textContent.includes('Đã dừng')) {
           c.remove();
           count++;
         }
@@ -2141,10 +2194,99 @@ if (typeof document !== 'undefined') {
     });
   }
 
+  // 12. Retry Queue Download Helper with Double-Click Guard & Friendly Toast (Round 2 Deep Vertical)
+  const retryInFlight = new Set();
+  async function retryQueueDownload(itemId) {
+    if (!itemId) return;
+    const safeId = String(itemId);
+    if (retryInFlight.has(safeId)) return;
+    retryInFlight.add(safeId);
+
+    const retryBtns = Array.from(document.querySelectorAll('.btn-queue-retry'))
+      .filter(b => b.dataset.retryId === safeId);
+    retryBtns.forEach(b => {
+      b.disabled = true;
+      b.style.opacity = '0.5';
+    });
+
+    try {
+      const res = await fetch(`/api/queue/retry/${encodeURIComponent(safeId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (res.ok && (data.success || data.ok)) {
+        showToast('🔄 Đã thêm lại bài hát vào hàng đợi tải!', 'success');
+      } else {
+        showToast((data && data.error) || 'Chưa thể thử lại bài hát này', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối khi thử lại bài hát: ' + err.message, 'error');
+    } finally {
+      setTimeout(() => {
+        retryInFlight.delete(safeId);
+        retryBtns.forEach(b => {
+          b.disabled = false;
+          b.style.opacity = '1';
+        });
+      }, 800);
+    }
+  }
+
+  // 13. 1-Click System Doctor Diagnostic Trigger (Round 2 Deep Vertical)
+  const btnRunDoctor = document.getElementById('btn-run-system-doctor');
+  const systemDoctorPanel = document.getElementById('system-doctor-panel');
+
+  if (btnRunDoctor && systemDoctorPanel) {
+    btnRunDoctor.addEventListener('click', async () => {
+      btnRunDoctor.disabled = true;
+      btnRunDoctor.innerHTML = '🩺 <span style="font-size: 14px;">Đang Kiểm Tra...</span>';
+      systemDoctorPanel.style.display = 'block';
+      systemDoctorPanel.innerHTML = '<div style="color: var(--accent-gold); font-weight: 500;">⏳ Đang kiểm tra toàn diện tình trạng máy chủ...</div>';
+
+      try {
+        const res = await fetch('/api/system/doctor');
+        const data = await res.json();
+        const checks = data.checks || {};
+        const rl = data.rateLimiters || {};
+        const qSummary = data.queueSummary || {};
+
+        const statusIcon = (val) => val ? '✅' : '❌';
+
+        systemDoctorPanel.innerHTML = `
+          <div style="font-weight: 700; margin-bottom: 8px; color: ${data.ok ? 'var(--accent-green, #10b981)' : 'var(--accent-red, #ef4444)'}; font-size: 14px;">
+            ${data.ok ? '✅ Máy Chủ Hoạt Động Rất Tốt' : '⚠️ Có Một Số Cảnh Báo Cần Lưu Ý'}
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 4px; font-size: 13px;">
+            <div>${statusIcon(checks.node && checks.node.ok)} <strong>Node.js:</strong> ${escapeHtml((checks.node && checks.node.version) || 'N/A')}</div>
+            <div>${statusIcon(checks.ytdlp && checks.ytdlp.ok)} <strong>yt-dlp:</strong> ${escapeHtml((checks.ytdlp && checks.ytdlp.version) || (checks.ytdlp && checks.ytdlp.ok ? 'Sẵn sàng' : 'Chưa tìm thấy'))}</div>
+            <div>${statusIcon(checks.ffmpeg && checks.ffmpeg.ok)} <strong>ffmpeg:</strong> ${escapeHtml((checks.ffmpeg && checks.ffmpeg.version) || (checks.ffmpeg && checks.ffmpeg.ok ? 'Sẵn sàng' : 'Chưa tìm thấy'))}</div>
+            <div>${statusIcon(checks.downloadsDir && checks.downloadsDir.writable)} <strong>Thư mục tải nhạc:</strong> ${checks.downloadsDir && checks.downloadsDir.writable ? 'Ghi đĩa tốt' : 'Không có quyền ghi'}</div>
+            <div>${statusIcon(checks.database && checks.database.ok)} <strong>Cơ sở dữ liệu SQLite:</strong> ${checks.database && checks.database.ok ? 'Kết nối tốt' : 'Lỗi kết nối'}</div>
+            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border-color);">
+              🛡️ <strong>Chống nghẽn RateLimiter:</strong> Tìm kiếm (IPs: ${(rl.search && rl.search.size) || 0}, Tối đa: ${(rl.search && rl.search.maxUniqueIps) || 1000}), Tải nhạc (IPs: ${(rl.queue && rl.queue.size) || 0})
+            </div>
+            ${qSummary.headline ? `
+              <div style="margin-top: 4px; color: var(--accent-gold);">
+                ✨ <strong>Hàng đợi hiện tại:</strong> ${escapeHtml(qSummary.headline)} (${escapeHtml(qSummary.details || '')})
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } catch (err) {
+        systemDoctorPanel.innerHTML = `<div style="color: var(--accent-red);">❌ Lỗi khi kiểm tra sức khỏe máy chủ: ${escapeHtml(err.message)}</div>`;
+      } finally {
+        btnRunDoctor.disabled = false;
+        btnRunDoctor.innerHTML = '🩺 <span style="font-size: 14px;">Kiểm Tra Sức Khỏe Máy Chủ</span>';
+      }
+    });
+  }
+
   window.showToast = showToast;
   window.renderResults = renderResults;
   window.renderPlaylistBatch = renderPlaylistBatch;
   window.updatePlaylistPlayButtonState = updatePlaylistPlayButtonState;
+  window.retryQueueDownload = retryQueueDownload;
 });
 }
 

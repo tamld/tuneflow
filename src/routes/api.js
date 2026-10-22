@@ -68,6 +68,7 @@ const queueRateLimiter = createRateLimiter({
 // Health check endpoint for container monitoring
 router.get('/health', (req, res) => {
   res.json({
+    ok: true,
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -473,6 +474,37 @@ router.get('/queue/stream', (req, res) => {
 router.post('/queue/cancel/:id', (req, res) => {
   const success = queue.cancel(req.params.id);
   res.json({ success });
+});
+
+// Retry failed or cancelled item (Zero-login friendly for elderly users)
+router.post('/queue/retry/:id', (req, res) => {
+  const result = queue.retryQueueItem(req.params.id);
+  if (!result || !result.ok) {
+    return res.status(400).json({
+      ok: false,
+      success: false,
+      error: (result && result.reason === 'not_found')
+        ? 'Không tìm thấy bài hát trong hàng đợi'
+        : 'Chỉ có thể thử lại bài hát bị lỗi hoặc đã dừng',
+      reason: result ? result.reason : 'unknown_error'
+    });
+  }
+  res.json({
+    ok: true,
+    success: true,
+    item: result.item
+  });
+});
+
+// Get elderly-friendly queue summary (accepting ?lang=vi|en)
+router.get('/queue/summary', (req, res) => {
+  const lang = (req.query && req.query.lang === 'en') ? 'en' : 'vi';
+  const summary = queue.getElderlySummary(lang);
+  res.json({
+    ok: true,
+    success: true,
+    ...summary
+  });
 });
 
 // Clear completed items
@@ -898,7 +930,14 @@ const { runSystemDoctor } = require('../engine/doctor');
 router.get('/system/doctor', async (_req, res) => {
   try {
     const report = await runSystemDoctor({ writeLog: true });
-    res.json(report);
+    res.json({
+      ...report,
+      rateLimiters: {
+        search: searchRateLimiter.getStats(),
+        queue: queueRateLimiter.getStats()
+      },
+      queueSummary: queue.getElderlySummary('vi')
+    });
   } catch (err) {
     res.status(500).json({ ok: false, success: false, error: err.message });
   }
