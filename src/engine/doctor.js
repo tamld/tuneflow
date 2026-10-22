@@ -6,7 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { DOWNLOADS_DIR, DB_PATH } = require('../config');
+const { DOWNLOADS_DIR, DB_PATH, LOGS_DIR } = require('../config');
 const { initDatabase } = require('../db/database');
 const { resolveSidecarBinary } = require('../security/binary_guard');
 const { getYtDlpVersion, getFFmpegVersion } = require('./ytdlp');
@@ -206,11 +206,17 @@ async function runSystemDoctor(options = {}) {
     checks
   };
 
-  if (writeLog && process.env.LOCALAPPDATA) {
+  if (writeLog) {
     try {
-      const logDir = path.join(process.env.LOCALAPPDATA, "TuneFlow", "logs");
-      fs.mkdirSync(logDir, { recursive: true });
-      fs.writeFileSync(path.join(logDir, "doctor.json"), JSON.stringify(report, null, 2), "utf8");
+      if (LOGS_DIR) {
+        fs.mkdirSync(LOGS_DIR, { recursive: true });
+        fs.writeFileSync(path.join(LOGS_DIR, "doctor.json"), JSON.stringify(report, null, 2), "utf8");
+      }
+      if (process.env.LOCALAPPDATA) {
+        const logDir = path.join(process.env.LOCALAPPDATA, "TuneFlow", "logs");
+        fs.mkdirSync(logDir, { recursive: true });
+        fs.writeFileSync(path.join(logDir, "doctor.json"), JSON.stringify(report, null, 2), "utf8");
+      }
     } catch (_e) {
       // Non-fatal if log dir cannot be written in sandboxed env
     }

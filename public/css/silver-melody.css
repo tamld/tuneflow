@@ -604,12 +604,16 @@ body {
     box-shadow: 0 0 0 3px var(--accent-gold-soft);
   }
 
-  .search-input-group .search-input {
+  .search-input-group .search-input,
+  .search-input-group .search-input:focus,
+  .search-input-group .search-input:focus-visible {
     height: 46px;
     border: none !important;
     background: transparent !important;
     padding: 0 8px 0 0;
     box-shadow: none !important;
+    outline: none !important;
+    outline-offset: 0 !important;
   }
 
   .search-input-group .btn-clear-search {
@@ -1995,6 +1999,16 @@ body.compact-mode .search-card {
   outline-offset: 3px !important;
 }
 
+/* Single Focus Frame Invariant for Form Inputs & Modals (WCAG AAA compliant border + glow, eliminates detached double outline) */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--accent-gold-soft);
+}
+
 /* Motion Reduction for Vestibular & Senior Users (Prefers-Reduced-Motion) */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -2905,6 +2919,18 @@ body.tv-mode .player-title {
     border-radius: 11px;
     padding-left: 16px;
     padding-right: 8px;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    outline-offset: 0 !important;
+  }
+
+  .search-card .search-input:focus,
+  .search-card .search-input:focus-visible {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    outline-offset: 0 !important;
   }
 
   .search-card .search-btn {

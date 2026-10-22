@@ -70,6 +70,7 @@ const DOWNLOADS_DIR = process.env.DOWNLOADS_DIR || storage.downloadsDir;
 const TEMP_DIR = process.env.TEMP_DIR || path.join(DOWNLOADS_DIR, 'temp');
 
 const DATA_DIR = process.env.DATA_DIR || storage.dataDir;
+const LOGS_DIR = process.env.LOGS_DIR || path.join(path.dirname(DATA_DIR), 'logs');
 
 // Ensure directories exist
 if (!fs.existsSync(DOWNLOADS_DIR)) {
@@ -81,6 +82,11 @@ if (!fs.existsSync(TEMP_DIR)) {
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
+try {
+  if (!fs.existsSync(LOGS_DIR)) {
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+  }
+} catch (_e) {}
 
 const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'tuneflow.db');
 
@@ -96,6 +102,7 @@ module.exports = {
   DOWNLOAD_TTL_HOURS: parseInt(process.env.DOWNLOAD_TTL_HOURS || '24', 10),
   MAX_STORAGE_MB: parseInt(process.env.MAX_STORAGE_MB || '2048', 10),
   DATA_DIR,
+  LOGS_DIR,
   DB_PATH,
   GUEST_MAX_LISTEN_SEC: parseInt(process.env.GUEST_MAX_LISTEN_SEC || '1800', 10),
   GUEST_COOLDOWN_SEC: parseInt(process.env.GUEST_COOLDOWN_SEC || '3600', 10),

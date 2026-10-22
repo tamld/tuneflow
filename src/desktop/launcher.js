@@ -189,6 +189,9 @@ async function launch({ port: requestedPort, autoOpenBrowser = true } = {}) {
   const port = await findAvailablePort(startPort);
 
   process.env.PORT = String(port);
+  if (!process.env.TUNEFLOW_DESKTOP_LOCAL) {
+    process.env.TUNEFLOW_DESKTOP_LOCAL = '1';
+  }
 
   // Require Express app after setting process.env.PORT
   const { app } = require('../server');

@@ -2282,6 +2282,70 @@ if (typeof document !== 'undefined') {
     });
   }
 
+  // 14. Operational Log Viewer (Bộ Log Vận Hành - Round 4 Deep Vertical)
+  const btnViewOpLogs = document.getElementById('btn-view-op-logs');
+  const systemOpLogsPanel = document.getElementById('system-op-logs-panel');
+
+  async function loadAndRenderOpLogs(levelFilter = 'ALL') {
+    if (!systemOpLogsPanel) return;
+    systemOpLogsPanel.style.display = 'block';
+    systemOpLogsPanel.innerHTML = '<div style="color: var(--accent-gold);">⏳ Đang tải nhật ký vận hành...</div>';
+    try {
+      const res = await fetch(`/api/system/logs?limit=60&level=${encodeURIComponent(levelFilter)}`);
+      const data = await res.json();
+      const entries = Array.isArray(data.entries) ? data.entries : [];
+      const rowsHtml = entries.length === 0
+        ? '<div style="color: var(--text-sub); padding: 8px 0;">Chưa có bản ghi nhật ký nào phù hợp bộ lọc.</div>'
+        : entries.map(e => {
+            const color = e.level === 'ERROR'
+              ? 'var(--accent-red, #ef4444)'
+              : (e.level === 'WARN' ? 'var(--accent-gold, #f59e0b)' : 'var(--accent-green, #10b981)');
+            const timeShort = String(e.timestamp || '').split('T')[1]?.replace('Z', '') || '';
+            return `<div style="padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.08); font-family: monospace; word-break: break-word;">
+              <span style="color: var(--text-muted);">[${escapeHtml(timeShort)}]</span>
+              <strong style="color: ${color};">[${escapeHtml(e.level)}]</strong>
+              <span style="color: var(--accent-blue, #60a5fa);">[${escapeHtml(e.category)}]</span>
+              <span>${escapeHtml(e.message)}</span>
+            </div>`;
+          }).join('');
+
+      systemOpLogsPanel.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color);">
+          <div>
+            <strong style="color: var(--accent-green, #10b981); font-size: 13.5px;">📜 Nhật Ký Vận Hành (${entries.length} sự kiện gần nhất)</strong>
+            <div style="font-size: 11.5px; color: var(--text-muted); font-family: monospace;">Tệp log: ${escapeHtml(data.mainLogFile || 'N/A')}</div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" id="btn-oplog-all" class="font-scale-btn" style="padding: 3px 10px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 6px;">Tất cả</button>
+            <button type="button" id="btn-oplog-warn" class="font-scale-btn" style="padding: 3px 10px; font-size: 12px; border: 1px solid var(--accent-gold); border-radius: 6px; color: var(--accent-gold);">Cảnh báo/Lỗi</button>
+            <button type="button" id="btn-oplog-clear" class="font-scale-btn" style="padding: 3px 10px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 6px;">Xóa log</button>
+          </div>
+        </div>
+        <div>${rowsHtml}</div>
+      `;
+
+      const bAll = document.getElementById('btn-oplog-all');
+      const bWarn = document.getElementById('btn-oplog-warn');
+      const bClear = document.getElementById('btn-oplog-clear');
+      if (bAll) bAll.addEventListener('click', () => loadAndRenderOpLogs('ALL'));
+      if (bWarn) bWarn.addEventListener('click', () => loadAndRenderOpLogs('WARN_ERROR'));
+      if (bClear) {
+        bClear.addEventListener('click', async () => {
+          await fetch('/api/system/logs/clear', { method: 'POST' });
+          loadAndRenderOpLogs('ALL');
+        });
+      }
+    } catch (err) {
+      systemOpLogsPanel.innerHTML = `<div style="color: var(--accent-red);">❌ Không thể tải nhật ký vận hành: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  if (btnViewOpLogs && systemOpLogsPanel) {
+    btnViewOpLogs.addEventListener('click', () => {
+      loadAndRenderOpLogs('ALL');
+    });
+  }
+
   window.showToast = showToast;
   window.renderResults = renderResults;
   window.renderPlaylistBatch = renderPlaylistBatch;

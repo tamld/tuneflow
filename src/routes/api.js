@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 const { Readable } = require('stream');
 const router = express.Router();
 const { searchYouTube, getVideoMetadata, getPreviewStreamUrl, parsePlaylist, getSystemDiagnostics, updateYtDlpBinary } = require('../engine/ytdlp');
@@ -11,6 +12,9 @@ const { createRateLimiter } = require('../utils/rateLimiter');
 const { connectHub } = require('../engine/connect');
 const { detectUsbDrives, exportTracksToUsb, generateBatchZipBuffer } = require('../engine/usb_exporter');
 const { engineHealthMonitor } = require('../engine/engine_health');
+const { resolveSidecarBinary, getSanitizedEnv } = require('../security/binary_guard');
+const { processManager } = require('../engine/process_manager');
+const { opLogger } = require('../utils/logger');
 
 // SQLite DB & Auth Services (Issue #52)
 const { initDatabase } = require('../db/database');
@@ -46,6 +50,44 @@ engineHealthMonitor.setAutoUpdater(async () => {
 
 // Apply authentication to all API endpoints
 router.use(authenticate);
+
+// Operational Telemetry Middleware (Bộ Log Vận Hành)
+router.use((req, res, next) => {
+  const startMs = Date.now();
+  res.on('finish', () => {
+    const p = req.path || '';
+    if (p === '/health' || p === '/auth/guest-heartbeat' || p.startsWith('/system/logs')) {
+      return;
+    }
+    const durationMs = Date.now() - startMs;
+    const status = res.statusCode;
+    const role = (req.user && req.user.role) || 'anonymous';
+    if (status >= 400) {
+      opLogger.warn('http', `${req.method} /api${p} -> HTTP ${status} (${durationMs}ms)`, {
+        method: req.method,
+        path: `/api${p}`,
+        status,
+        durationMs,
+        role
+      });
+    } else if (
+      p.startsWith('/search') ||
+      p.startsWith('/preview/') ||
+      p.startsWith('/queue/add') ||
+      p.startsWith('/queue/retry') ||
+      p.startsWith('/system/doctor')
+    ) {
+      opLogger.info('http', `${req.method} /api${p} -> HTTP ${status} (${durationMs}ms)`, {
+        method: req.method,
+        path: `/api${p}`,
+        status,
+        durationMs,
+        role
+      });
+    }
+  });
+  next();
+});
 
 // Mount Auth, Admin & User sub-routers
 router.use('/auth', createAuthRouter({ authService }));
@@ -97,6 +139,15 @@ router.get('/search', searchRateLimiter, async (req, res) => {
       limit: parseInt(limit || '10', 10)
     });
     engineHealthMonitor.recordSuccess();
+    if (process.env.NODE_ENV !== 'test' && Array.isArray(results)) {
+      const topVideos = results.filter(r => r && r.type !== 'playlist' && isValidVideoId(r.id)).slice(0, 2);
+      topVideos.forEach((v, idx) => {
+        const timer = setTimeout(() => {
+          getPreviewStreamUrl(`https://www.youtube.com/watch?v=${v.id}`).catch(() => {});
+        }, idx * 350);
+        if (timer.unref) timer.unref();
+      });
+    }
     res.json({
       ok: true,
       success: true,
@@ -140,10 +191,108 @@ router.get('/preview/:id', guestGuard, async (req, res) => {
   try {
     const streamUrl = await getPreviewStreamUrl(videoUrl);
     if (!isSafeRemoteStreamUrl(streamUrl)) {
+      opLogger.error('preview', `Rejected unsafe remote stream URL for ${id}`);
       return res.status(400).json({ error: 'Nguồn phát luồng âm thanh không an toàn' });
     }
 
-    // Forward Range header if requested by HTML5 audio element for seeking
+    const ffmpegBin = resolveSidecarBinary('ffmpeg');
+    const canTranscodeLive =
+      streamUrl.includes('googlevideo.com') &&
+      req.query.raw !== '1' &&
+      ffmpegBin &&
+      (path.isAbsolute(ffmpegBin) ? fs.existsSync(ffmpegBin) : true);
+
+    if (canTranscodeLive) {
+      const clenMatch = streamUrl.match(/[?&]clen=(\d+)/);
+      const totalLen = clenMatch ? parseInt(clenMatch[1], 10) : 60 * 1024 * 1024;
+
+      res.status(200);
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Accept');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+
+      const ffProc = spawn(ffmpegBin, [
+        '-hide_banner',
+        '-loglevel', 'error',
+        '-i', 'pipe:0',
+        '-vn',
+        '-c:a', 'libmp3lame',
+        '-b:a', '128k',
+        '-f', 'mp3',
+        'pipe:1'
+      ], {
+        windowsHide: true,
+        detached: process.platform !== 'win32',
+        env: getSanitizedEnv(process.env)
+      });
+
+      processManager.register(ffProc, {
+        label: `ffmpeg:preview:${id}`,
+        command: ffmpegBin
+      });
+
+      let closed = false;
+      const cleanupPreview = (reason) => {
+        if (closed) return;
+        closed = true;
+        try {
+          processManager.killProcessTree(ffProc, 'SIGKILL', reason);
+        } catch (_e) {}
+      };
+
+      req.on('close', () => cleanupPreview('preview_client_close'));
+      res.on('close', () => cleanupPreview('preview_res_close'));
+      ffProc.stdin.on('error', () => {});
+      ffProc.stdout.on('error', () => {});
+      ffProc.on('error', (err) => {
+        opLogger.error('preview', `ffmpeg preview spawn error for ${id}: ${err.message}`);
+        cleanupPreview('ffmpeg_error');
+      });
+
+      ffProc.stdout.pipe(res);
+
+      opLogger.info('preview', `Bắt đầu phát nghe thử tốc độ cao (MP3 stream) cho video ${id}`, {
+        videoId: id,
+        mode: 'chunked_range_ffmpeg_mp3',
+        totalBytes: totalLen
+      });
+
+      const CHUNK_SIZE = 512 * 1024; // 512KB bounded Range chunks bypass YouTube CDN throttling
+      let cursor = 0;
+      while (cursor < totalLen && !closed) {
+        const nextEnd = Math.min(totalLen - 1, cursor + CHUNK_SIZE - 1);
+        const chunkRes = await fetch(streamUrl, {
+          headers: { Range: `bytes=${cursor}-${nextEnd}` }
+        });
+        if (!chunkRes.ok && chunkRes.status !== 206) {
+          opLogger.warn('preview', `Upstream chunk HTTP ${chunkRes.status} for ${id} at offset ${cursor}`);
+          break;
+        }
+        const chunkBuf = Buffer.from(await chunkRes.arrayBuffer());
+        if (closed || chunkBuf.length === 0) break;
+        if (!ffProc.stdin.destroyed) {
+          const canContinue = ffProc.stdin.write(chunkBuf);
+          if (!canContinue && !closed) {
+            await new Promise((resolve) => {
+              ffProc.stdin.once('drain', resolve);
+              ffProc.stdin.once('close', resolve);
+            });
+          }
+        }
+        cursor += chunkBuf.length;
+      }
+      if (!closed && !ffProc.stdin.destroyed) {
+        try {
+          ffProc.stdin.end();
+        } catch (_e) {}
+      }
+      return;
+    }
+
+    // Fallback / Synthetic test stream proxy: Forward Range header (clamped to 2MB for googlevideo.com)
     const headers = {};
     if (req.headers.range) {
       headers['Range'] = req.headers.range;
@@ -195,8 +344,11 @@ router.get('/preview/:id', guestGuard, async (req, res) => {
     });
   } catch (err) {
     if (err.name === 'AbortError') return;
+    opLogger.error('preview', `Lỗi phát nghe thử cho video ${id}: ${err.message}`, { videoId: id });
     console.error(`⚠️ Preview stream error for id ${id}:`, err.message);
-    res.status(500).json({ error: 'Không thể phát nghe thử bài hát này.' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Không thể phát nghe thử bài hát này.' });
+    }
   }
 });
 
@@ -930,8 +1082,10 @@ const { runSystemDoctor } = require('../engine/doctor');
 router.get('/system/doctor', async (_req, res) => {
   try {
     const report = await runSystemDoctor({ writeLog: true });
+    const logPaths = opLogger.getLogFilePaths();
     res.json({
       ...report,
+      logs: logPaths,
       rateLimiters: {
         search: searchRateLimiter.getStats(),
         queue: queueRateLimiter.getStats()
@@ -940,6 +1094,50 @@ router.get('/system/doctor', async (_req, res) => {
     });
   } catch (err) {
     res.status(500).json({ ok: false, success: false, error: err.message });
+  }
+});
+
+router.get('/system/logs', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || '80', 10);
+    const level = req.query.level || 'ALL';
+    const category = req.query.category || 'ALL';
+    const entries = opLogger.getEntries({ limit, level, category });
+    const paths = opLogger.getLogFilePaths();
+    res.json({
+      ok: true,
+      success: true,
+      ...paths,
+      count: entries.length,
+      entries
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, success: false, error: err.message });
+  }
+});
+
+router.post('/system/logs/client', (req, res) => {
+  try {
+    const { level, category, message, meta } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ ok: false, error: 'Missing log message' });
+    }
+    const safeLevel = ['INFO', 'WARN', 'ERROR'].includes(String(level || '').toUpperCase())
+      ? String(level).toUpperCase()
+      : 'INFO';
+    const entry = opLogger.record(safeLevel, category || 'player-ui', message.slice(0, 300), meta || {});
+    res.json({ ok: true, entry });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+router.post('/system/logs/clear', (_req, res) => {
+  try {
+    opLogger.clear();
+    res.json({ ok: true, success: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 

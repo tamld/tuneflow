@@ -75,6 +75,9 @@ jobs:
       - name: Install Puppeteer Chrome
         run: npx puppeteer browsers install chrome
 
+      - name: Run UX & User-Story Visual QA Gate
+        run: node scripts/ci-ux-qa-gate.js
+
       - name: Run Full Test Suite
         run: pnpm test
 

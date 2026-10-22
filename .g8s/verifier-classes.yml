@@ -31,3 +31,5 @@ classes:
         run: node scripts/ci-sast-gate.js
       - type: script
         run: node scripts/ci-dast-gate.js
+      - type: script
+        run: node scripts/ci-ux-qa-gate.js

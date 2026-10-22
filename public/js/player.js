@@ -287,7 +287,24 @@ class PreviewPlayer {
       this.updatePlayPauseIcon();
       this.updateCardState();
       this.trackStatus.textContent = window.TuneFlowI18n ? window.TuneFlowI18n.t('player_error') : 'Dạ bài này đang bị giới hạn, Bố Mẹ thử chọn bài khác nhé!';
+      const mediaErr = this.audio && this.audio.error ? { code: this.audio.error.code, message: this.audio.error.message || '' } : {};
+      this.reportClientLog('ERROR', 'Lỗi phát luồng âm thanh trên trình phát (HTMLMediaElement error)', {
+        trackId: this.currentTrack ? this.currentTrack.id : null,
+        ...mediaErr
+      });
     });
+  }
+
+  reportClientLog(level, message, meta = {}) {
+    try {
+      if (typeof fetch !== 'function') return;
+      const resolve = (typeof window !== 'undefined' && window.TUNEFLOW_RESOLVE_URL) ? window.TUNEFLOW_RESOLVE_URL : (p => p);
+      fetch(resolve('/api/system/logs/client'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ level, category: 'player-ui', message, meta })
+      }).catch(() => {});
+    } catch (_e) {}
   }
 
   /**
@@ -668,6 +685,10 @@ class PreviewPlayer {
         this.currentTrack = null;
         this.playTrack(trackToResume);
       }
+      return;
+    }
+    if (this.isLoading) {
+      // Prevent premature state flip while initial stream handshake is still in progress
       return;
     }
     if (this.isPlaying) {

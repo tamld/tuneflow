@@ -32,8 +32,14 @@ function createAuthenticateMiddleware(authService) {
     const fingerprintHash = (req.headers && req.headers['x-fingerprint']) || (req.query && req.query.fp) || null;
     const guestId = (req.headers && req.headers['x-guest-id']) || (req.query && req.query.guest_id) || null;
 
-    // Loopback accommodation: When calling directly from localhost without explicit token or guest headers (e.g. local legacy test suites / CLI)
-    if (!token && !guestId && !fingerprintHash && isLoopback(clientIp)) {
+    // Loopback accommodation: When calling directly from localhost without explicit token or guest headers (e.g. local legacy test suites / CLI),
+    // OR when running in Standalone Desktop Local Mode (TUNEFLOW_DESKTOP_LOCAL=1) on the operator's own loopback machine.
+    const isDesktopLocalOwner =
+      process.env.TUNEFLOW_DESKTOP_LOCAL === '1' &&
+      isLoopback(clientIp) &&
+      !(req.headers && req.headers['x-test-force-guest'] === '1');
+
+    if ((!token && !guestId && !fingerprintHash && isLoopback(clientIp)) || isDesktopLocalOwner) {
       req.user = {
         id: 1,
         username: 'local-admin',

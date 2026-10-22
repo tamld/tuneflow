@@ -89,6 +89,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let prefItem = NSMenuItem(title: "Cài đặt máy chủ (Preferences)...", action: #selector(openPreferences), keyEquivalent: ",")
         appMenu.addItem(prefItem)
+        let logItem = NSMenuItem(title: "Mở thư mục Nhật ký Vận hành (Logs)...", action: #selector(openLogsFolder), keyEquivalent: "l")
+        appMenu.addItem(logItem)
         appMenu.addItem(NSMenuItem.separator())
 
         appMenu.addItem(withTitle: "Ẩn TuneFlow", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
@@ -315,7 +317,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let home = NSHomeDirectory()
         let extraPaths = "/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:\(home)/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         env["PATH"] = "\(extraPaths):\(env["PATH"] ?? "")"
+        env["TUNEFLOW_DESKTOP_LOCAL"] = "1"
         proc.environment = env
+
+        let logsDir = "\(home)/Library/Application Support/TuneFlow/logs"
+        try? FileManager.default.createDirectory(atPath: logsDir, withIntermediateDirectories: true)
+        let stdioLogPath = "\(logsDir)/server-stdio.log"
+        if !FileManager.default.fileExists(atPath: stdioLogPath) {
+            FileManager.default.createFile(atPath: stdioLogPath, contents: nil)
+        }
+        if let logHandle = FileHandle(forWritingAtPath: stdioLogPath) {
+            logHandle.seekToEndOfFile()
+            proc.standardOutput = logHandle
+            proc.standardError = logHandle
+        }
 
         do {
             try proc.run()
@@ -327,6 +342,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 message: "Không thể chạy máy chủ TuneFlow: \(error.localizedDescription)"
             )
         }
+    }
+
+    @objc func openLogsFolder() {
+        let logsDir = "\(NSHomeDirectory())/Library/Application Support/TuneFlow/logs"
+        try? FileManager.default.createDirectory(atPath: logsDir, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(URL(fileURLWithPath: logsDir))
     }
 
     func pollForServerReadiness() {
