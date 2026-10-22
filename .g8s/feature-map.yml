@@ -1,0 +1,120 @@
+schema_version: "1.0"
+features:
+  - id: FEAT-TF-UX-SINGLE-FRAME
+    title: "Single Focus Frame UX & WCAG AAA Elderly Geometry Gate"
+    persona_story: "PRD#SilverMelody-SingleFocusFrame"
+    srs_reqs:
+      - "REQ-FUNC-01"
+      - "REQ-FUNC-03"
+    code_paths:
+      - "scripts/ci-ux-qa-gate.js"
+      - "public/index.html"
+      - "public/css/**"
+    invariants:
+      - "Search input and wrapper never render dual nested outlines on :focus-visible"
+      - "Elderly mode touch targets >= 44px and WCAG AAA contrast verified"
+    visible_tests:
+      - "node scripts/ci-sast-gate.js"
+    holdout_tests:
+      - "$G8S_STATE_DIR/holdout/FEAT-TF-UX-SINGLE-FRAME"
+    verifier_class: "gates"
+    blast_radius:
+      depends_on:
+        - "FEAT-TF-ELDERLY-QUEUE"
+      direct_consumers: []
+
+  - id: FEAT-TF-ELDERLY-QUEUE
+    title: "Resilient Elderly Download Queue & One-Click Retry"
+    persona_story: "PRD#SilverMelody-QueueRecovery"
+    srs_reqs:
+      - "REQ-FUNC-01"
+      - "REQ-FUNC-04"
+    code_paths:
+      - "public/js/app.js"
+      - "public/js/player.js"
+      - "src/engine/**"
+    invariants:
+      - "Failed queue items expose deterministic one-click retry without losing queue order"
+      - "Bounded concurrency = 2 and automatic retry = 3"
+    visible_tests:
+      - "node scripts/ci-sast-gate.js"
+    holdout_tests:
+      - "$G8S_STATE_DIR/holdout/FEAT-TF-ELDERLY-QUEUE"
+    verifier_class: "gates"
+    blast_radius:
+      depends_on:
+        - "FEAT-TF-MACOS-STREAM"
+      direct_consumers:
+        - "FEAT-TF-UX-SINGLE-FRAME"
+
+  - id: FEAT-TF-MACOS-STREAM
+    title: "macOS WKWebView AVFoundation 512KB Chunked Range Streaming & Desktop Auto-Admin"
+    persona_story: "PRD#MacOS-NativePreviewAndAuth"
+    srs_reqs:
+      - "REQ-FUNC-02"
+      - "REQ-FUNC-04"
+    code_paths:
+      - "src/routes/api.js"
+      - "src/middleware/authenticate.js"
+      - "src/desktop/**"
+    invariants:
+      - "Open-ended Range requests (bytes=0-) serve 512KB 206 Partial Content chunks for AVFoundation"
+      - "TUNEFLOW_DESKTOP_LOCAL=1 grants loopback auto-admin for native macOS app"
+    visible_tests:
+      - "node scripts/ci-sast-gate.js"
+    holdout_tests:
+      - "$G8S_STATE_DIR/holdout/FEAT-TF-MACOS-STREAM"
+    verifier_class: "gates"
+    blast_radius:
+      depends_on:
+        - "FEAT-TF-SECURITY-SSRF-LRU"
+        - "FEAT-TF-DOCTOR-LOG"
+      direct_consumers:
+        - "FEAT-TF-ELDERLY-QUEUE"
+
+  - id: FEAT-TF-SECURITY-SSRF-LRU
+    title: "Zero-Trust SSRF Private-IP Blocking, SAST/DAST Gates & Bounded LRU Cache"
+    persona_story: "PRD#SecOps-ZeroTrustBoundary"
+    srs_reqs:
+      - "REQ-FUNC-01"
+      - "REQ-FUNC-02"
+    code_paths:
+      - "src/utils/validator.js"
+      - "src/security/**"
+      - "src/middleware/**"
+      - "scripts/ci-sast-gate.js"
+      - "scripts/ci-dast-gate.js"
+    invariants:
+      - "Strict YouTube host allowlist and private-IP SSRF rejection"
+      - "Zero child_process shell interpolation and path traversal containment"
+    visible_tests:
+      - "node scripts/ci-sast-gate.js"
+    holdout_tests:
+      - "$G8S_STATE_DIR/holdout/FEAT-TF-SECURITY-SSRF-LRU"
+    verifier_class: "gates"
+    blast_radius:
+      depends_on: []
+      direct_consumers:
+        - "FEAT-TF-MACOS-STREAM"
+
+  - id: FEAT-TF-DOCTOR-LOG
+    title: "Structured Operational Logger with Rotation & Live Doctor Diagnostics"
+    persona_story: "PRD#Ops-DoctorAndLogViewer"
+    srs_reqs:
+      - "REQ-FUNC-01"
+      - "REQ-FUNC-02"
+    code_paths:
+      - "src/utils/logger.js"
+      - "src/config.js"
+    invariants:
+      - "Operational logs persist to tuneflow.log with automatic 5MB rotation"
+      - "GET /api/system/logs returns structured recent log entries"
+    visible_tests:
+      - "node scripts/ci-sast-gate.js"
+    holdout_tests:
+      - "$G8S_STATE_DIR/holdout/FEAT-TF-DOCTOR-LOG"
+    verifier_class: "gates"
+    blast_radius:
+      depends_on: []
+      direct_consumers:
+        - "FEAT-TF-MACOS-STREAM"
