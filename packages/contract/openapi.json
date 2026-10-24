@@ -13,60 +13,415 @@
     "browser-extension"
   ],
   "x-routes": [
-    { "method": "POST", "path": "/api/auth/login", "source": "src/routes/auth_routes.js", "auth": "public", "summary": "Authenticate user credentials and return bearer session token" },
-    { "method": "POST", "path": "/api/auth/logout", "source": "src/routes/auth_routes.js", "auth": "public", "summary": "Revoke caller session token and log out" },
-    { "method": "GET", "path": "/api/auth/me", "source": "src/routes/auth_routes.js", "auth": "public", "summary": "Retrieve current session info, role, and authentication status" },
-    { "method": "POST", "path": "/api/auth/change-password", "source": "src/routes/auth_routes.js", "auth": "authenticated", "summary": "Change password for authenticated user and revoke other sessions" },
-    { "method": "POST", "path": "/api/auth/guest-bootstrap", "source": "src/routes/auth_routes.js", "auth": "guest", "summary": "Bootstrap or retrieve guest session by client IP and fingerprint" },
-    { "method": "POST", "path": "/api/auth/guest-heartbeat", "source": "src/routes/auth_routes.js", "auth": "guest", "summary": "Track listening duration heartbeat against guest 30-min quota" },
-    { "method": "GET", "path": "/api/admin/users", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "List all registered user accounts" },
-    { "method": "POST", "path": "/api/admin/users", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "Create new user account with specified role" },
-    { "method": "DELETE", "path": "/api/admin/users/:id", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "Delete user account by ID" },
-    { "method": "POST", "path": "/api/admin/users/:id/reset-password", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "Reset password for specified user and revoke their active sessions" },
-    { "method": "POST", "path": "/api/admin/guests/reset", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "Reset guest listening quota and cooldown state" },
-    { "method": "GET", "path": "/api/admin/guests", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "List all tracked guest sessions and quota statuses" },
-    { "method": "GET", "path": "/api/admin/sessions", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "List active sessions, metadata, and aggregate metrics" },
-    { "method": "POST", "path": "/api/admin/sessions/revoke", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "Revoke a single session token" },
-    { "method": "POST", "path": "/api/admin/sessions/revoke-group", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "Revoke batch sessions by group" },
-    { "method": "POST", "path": "/api/admin/sessions/revoke-all", "source": "src/routes/admin_routes.js", "auth": "admin", "summary": "Revoke all sessions across all roles and purge guest sessions" },
-    { "method": "GET", "path": "/api/user/favorites", "source": "src/routes/user_routes.js", "auth": "authenticated", "summary": "Get favorites list for current authenticated user" },
-    { "method": "POST", "path": "/api/user/favorites", "source": "src/routes/user_routes.js", "auth": "authenticated", "summary": "Add track to user's favorites" },
-    { "method": "DELETE", "path": "/api/user/favorites/:id", "source": "src/routes/user_routes.js", "auth": "authenticated", "summary": "Remove track from user's favorites by video ID" },
-    { "method": "POST", "path": "/api/user/favorites/sync", "source": "src/routes/user_routes.js", "auth": "authenticated", "summary": "Bulk synchronize favorites list with user account" },
-    { "method": "GET", "path": "/api/health", "source": "src/routes/api.js", "auth": "public", "summary": "Container health check, system uptime, and active download tasks count" },
-    { "method": "GET", "path": "/api/search", "source": "src/routes/api.js", "auth": "public", "summary": "Search YouTube videos/playlists with sorting, filtering, and rate limiting" },
-    { "method": "POST", "path": "/api/preview/prewarm", "source": "src/routes/api.js", "auth": "guestGuard", "summary": "Prewarm preview audio stream URL cache on hover/pointer focus" },
-    { "method": "GET", "path": "/api/preview/:id", "source": "src/routes/api.js", "auth": "guestGuard", "summary": "Proxy in-app HTML5 audio preview stream from YouTube CDN with Range support" },
-    { "method": "GET", "path": "/api/thumbnail", "source": "src/routes/api.js", "auth": "public", "summary": "Proxy and LRU cache YouTube video thumbnail images" },
-    { "method": "GET", "path": "/api/info", "source": "src/routes/api.js", "auth": "public", "summary": "Fetch YouTube video or playlist metadata" },
-    { "method": "POST", "path": "/api/queue/add", "source": "src/routes/api.js", "auth": "user", "summary": "Add single audio download item to queue" },
-    { "method": "POST", "path": "/api/queue/batch-add", "source": "src/routes/api.js", "auth": "user", "summary": "Add multiple audio download items to queue in batch" },
-    { "method": "POST", "path": "/api/playlist/parse", "source": "src/routes/api.js", "auth": "public", "summary": "Parse YouTube playlist URL and extract track entries" },
-    { "method": "GET", "path": "/api/curation/presets", "source": "src/routes/api.js", "auth": "public", "summary": "Get curated elderly personas search presets" },
-    { "method": "GET", "path": "/api/queue/list", "source": "src/routes/api.js", "auth": "public", "summary": "Get current download queue item list" },
-    { "method": "GET", "path": "/api/queue/stream", "source": "src/routes/api.js", "auth": "public", "summary": "SSE stream for real-time queue progress events" },
-    { "method": "POST", "path": "/api/queue/cancel/:id", "source": "src/routes/api.js", "auth": "public", "summary": "Cancel queued or active download item" },
-    { "method": "POST", "path": "/api/queue/clear", "source": "src/routes/api.js", "auth": "public", "summary": "Clear finished/failed items from queue" },
-    { "method": "GET", "path": "/api/download/:id/file", "source": "src/routes/api.js", "auth": "public", "summary": "Stream downloaded audio file directly to browser with checksum" },
-    { "method": "GET", "path": "/api/stream/pipe/:id", "source": "src/routes/api.js", "auth": "guestGuard", "summary": "Zero-disk direct audio chunk streaming pipeline from YouTube CDN" },
-    { "method": "GET", "path": "/api/system/status", "source": "src/routes/api.js", "auth": "admin", "summary": "Retrieve runtime system diagnostics and tool binary versions" },
-    { "method": "POST", "path": "/api/system/update-ytdlp", "source": "src/routes/api.js", "auth": "admin", "summary": "Trigger manual hot-update of yt-dlp binary" },
-    { "method": "GET", "path": "/api/system/network", "source": "src/routes/api.js", "auth": "public", "summary": "Discover local network IPv4 interfaces, LAN URL, and pairing code" },
-    { "method": "GET", "path": "/api/system/pairing-qr", "source": "src/routes/api.js", "auth": "public", "summary": "Generate LAN pairing QR payload and one-time pairing code for Android zero-typing setup" },
-    { "method": "POST", "path": "/api/connect/register", "source": "src/routes/api.js", "auth": "public", "summary": "Register new TuneFlow Connect TV/10-foot casting receiver" },
-    { "method": "GET", "path": "/api/connect/receivers", "source": "src/routes/api.js", "auth": "public", "summary": "List active TuneFlow Connect receivers" },
-    { "method": "POST", "path": "/api/connect/pair", "source": "src/routes/api.js", "auth": "public", "summary": "Pair controller device with receiver using 4-digit PIN code" },
-    { "method": "POST", "path": "/api/connect/cast", "source": "src/routes/api.js", "auth": "public", "summary": "Dispatch playback cast command to paired receiver" },
-    { "method": "GET", "path": "/api/connect/events", "source": "src/routes/api.js", "auth": "public", "summary": "Subscribe to SSE receiver event bus" },
-    { "method": "GET", "path": "/api/connect/state", "source": "src/routes/api.js", "auth": "public", "summary": "Query playback and pairing state of a receiver" },
-    { "method": "POST", "path": "/api/connect/state", "source": "src/routes/api.js", "auth": "public", "summary": "Update playback state for a receiver" },
-    { "method": "GET", "path": "/api/usb/drives", "source": "src/routes/api.js", "auth": "public", "summary": "Detect mounted physical USB / SD card removable drives" },
-    { "method": "POST", "path": "/api/usb/export", "source": "src/routes/api.js", "auth": "public", "summary": "Export tracks to USB FAT32 with 3-digit elderly indexing" },
-    { "method": "GET", "path": "/api/usb/batch-zip", "source": "src/routes/api.js", "auth": "public", "summary": "Generate and download streaming ZIP archive of all tracks" },
-    { "method": "GET", "path": "/api/engine/health", "source": "src/routes/api.js", "auth": "public", "summary": "Get engine health monitor error metrics and quick diagnostics" },
-    { "method": "POST", "path": "/api/engine/update", "source": "src/routes/api.js", "auth": "public", "summary": "Trigger engine self-healing binary update" },
-    { "method": "GET", "path": "/api/system/doctor", "source": "src/routes/api.js", "auth": "public", "summary": "Self-diagnostic health check of sidecar binaries, disk writability, network reachability, and process telemetry" },
-    { "method": "GET", "path": "/api/library/local", "source": "src/routes/api.js", "auth": "public", "summary": "List downloaded local MP3/M4A/WebM audio files in the downloads directory" },
-    { "method": "GET", "path": "/api/library/local/stream/:filename", "source": "src/routes/api.js", "auth": "public", "summary": "Stream local downloaded audio file with HTTP Range support" }
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "source": "src/routes/auth_routes.js",
+      "auth": "public",
+      "summary": "Authenticate user credentials and return bearer session token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "source": "src/routes/auth_routes.js",
+      "auth": "public",
+      "summary": "Revoke caller session token and log out"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "source": "src/routes/auth_routes.js",
+      "auth": "public",
+      "summary": "Retrieve current session info, role, and authentication status"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/change-password",
+      "source": "src/routes/auth_routes.js",
+      "auth": "authenticated",
+      "summary": "Change password for authenticated user and revoke other sessions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/guest-bootstrap",
+      "source": "src/routes/auth_routes.js",
+      "auth": "guest",
+      "summary": "Bootstrap or retrieve guest session by client IP and fingerprint"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/guest-heartbeat",
+      "source": "src/routes/auth_routes.js",
+      "auth": "guest",
+      "summary": "Track listening duration heartbeat against guest 30-min quota"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "List all registered user accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/users",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "Create new user account with specified role"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/users/:id",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "Delete user account by ID"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/users/:id/reset-password",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "Reset password for specified user and revoke their active sessions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/guests/reset",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "Reset guest listening quota and cooldown state"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/guests",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "List all tracked guest sessions and quota statuses"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/sessions",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "List active sessions, metadata, and aggregate metrics"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/sessions/revoke",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "Revoke a single session token"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/sessions/revoke-group",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "Revoke batch sessions by group"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/sessions/revoke-all",
+      "source": "src/routes/admin_routes.js",
+      "auth": "admin",
+      "summary": "Revoke all sessions across all roles and purge guest sessions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/user/favorites",
+      "source": "src/routes/user_routes.js",
+      "auth": "authenticated",
+      "summary": "Get favorites list for current authenticated user"
+    },
+    {
+      "method": "POST",
+      "path": "/api/user/favorites",
+      "source": "src/routes/user_routes.js",
+      "auth": "authenticated",
+      "summary": "Add track to user's favorites"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/user/favorites/:id",
+      "source": "src/routes/user_routes.js",
+      "auth": "authenticated",
+      "summary": "Remove track from user's favorites by video ID"
+    },
+    {
+      "method": "POST",
+      "path": "/api/user/favorites/sync",
+      "source": "src/routes/user_routes.js",
+      "auth": "authenticated",
+      "summary": "Bulk synchronize favorites list with user account"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Container health check, system uptime, and active download tasks count"
+    },
+    {
+      "method": "GET",
+      "path": "/api/search",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Search YouTube videos/playlists with sorting, filtering, and rate limiting"
+    },
+    {
+      "method": "POST",
+      "path": "/api/preview/prewarm",
+      "source": "src/routes/api.js",
+      "auth": "guestGuard",
+      "summary": "Prewarm preview audio stream URL cache on hover/pointer focus"
+    },
+    {
+      "method": "GET",
+      "path": "/api/preview/:id",
+      "source": "src/routes/api.js",
+      "auth": "guestGuard",
+      "summary": "Proxy in-app HTML5 audio preview stream from YouTube CDN with Range support"
+    },
+    {
+      "method": "GET",
+      "path": "/api/thumbnail",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Proxy and LRU cache YouTube video thumbnail images"
+    },
+    {
+      "method": "GET",
+      "path": "/api/info",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Fetch YouTube video or playlist metadata"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/add",
+      "source": "src/routes/api.js",
+      "auth": "user",
+      "summary": "Add single audio download item to queue"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/batch-add",
+      "source": "src/routes/api.js",
+      "auth": "user",
+      "summary": "Add multiple audio download items to queue in batch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/playlist/parse",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Parse YouTube playlist URL and extract track entries"
+    },
+    {
+      "method": "GET",
+      "path": "/api/curation/presets",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Get curated elderly personas search presets"
+    },
+    {
+      "method": "GET",
+      "path": "/api/queue/list",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Get current download queue item list"
+    },
+    {
+      "method": "GET",
+      "path": "/api/queue/stream",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "SSE stream for real-time queue progress events"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/cancel/:id",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Cancel queued or active download item"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/clear",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Clear finished/failed items from queue"
+    },
+    {
+      "method": "GET",
+      "path": "/api/download/:id/file",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Stream downloaded audio file directly to browser with checksum"
+    },
+    {
+      "method": "GET",
+      "path": "/api/stream/pipe/:id",
+      "source": "src/routes/api.js",
+      "auth": "guestGuard",
+      "summary": "Zero-disk direct audio chunk streaming pipeline from YouTube CDN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/status",
+      "source": "src/routes/api.js",
+      "auth": "admin",
+      "summary": "Retrieve runtime system diagnostics and tool binary versions"
+    },
+    {
+      "method": "POST",
+      "path": "/api/system/update-ytdlp",
+      "source": "src/routes/api.js",
+      "auth": "admin",
+      "summary": "Trigger manual hot-update of yt-dlp binary"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/network",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Discover local network IPv4 interfaces, LAN URL, and pairing code"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/pairing-qr",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Generate LAN pairing QR payload and one-time pairing code for Android zero-typing setup"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connect/register",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Register new TuneFlow Connect TV/10-foot casting receiver"
+    },
+    {
+      "method": "GET",
+      "path": "/api/connect/receivers",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "List active TuneFlow Connect receivers"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connect/pair",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Pair controller device with receiver using 4-digit PIN code"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connect/cast",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Dispatch playback cast command to paired receiver"
+    },
+    {
+      "method": "GET",
+      "path": "/api/connect/events",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Subscribe to SSE receiver event bus"
+    },
+    {
+      "method": "GET",
+      "path": "/api/connect/state",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Query playback and pairing state of a receiver"
+    },
+    {
+      "method": "POST",
+      "path": "/api/connect/state",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Update playback state for a receiver"
+    },
+    {
+      "method": "GET",
+      "path": "/api/usb/drives",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Detect mounted physical USB / SD card removable drives"
+    },
+    {
+      "method": "POST",
+      "path": "/api/usb/export",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Export tracks to USB FAT32 with 3-digit elderly indexing"
+    },
+    {
+      "method": "GET",
+      "path": "/api/usb/batch-zip",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Generate and download streaming ZIP archive of all tracks"
+    },
+    {
+      "method": "GET",
+      "path": "/api/engine/health",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Get engine health monitor error metrics and quick diagnostics"
+    },
+    {
+      "method": "POST",
+      "path": "/api/engine/update",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Trigger engine self-healing binary update"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/doctor",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Self-diagnostic health check of sidecar binaries, disk writability, network reachability, and process telemetry"
+    },
+    {
+      "method": "GET",
+      "path": "/api/library/local",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "List downloaded local MP3/M4A/WebM audio files in the downloads directory"
+    },
+    {
+      "method": "GET",
+      "path": "/api/library/local/stream/:filename",
+      "source": "src/routes/api.js",
+      "auth": "public",
+      "summary": "Stream local downloaded audio file with HTTP Range support"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/retry/:id",
+      "source": "src/routes/api.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/queue/summary",
+      "source": "src/routes/api.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/system/logs",
+      "source": "src/routes/api.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/system/logs/client",
+      "source": "src/routes/api.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/system/logs/clear",
+      "source": "src/routes/api.js"
+    }
   ]
 }

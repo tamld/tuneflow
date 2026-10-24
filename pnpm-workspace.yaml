@@ -6,6 +6,8 @@ packages:
 
 overrides:
   qs: "^6.16.0"
+  body-parser: ">=1.20.9"
+  zod: ">=4.6.6"
 
 allowBuilds:
   puppeteer: true

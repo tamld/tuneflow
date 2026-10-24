@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test tests/*.test.js",
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage tests/*.test.js",
     "test:unit": "node --test tests/engine.test.js",
     "test:api": "node --test tests/api.test.js",
@@ -51,12 +51,15 @@
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/cli": "^2.11.4",
     "eslint": "^10.10.0",
-    "puppeteer": "^25.10.0"
+    "puppeteer": "25.10.0"
   },
   "overrides": {
     "qs": "^6.16.0",
+    "body-parser": ">=1.20.9",
+    "zod": ">=4.6.6",
     "express": {
-      "qs": "^6.16.0"
+      "qs": "^6.16.0",
+      "body-parser": ">=1.20.9"
     }
   },
   "engines": {

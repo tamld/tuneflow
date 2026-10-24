@@ -191,8 +191,16 @@ describe('UI Layout Geometry, Anti-Clipping & Multi-Viewport Regression Suite', 
       await page.waitForSelector('#category-pills .pill-btn:nth-child(4)', { timeout: 5000 });
 
       // Click the 4th category pill ("Trữ Tình Quê Mẹ") to trigger song card rendering
-      await page.click('#category-pills .pill-btn:nth-child(4)');
-      await page.waitForSelector('.results-grid .song-card .btn-preview', { timeout: 5000 });
+      // Re-click if initial async starter-shelf render overwrites #results-grid
+      await page.waitForFunction(() => {
+        if (document.querySelector('.results-grid .song-card .btn-preview')) return true;
+        const pill = document.querySelector('#category-pills .pill-btn:nth-child(4)');
+        if (pill && (!window.__pillClickTs || Date.now() - window.__pillClickTs > 400)) {
+          window.__pillClickTs = Date.now();
+          pill.click();
+        }
+        return false;
+      }, { timeout: 8000 });
 
       for (const vp of viewports) {
         await page.setViewport({ width: vp.width, height: vp.height });
@@ -509,6 +517,9 @@ describe('UI Layout Geometry, Anti-Clipping & Multi-Viewport Regression Suite', 
       );
     } finally {
       await browser.close();
+      if (typeof server.closeAllConnections === 'function') {
+        server.closeAllConnections();
+      }
       await new Promise((resolve) => server.close(resolve));
     }
   });
