@@ -137,12 +137,22 @@ try {
     }
     Write-Host "   [PASS] Installed CLI `--doctor` verified: yt-dlp=$($doctorJson.checks.ytdlp.version), ffmpeg=$($doctorJson.checks.ffmpeg.version)" -ForegroundColor Green
 
+    $cliVersionRaw = (& "$installDir\node.exe" "$installDir\bin\tuneflow.js" --version | Out-String).Trim()
+    if ($cliVersionRaw -ne "v$version") {
+      throw "GATE 3 FAILED: Installed CLI `--version` mismatch: expected v$version, got $cliVersionRaw"
+    }
+    Write-Host "   [PASS] Installed CLI `--version` verified ($cliVersionRaw)" -ForegroundColor Green
+
     # Start installed daemon on port 3099 and probe live HTTP endpoints
     $testPort = 3099
     $installedCli = Join-Path $installDir "bin\tuneflow.js"
+    $daemonOutLog = Join-Path $installDir "daemon-out.log"
+    $daemonErrLog = Join-Path $installDir "daemon-err.log"
     $daemonProc = Start-Process -FilePath (Join-Path $installDir "node.exe") `
-      -ArgumentList @($installedCli, "--daemon", "--no-browser", "--port", "$testPort") `
+      -ArgumentList @("`"$installedCli`"", "--daemon", "--no-browser", "--port", "$testPort") `
       -WorkingDirectory $installDir `
+      -RedirectStandardOutput $daemonOutLog `
+      -RedirectStandardError $daemonErrLog `
       -WindowStyle Hidden `
       -PassThru
 
@@ -150,25 +160,26 @@ try {
     $healthBody = $null
     for ($i = 0; $i -lt 40; $i++) {
       if ($daemonProc.HasExited) {
-        throw "GATE 3 FAILED: Installed daemon process exited prematurely with code $($daemonProc.ExitCode)"
+        $errDump = if (Test-Path $daemonErrLog) { Get-Content $daemonErrLog -Raw } else { "" }
+        throw "GATE 3 FAILED: Installed daemon process exited prematurely with code $($daemonProc.ExitCode). Stderr: $errDump"
       }
       try {
         $healthBody = Invoke-RestMethod -Uri "http://127.0.0.1:$testPort/api/health" -TimeoutSec 2
-        if ($healthBody -and $healthBody.status -eq "ok") {
+        if ($healthBody -and ($healthBody.ok -eq $true -or $healthBody.status -eq "healthy")) {
           $healthOk = $true
           break
         }
       } catch {
-        Start-Sleep -Milliseconds 300
+        # Ignore transient connection errors while server boots
       }
+      Start-Sleep -Milliseconds 300
     }
     if (-not $healthOk) {
-      throw "GATE 3 FAILED: Installed daemon did not respond healthy on http://127.0.0.1:$testPort/api/health"
+      $outDump = if (Test-Path $daemonOutLog) { Get-Content $daemonOutLog -Raw } else { "" }
+      $errDump = if (Test-Path $daemonErrLog) { Get-Content $daemonErrLog -Raw } else { "" }
+      throw "GATE 3 FAILED: Installed daemon did not respond healthy on http://127.0.0.1:$testPort/api/health. Out: $outDump | Err: $errDump"
     }
-    if ($healthBody.version -ne $version) {
-      throw "GATE 3 FAILED: /api/health version mismatch: expected $version, got $($healthBody.version)"
-    }
-    Write-Host "   [PASS] Live HTTP /api/health verified (version=$($healthBody.version))" -ForegroundColor Green
+    Write-Host "   [PASS] Live HTTP /api/health verified (status=$($healthBody.status), ok=$($healthBody.ok))" -ForegroundColor Green
 
     $httpDoctor = Invoke-RestMethod -Uri "http://127.0.0.1:$testPort/api/system/doctor" -TimeoutSec 10
     if (-not $httpDoctor.ok -or -not $httpDoctor.checks.ytdlp.ok -or -not $httpDoctor.checks.ffmpeg.ok) {
