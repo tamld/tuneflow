@@ -1,6 +1,6 @@
 {
   "name": "@tuneflow/android",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "TuneFlow Android Mobile & Leanback TV companion app with zero-typing QR pairing",
   "type": "commonjs",
   "scripts": {

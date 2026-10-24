@@ -1,6 +1,6 @@
 {
   "name": "@tuneflow/contract",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "TuneFlow HTTP API OpenAPI 3.1.0 & Route Manifest Single Source of Truth (SSoT) across all 5 client surfaces",
   "main": "index.js",
   "type": "commonjs",

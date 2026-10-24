@@ -59,8 +59,8 @@ describe('SPEC-0016: 3-Zone Desktop App Shell, Instant Curated Shelf & Native Wi
 
   test('4. Service Worker (sw.js) bypasses cache lock-in on local desktop engine (127.0.0.1 / localhost)', () => {
     assert.ok(
-      swJs.includes("CACHE_NAME = 'tuneflow-v2.5.0'"),
-      'sw.js must align CACHE_NAME with package.json version tuneflow-v2.5.0'
+      swJs.includes("CACHE_NAME = 'tuneflow-v2.6.0'"),
+      'sw.js must align CACHE_NAME with package.json version tuneflow-v2.6.0'
     );
     assert.ok(
       swJs.includes("url.hostname === '127.0.0.1' || url.hostname === 'localhost'"),

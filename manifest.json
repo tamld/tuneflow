@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "name": "TuneFlow",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "tagline": "An elegant, elderly-friendly YouTube to MP3/MP4 music downloader with in-app audio preview player. Self-hosted & container-ready (Docker, Podman, VPS, Cloud).",
   "license": "MIT",
   "repository": "https://github.com/tamld/tuneflow",
@@ -18,8 +18,14 @@
       "dev": 3001
     },
     "dependencies": {
-      "system": ["yt-dlp", "ffmpeg"],
-      "npm": ["express", "cors"]
+      "system": [
+        "yt-dlp",
+        "ffmpeg"
+      ],
+      "npm": [
+        "express",
+        "cors"
+      ]
     }
   },
   "storage": {
@@ -27,17 +33,65 @@
     "temp_dir": "downloads/temp"
   },
   "features": [
-    { "id": "TF-01", "name": "in_app_preview_player", "status": "active" },
-    { "id": "TF-02", "name": "direct_client_browser_delivery", "status": "active" },
-    { "id": "TF-03", "name": "elderly_friendly_ui", "status": "active" },
-    { "id": "TF-04", "name": "batch_and_playlist_download", "status": "active" },
-    { "id": "TF-05", "name": "resumable_part_retries", "status": "active" },
-    { "id": "TF-06", "name": "homelab_docker_packaging", "status": "active" },
-    { "id": "TF-07", "name": "web_audio_equalizer_and_visualizer", "status": "active" },
-    { "id": "TF-08", "name": "zero_disk_stream_pipeline", "status": "active" },
-    { "id": "TF-09", "name": "system_diagnostics_and_ytdlp_hot_update", "status": "active" },
-    { "id": "TF-10", "name": "browser_extension_mv3_and_compliance", "status": "active" },
-    { "id": "TF-11", "name": "android_tv_leanback_and_ambient_mode", "status": "active" },
-    { "id": "TF-12", "name": "pwa_offline_and_voice_search", "status": "active" }
+    {
+      "id": "TF-01",
+      "name": "in_app_preview_player",
+      "status": "active"
+    },
+    {
+      "id": "TF-02",
+      "name": "direct_client_browser_delivery",
+      "status": "active"
+    },
+    {
+      "id": "TF-03",
+      "name": "elderly_friendly_ui",
+      "status": "active"
+    },
+    {
+      "id": "TF-04",
+      "name": "batch_and_playlist_download",
+      "status": "active"
+    },
+    {
+      "id": "TF-05",
+      "name": "resumable_part_retries",
+      "status": "active"
+    },
+    {
+      "id": "TF-06",
+      "name": "homelab_docker_packaging",
+      "status": "active"
+    },
+    {
+      "id": "TF-07",
+      "name": "web_audio_equalizer_and_visualizer",
+      "status": "active"
+    },
+    {
+      "id": "TF-08",
+      "name": "zero_disk_stream_pipeline",
+      "status": "active"
+    },
+    {
+      "id": "TF-09",
+      "name": "system_diagnostics_and_ytdlp_hot_update",
+      "status": "active"
+    },
+    {
+      "id": "TF-10",
+      "name": "browser_extension_mv3_and_compliance",
+      "status": "active"
+    },
+    {
+      "id": "TF-11",
+      "name": "android_tv_leanback_and_ambient_mode",
+      "status": "active"
+    },
+    {
+      "id": "TF-12",
+      "name": "pwa_offline_and_voice_search",
+      "status": "active"
+    }
   ]
 }

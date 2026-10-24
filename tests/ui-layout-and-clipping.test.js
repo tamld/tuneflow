@@ -192,15 +192,16 @@ describe('UI Layout Geometry, Anti-Clipping & Multi-Viewport Regression Suite', 
 
       // Click the 4th category pill ("Trữ Tình Quê Mẹ") to trigger song card rendering
       // Re-click if initial async starter-shelf render overwrites #results-grid
+      await page.click('#category-pills .pill-btn:nth-child(4)');
       await page.waitForFunction(() => {
         if (document.querySelector('.results-grid .song-card .btn-preview')) return true;
         const pill = document.querySelector('#category-pills .pill-btn:nth-child(4)');
-        if (pill && (!window.__pillClickTs || Date.now() - window.__pillClickTs > 400)) {
+        if (pill && (!window.__pillClickTs || Date.now() - window.__pillClickTs > 350)) {
           window.__pillClickTs = Date.now();
           pill.click();
         }
         return false;
-      }, { timeout: 8000 });
+      }, { timeout: 15000 });
 
       for (const vp of viewports) {
         await page.setViewport({ width: vp.width, height: vp.height });

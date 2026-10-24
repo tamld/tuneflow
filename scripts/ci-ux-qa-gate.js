@@ -153,6 +153,10 @@ async function runUxQaGate(options = {}) {
         });
         return;
       }
+      if (!req.url().startsWith('http://127.0.0.1') && !req.url().startsWith('data:')) {
+        req.abort();
+        return;
+      }
       req.continue();
     });
 

@@ -4,7 +4,7 @@
  * Network-first with offline fallback for remote mobile/tablet PWA clients.
  */
 
-const CACHE_NAME = 'tuneflow-v2.5.0';
+const CACHE_NAME = 'tuneflow-v2.6.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
