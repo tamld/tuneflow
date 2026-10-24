@@ -92,8 +92,37 @@ describe('SPEC-0010: Windows Native Desktop Packaging Suite', () => {
       assert.match(content, /windows-desktop-build:/, 'Must declare windows-desktop-build job');
       assert.match(content, /runs-on:\s*windows-latest/, 'Must run on windows-latest');
       assert.match(content, /setup\.iss/, 'Must compile setup.iss');
+      assert.match(content, /package_windows\.ps1/, 'Must invoke canonical scripts/package_windows.ps1');
+      assert.match(content, /verify_windows_installer_e2e\.ps1/, 'Must invoke live 4-gate Windows installer E2E verifier');
       assert.match(content, /tuneflow-windows-installer/, 'Must upload Windows installer artifact');
       assert.match(content, /release-assets\/\*\.exe/, 'Must include .exe in release assets');
+    });
+
+    it('should verify ci.yml runs package_windows.ps1 and verify_windows_installer_e2e.ps1 on windows-latest', () => {
+      const ciYmlPath = path.join(repoRoot, '.github', 'workflows', 'ci.yml');
+      const ciContent = fs.readFileSync(ciYmlPath, 'utf8');
+      assert.match(ciContent, /package_windows\.ps1/, 'ci.yml must invoke scripts/package_windows.ps1 on windows-latest');
+      assert.match(ciContent, /verify_windows_installer_e2e\.ps1/, 'ci.yml must invoke scripts/verify_windows_installer_e2e.ps1 on windows-latest');
+    });
+
+    it('should verify package_windows.ps1 and verify_windows_installer_e2e.ps1 enforce 4-gate sidecar, flat node_modules, and live install E2E invariants', () => {
+      const pkgPs1Path = path.join(repoRoot, 'scripts', 'package_windows.ps1');
+      const verifyPs1Path = path.join(repoRoot, 'scripts', 'verify_windows_installer_e2e.ps1');
+      assert.strictEqual(fs.existsSync(pkgPs1Path), true, 'scripts/package_windows.ps1 must exist');
+      assert.strictEqual(fs.existsSync(verifyPs1Path), true, 'scripts/verify_windows_installer_e2e.ps1 must exist');
+
+      const pkgPs1 = fs.readFileSync(pkgPs1Path, 'utf8');
+      assert.match(pkgPs1, /bundle-sidecars\.js.*--include-ffmpeg/, 'package_windows.ps1 must bundle sidecars with --include-ffmpeg');
+      assert.match(pkgPs1, /bundle-prod-deps\.js/, 'package_windows.ps1 must bundle flat production node_modules');
+      assert.match(pkgPs1, /node_modules\\\.pnpm/, 'package_windows.ps1 must guard against .pnpm symlink leakage');
+      assert.match(pkgPs1, /node_modules\\puppeteer/, 'package_windows.ps1 must guard against puppeteer devDependency leakage');
+
+      const verifyPs1 = fs.readFileSync(verifyPs1Path, 'utf8');
+      assert.match(verifyPs1, /\[Gate 1\/4\]/, 'verify_windows_installer_e2e.ps1 must implement Gate 1 (Bundle Hygiene)');
+      assert.match(verifyPs1, /\[Gate 2\/4\]/, 'verify_windows_installer_e2e.ps1 must implement Gate 2 (Silent Setup & Registry)');
+      assert.match(verifyPs1, /\[Gate 3\/4\]/, 'verify_windows_installer_e2e.ps1 must implement Gate 3 (Isolated Runtime & Sidecar Doctor)');
+      assert.match(verifyPs1, /\[Gate 4\/4\]/, 'verify_windows_installer_e2e.ps1 must implement Gate 4 (Silent Uninstaller)');
+      assert.match(verifyPs1, /\/api\/system\/doctor/, 'Gate 3 must probe live HTTP /api/system/doctor');
     });
   });
 });

@@ -413,7 +413,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func showAbout() {
         let alert = NSAlert()
-        alert.messageText = "TuneFlow v2.6.0"
+        alert.messageText = "TuneFlow v2.6.1"
         alert.informativeText = "Trình phát và tải nhạc YouTube chất lượng cao cho người cao tuổi và gia đình.\nChế độ hiện tại: \(isRemoteServer(currentServerUrl) ? "Remote Thin Client" : "Standalone Local Engine")\nMáy chủ mục tiêu: \(currentServerUrl)"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Đóng")

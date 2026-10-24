@@ -1,6 +1,20 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.6.1] - 2026-10-24
+
+### Đã Sửa & Củng Cố (Fixed & Hardened)
+- **Chuẩn Hóa Đóng Gói Windows (Inno Setup) & Cổng Kiểm Định Live Installer 4-Gate E2E Trên CI/CD (`scripts/package_windows.ps1`, `scripts/verify_windows_installer_e2e.ps1`, `scripts/bundle-sidecars.js`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`)**:
+  - Hợp nhất điểm thực thi đóng gói Windows về kịch bản chuẩn `scripts/package_windows.ps1` trên cả `ci.yml` và `release.yml`, loại bỏ hoàn toàn bước copy `node_modules` trực tiếp từ `pnpm` (chứa symlink `.pnpm` và `puppeteer` devDependency).
+  - Tự động cung cấp và kiểm tra kích thước binary độc lập (`>= 1 MB` cho `yt-dlp.exe`, `>= 5 MB` cho `ffmpeg.exe`, chống copy nhầm shim `shimgen` ~100 KB của Chocolatey/Scoop) vào `dist\win-unpacked\bin\` kèm bảng mã băm `SHA256SUMS.json`.
+  - Xây dựng cổng kiểm định 4-Gate E2E thực thi trực tiếp trên `windows-latest` (`scripts/verify_windows_installer_e2e.ps1`): (Gate 1) Kiểm toán vệ sinh bundle & sidecar; (Gate 2) Chạy cài đặt thật `TuneFlow-Setup-2.6.1.exe /VERYSILENT` vào thư mục độc lập ngoài git repo và đối chiếu khóa Registry (`App Paths`, `tuneflow://`); (Gate 3) Cô lập biến môi trường `PATH`, khởi chạy `node.exe bin\tuneflow.js --doctor` và máy chủ HTTP thực tế từ bản vừa cài để xác minh `/api/health`, `/api/system/doctor` (`yt-dlp` & `ffmpeg` operational) và giao diện Desktop (`/?desktop=1`); (Gate 4) Chạy gỡ cài đặt tĩnh lặng (`unins000.exe /VERYSILENT`) và xác nhận dọn sạch hoàn toàn.
+
+## [2.6.0] - 2026-10-24
+
+### Đã Thêm (Added)
+- **Đồng Bộ Phát Hành Đa Nền Tảng `v2.6.0` & Củng Cố Cổng Kiểm Định UX QA (`scripts/sync-versions.js`, `scripts/ci-ux-qa-gate.js`)**:
+  - Đồng bộ hóa phiên bản `2.6.0` xuyên suốt 11 manifest phân phối và xử lý chặn truy vấn phông chữ ngoại mạng trong chế độ request interception của Puppeteer UX QA gate.
+
 ## [2.5.0] - 2026-10-16
 
 ### Đã Thêm (Added)

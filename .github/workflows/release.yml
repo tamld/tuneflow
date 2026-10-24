@@ -72,7 +72,7 @@ jobs:
             echo "android=false" >> "$GITHUB_OUTPUT"
           fi
 
-          if echo "$CHANGED" | grep -qE '^(src-tauri/|src/desktop/|installer/|scripts/package_|scripts/bundle-)'; then
+          if echo "$CHANGED" | grep -qE '^(src-tauri/|src/desktop/|installer/|scripts/package_|scripts/bundle-|scripts/verify_windows_)'; then
             echo "desktop=true" >> "$GITHUB_OUTPUT"
           else
             echo "desktop=false" >> "$GITHUB_OUTPUT"
@@ -306,32 +306,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Prepare Windows Distribution Tree
+      - name: Build & Package Windows Desktop Setup (package_windows.ps1 + installer/windows/setup.iss)
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path dist\win-unpacked, dist\installer
-          Copy-Item -Recurse -Force src, public, bin, package.json, node_modules dist\win-unpacked\
-          $nodeExe = (Get-Command node).Source
-          Copy-Item -Force $nodeExe dist\win-unpacked\node.exe
-          $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-          & "$cscPath" /target:winexe /win32icon:public\icons\favicon.ico /r:System.Windows.Forms.dll /r:System.Drawing.dll /out:dist\win-unpacked\TuneFlow.exe installer\windows\TuneFlowLauncher.cs
-          echo "Distribution tree prepared with native C# GUI launcher."
+          ./scripts/package_windows.ps1
 
-      - name: Compile Inno Setup Installer
+      - name: Run Live Windows Installer 4-Gate E2E Verification
         shell: pwsh
         run: |
-          $isccPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $isccPath)) {
-            choco install innosetup --no-progress
-          }
-          & "$isccPath" installer\windows\setup.iss
-
-      - name: Generate SHA-256 for Windows Installer
-        shell: pwsh
-        run: |
-          Get-FileHash dist\installer\*.exe -Algorithm SHA256 | ForEach-Object {
-            "$($_.Hash.ToLower())  $($_.Path | Split-Path -Leaf)"
-          } | Set-Content -Path dist\installer\SHA256SUMS-windows.txt -Encoding utf8
+          ./scripts/verify_windows_installer_e2e.ps1
 
       - name: Upload Windows Installer Artifacts
         uses: actions/upload-artifact@v4

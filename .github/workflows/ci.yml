@@ -81,6 +81,13 @@ jobs:
       - name: Run Full Test Suite
         run: pnpm test
 
+      - name: Package & Verify Live Windows Installer E2E Gate (Windows only)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          ./scripts/package_windows.ps1
+          ./scripts/verify_windows_installer_e2e.ps1
+
   container-smoke-test:
     name: Docker Build & Container Health Smoke Test
     runs-on: ubuntu-latest

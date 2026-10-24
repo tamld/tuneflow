@@ -32,17 +32,71 @@ function computeFileSha256(filePath) {
   return hash.digest('hex');
 }
 
+function findChocolateyRealBinary(exeName, binaryName) {
+  const chocoLib = 'C:\\ProgramData\\chocolatey\\lib';
+  if (!fs.existsSync(chocoLib)) return null;
+  const dirs = [
+    path.join(chocoLib, binaryName),
+    path.join(chocoLib, `${binaryName}.install`)
+  ];
+  const stack = dirs.filter((d) => fs.existsSync(d));
+  while (stack.length > 0) {
+    const cur = stack.pop();
+    let entries = [];
+    try {
+      entries = fs.readdirSync(cur, { withFileTypes: true });
+    } catch (_e) {
+      continue;
+    }
+    for (const entry of entries) {
+      const full = path.join(cur, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(full);
+      } else if (entry.isFile() && entry.name.toLowerCase() === exeName.toLowerCase()) {
+        try {
+          const stat = fs.statSync(full);
+          if (stat.size >= 1024 * 1024) {
+            return full;
+          }
+        } catch (_e) {}
+      }
+    }
+  }
+  return null;
+}
+
 function findLocalBinaryCandidate(binaryName) {
   const isWin = process.platform === 'win32';
   const exeName = isWin ? `${binaryName}.exe` : binaryName;
   const userProfile = process.env.USERPROFILE || process.env.HOME || '';
 
+  const pathDirs = (process.env.PATH || '')
+    .split(path.delimiter)
+    .map((d) => d.trim())
+    .filter(Boolean);
+
   const candidates = [
     path.join(ROOT, 'bin', exeName),
     userProfile ? path.join(userProfile, 'scoop', 'apps', binaryName, 'current', exeName) : '',
     userProfile ? path.join(userProfile, 'scoop', 'apps', binaryName, 'current', 'bin', exeName) : '',
+    isWin ? findChocolateyRealBinary(exeName, binaryName) : '',
+    ...pathDirs.map((dir) => path.join(dir, exeName)),
     userProfile ? path.join(userProfile, 'scoop', 'shims', exeName) : ''
   ].filter(Boolean);
+
+  // On Windows, prefer standalone binaries (>= 1 MB) over Chocolatey/Scoop shim wrappers (~100 KB)
+  if (isWin) {
+    for (const candidate of candidates) {
+      try {
+        if (fs.existsSync(candidate)) {
+          const stat = fs.statSync(candidate);
+          if (stat.isFile() && stat.size >= 1024 * 1024) {
+            return candidate;
+          }
+        }
+      } catch (_e) {}
+    }
+  }
 
   for (const candidate of candidates) {
     try {
@@ -59,8 +113,12 @@ function findLocalBinaryCandidate(binaryName) {
 function bundleSidecars() {
   fs.mkdirSync(targetDir, { recursive: true });
 
-  // 1. Remove unused cloudflared binaries from target bundle
-  for (const unusedName of ['cloudflared.exe', 'cloudflared']) {
+  // 1. Remove unused cloudflared binaries and cross-OS POSIX sidecars on Windows
+  const excludedNames = ['cloudflared.exe', 'cloudflared'];
+  if (process.platform === 'win32') {
+    excludedNames.push('yt-dlp', 'ffmpeg', 'ffprobe');
+  }
+  for (const unusedName of excludedNames) {
     const unusedPath = path.join(targetDir, unusedName);
     if (fs.existsSync(unusedPath)) {
       fs.unlinkSync(unusedPath);

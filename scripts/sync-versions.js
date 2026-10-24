@@ -65,12 +65,44 @@ function syncVersions() {
   const gradlePath = path.join(ROOT_DIR, 'android/app/build.gradle');
   if (fs.existsSync(gradlePath)) {
     const gradleContent = fs.readFileSync(gradlePath, 'utf8');
+    const parts = version.split('.').map(Number);
+    const versionCode = (parts[0] || 0) * 100 + (parts[1] || 0) * 10 + (parts[2] || 0);
     const expectedLine = `versionName "${version}"`;
-    if (!gradleContent.includes(expectedLine)) {
-      drifts.push(`android/app/build.gradle: missing ${expectedLine}`);
+    const expectedCode = `versionCode ${versionCode}`;
+    if (!gradleContent.includes(expectedLine) || !gradleContent.includes(expectedCode)) {
+      drifts.push(`android/app/build.gradle: missing ${expectedLine} or ${expectedCode}`);
       if (!checkOnly) {
-        const updated = gradleContent.replace(/versionName\s+"[^"]+"/, expectedLine);
+        const updated = gradleContent
+          .replace(/versionName\s+"[^"]+"/, expectedLine)
+          .replace(/versionCode\s+\d+/, expectedCode);
         fs.writeFileSync(gradlePath, updated, 'utf8');
+      }
+    }
+  }
+
+  // OpenAPI contract spec
+  const openapiPath = path.join(ROOT_DIR, 'packages/contract/openapi.json');
+  if (fs.existsSync(openapiPath)) {
+    const openapi = JSON.parse(fs.readFileSync(openapiPath, 'utf8'));
+    if (openapi.info && openapi.info.version !== version) {
+      drifts.push(`packages/contract/openapi.json: ${openapi.info.version} !== ${version}`);
+      if (!checkOnly) {
+        openapi.info.version = version;
+        fs.writeFileSync(openapiPath, JSON.stringify(openapi, null, 2) + '\n', 'utf8');
+      }
+    }
+  }
+
+  // macOS Swift native host
+  const swiftPath = path.join(ROOT_DIR, 'src/desktop/macos/main.swift');
+  if (fs.existsSync(swiftPath)) {
+    const swiftContent = fs.readFileSync(swiftPath, 'utf8');
+    const expectedSwift = `TuneFlow v${version}`;
+    if (!swiftContent.includes(expectedSwift)) {
+      drifts.push(`src/desktop/macos/main.swift: missing ${expectedSwift}`);
+      if (!checkOnly) {
+        const updated = swiftContent.replace(/TuneFlow v\d+\.\d+\.\d+/g, expectedSwift);
+        fs.writeFileSync(swiftPath, updated, 'utf8');
       }
     }
   }
