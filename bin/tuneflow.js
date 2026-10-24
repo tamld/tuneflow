@@ -44,9 +44,11 @@ if (args.includes('--version') || args.includes('-v')) {
 }
 
 if (args.includes('--doctor')) {
+  const origLog = console.log;
+  console.log = (...logArgs) => console.error(...logArgs);
   const { runSystemDoctor } = require('../src/engine/doctor');
   runSystemDoctor().then((report) => {
-    console.log(JSON.stringify(report, null, 2));
+    origLog(JSON.stringify(report, null, 2));
     process.exit(report.ok ? 0 : 1);
   }).catch((err) => {
     console.error(JSON.stringify({ ok: false, error: err.message }));

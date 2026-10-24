@@ -65,17 +65,24 @@ describe('SPEC-0017: Phase 20 Packaging, System Doctor & Offline Library UX', ()
     assert.equal(typeof body.checks.ffmpeg.ok, 'boolean');
   });
 
-  it('REQ-PKG-02: CLI `node bin/tuneflow.js --doctor` exits 0 and outputs valid JSON diagnostic report', () => {
+  it('REQ-PKG-02: CLI `node bin/tuneflow.js --doctor` exits 0 and outputs valid JSON diagnostic report (including cold first-boot DB migration)', () => {
     const cliPath = path.join(ROOT, 'bin', 'tuneflow.js');
-    const output = execFileSync(process.execPath, [cliPath, '--doctor'], {
-      encoding: 'utf8',
-      timeout: 15000
-    });
-    const parsed = JSON.parse(output.trim());
-    assert.equal(parsed.ok, true);
-    assert.ok(parsed.checks);
-    assert.equal(parsed.checks.node.version, process.version);
-    assert.equal(parsed.checks.downloadsDir.writable, true);
+    const coldTmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tuneflow-cold-doctor-'));
+    try {
+      const output = execFileSync(process.execPath, [cliPath, '--doctor'], {
+        cwd: coldTmpDir,
+        env: { ...process.env, PORTABLE_MODE: '1' },
+        encoding: 'utf8',
+        timeout: 15000
+      });
+      const parsed = JSON.parse(output.trim());
+      assert.equal(parsed.ok, true);
+      assert.ok(parsed.checks);
+      assert.equal(parsed.checks.node.version, process.version);
+      assert.equal(parsed.checks.downloadsDir.writable, true);
+    } finally {
+      fs.rmSync(coldTmpDir, { recursive: true, force: true });
+    }
   });
 
   it('REQ-PKG-03: GET /api/library/local lists downloaded MP3 files and streams audio safely', async () => {

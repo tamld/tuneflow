@@ -119,10 +119,12 @@ try {
 
   Push-Location $installDir
   try {
-    $doctorRaw = & "$installDir\node.exe" "$installDir\bin\tuneflow.js" --doctor
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $doctorLines = & "$installDir\node.exe" "$installDir\bin\tuneflow.js" --doctor
     if ($LASTEXITCODE -ne 0) {
       throw "GATE 3 FAILED: Installed CLI `--doctor` exited with code $LASTEXITCODE"
     }
+    $doctorRaw = ($doctorLines -join "`n").Trim()
     $doctorJson = $doctorRaw | ConvertFrom-Json
     if (-not $doctorJson.ok) {
       throw "GATE 3 FAILED: Installed CLI `--doctor` reported ok=false: $doctorRaw"
