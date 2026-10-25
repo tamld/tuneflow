@@ -24,7 +24,7 @@ Copy-Item -Recurse -Force (Join-Path $RepoRoot "public") $installDir
 Copy-Item -Recurse -Force (Join-Path $RepoRoot "bin") $installDir
 Copy-Item -Force (Join-Path $RepoRoot "package.json") (Join-Path $installDir "package.json")
 
-node (Join-Path $RepoRoot "scripts\bundle-sidecars.js") --target (Join-Path $installDir "bin")
+node (Join-Path $RepoRoot "scripts\bundle-sidecars.js") --target (Join-Path $installDir "bin") --include-ffmpeg
 
 $unpackedExe = Join-Path $RepoRoot "dist\win-unpacked\TuneFlow.exe"
 if (Test-Path $unpackedExe) {

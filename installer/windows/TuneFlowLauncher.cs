@@ -301,6 +301,7 @@ namespace TuneFlow
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = false
             };
+            backendInfo.EnvironmentVariables["TUNEFLOW_DESKTOP_LOCAL"] = "1";
 
             try
             {

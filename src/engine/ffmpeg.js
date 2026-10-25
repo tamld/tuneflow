@@ -23,6 +23,10 @@ function convertToMp3(inputPath, outputPath, metadata = {}) {
 
     // Hermetic test mock hook
     if (process.env.MOCK_FFMPEG === 'success') {
+      if (typeof metadata.onProgress === 'function') {
+        metadata.onProgress(50);
+        metadata.onProgress(100);
+      }
       fs.writeFileSync(outputPath, Buffer.from([0xFF, 0xFB, 0x90, 0x64])); // ID3/MP3 header
       return resolve(outputPath);
     }
@@ -36,6 +40,7 @@ function convertToMp3(inputPath, outputPath, metadata = {}) {
     }
 
     const args = [
+      '-nostdin',
       '-y', // Overwrite output without asking
       '-i', inputPath,
       '-vn', // No video
@@ -57,6 +62,7 @@ function convertToMp3(inputPath, outputPath, metadata = {}) {
     const proc = spawn(ffmpegBin, args, {
       windowsHide: true,
       detached: process.platform !== 'win32',
+      stdio: ['ignore', 'ignore', 'pipe'],
       env: getSanitizedEnv(process.env)
     });
 
@@ -73,9 +79,34 @@ function convertToMp3(inputPath, outputPath, metadata = {}) {
     }
 
     let stderr = '';
+    let totalDurationSec = Number(metadata.durationSec) > 0 ? Number(metadata.durationSec) : 0;
 
     proc.stderr.on('data', (data) => {
-      stderr = (stderr + data.toString('utf8')).slice(-4096);
+      const chunk = data.toString('utf8');
+      stderr = (stderr + chunk).slice(-4096);
+
+      if (totalDurationSec <= 0) {
+        const durMatch = chunk.match(/Duration:\s*(\d{2}):(\d{2}):(\d{2}(?:\.\d+)?)/);
+        if (durMatch) {
+          totalDurationSec =
+            parseInt(durMatch[1], 10) * 3600 +
+            parseInt(durMatch[2], 10) * 60 +
+            parseFloat(durMatch[3]);
+        }
+      }
+
+      if (totalDurationSec > 0 && typeof metadata.onProgress === 'function') {
+        const timeMatches = Array.from(chunk.matchAll(/time=(\d{2}):(\d{2}):(\d{2}(?:\.\d+)?)/g));
+        if (timeMatches.length > 0) {
+          const last = timeMatches[timeMatches.length - 1];
+          const curSec =
+            parseInt(last[1], 10) * 3600 +
+            parseInt(last[2], 10) * 60 +
+            parseFloat(last[3]);
+          const pct = Math.min(100, Math.max(0, Math.round((curSec / totalDurationSec) * 100)));
+          metadata.onProgress(pct);
+        }
+      }
     });
 
     proc.on('close', (code) => {

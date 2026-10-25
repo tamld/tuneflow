@@ -159,15 +159,27 @@ function getSanitizedEnv(baseEnv = process.env) {
  * if present, and verifies integrity against SHA256SUMS.json when present.
  */
 function resolveSidecarBinary(name, customBinDir = null) {
+  if (!customBinDir) {
+    if (name === 'yt-dlp' && process.env.TUNEFLOW_YTDLP_BIN) {
+      return process.env.TUNEFLOW_YTDLP_BIN;
+    }
+    if (name === 'ffmpeg' && process.env.TUNEFLOW_FFMPEG_BIN) {
+      return process.env.TUNEFLOW_FFMPEG_BIN;
+    }
+  }
+
   const ext = process.platform === 'win32' ? '.exe' : '';
-  const baseBinDir = customBinDir || path.join(process.cwd(), 'bin');
+  const cwdBinDir = path.join(process.cwd(), 'bin');
+  const rootBinDir = path.join(path.resolve(__dirname, '..', '..'), 'bin');
 
   const searchDirs = customBinDir
     ? [customBinDir]
-    : [
-        baseBinDir,
-        path.join(baseBinDir, `${process.platform}-${process.arch}`)
-      ];
+    : Array.from(new Set([
+        cwdBinDir,
+        path.join(cwdBinDir, `${process.platform}-${process.arch}`),
+        rootBinDir,
+        path.join(rootBinDir, `${process.platform}-${process.arch}`)
+      ]));
 
   for (const binDir of searchDirs) {
     const candidatePath = path.join(binDir, `${name}${ext}`);
@@ -195,11 +207,27 @@ function resolveSidecarBinary(name, customBinDir = null) {
   // Check known standard candidate locations if not found in default local bin/
   if (!customBinDir) {
     const os = require('os');
+    const home = os.homedir();
+    const userProfile = process.env.USERPROFILE || home;
+    const localAppData = process.env.LOCALAPPDATA || (userProfile ? path.join(userProfile, 'AppData', 'Local') : '');
     const candidateDirs = [
       '/opt/homebrew/bin',
       '/usr/local/bin',
-      path.join(os.homedir(), '.local', 'bin')
+      path.join(home, '.local', 'bin')
     ];
+    if (process.platform === 'win32') {
+      if (userProfile) {
+        candidateDirs.push(
+          path.join(userProfile, 'scoop', 'apps', name, 'current'),
+          path.join(userProfile, 'scoop', 'apps', name, 'current', 'bin'),
+          path.join(userProfile, 'scoop', 'shims')
+        );
+      }
+      if (localAppData) {
+        candidateDirs.push(path.join(localAppData, 'Microsoft', 'WinGet', 'Links'));
+      }
+      candidateDirs.push('C:\\ProgramData\\chocolatey\\bin');
+    }
     for (const dir of candidateDirs) {
       const full = path.join(dir, `${name}${ext}`);
       if (fs.existsSync(full)) {

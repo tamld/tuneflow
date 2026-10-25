@@ -1200,8 +1200,17 @@ if (typeof document !== 'undefined') {
         body: JSON.stringify({ items: selectedTracks, format: 'mp3' })
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data && data.success) {
+        if (typeof data.queuedCount === 'number' && data.queuedCount > 0) {
+          bumpOptimisticQueueCounters(data.queuedCount);
+        }
         showToast(`🎉 Đã đưa ${data.queuedCount} bài hát vào danh sách tải tự động!`, 'success');
+      } else {
+        const errMsg = (data && data.error && (data.error.message || data.error)) || 'Không thể xếp hàng danh sách bài hát';
+        showToast(`❌ ${errMsg}`, 'error');
+        if ((res.status === 401 || res.status === 403) && window.authController && typeof window.authController.openLoginModal === 'function') {
+          window.authController.openLoginModal();
+        }
       }
     } catch (err) {
       showToast('❌ Lỗi khi tải danh sách bài hát', 'error');
@@ -1498,7 +1507,32 @@ if (typeof document !== 'undefined') {
   }
 
   function updateFavCount() {
-    if (favCountEl) favCountEl.textContent = favorites.length;
+    const liveFavEl = document.getElementById('fav-count') || favCountEl;
+    if (liveFavEl) liveFavEl.textContent = String(favorites.length);
+  }
+
+  function updateQueueCounters(activeCount, totalCount) {
+    const liveBadgeEl = document.getElementById('queue-badge-count') || queueBadgeCountEl;
+    const liveDrawerEl = document.getElementById('drawer-count') || drawerCountEl;
+    if (liveBadgeEl && typeof activeCount === 'number') {
+      liveBadgeEl.textContent = String(activeCount);
+    }
+    if (liveDrawerEl && typeof totalCount === 'number') {
+      liveDrawerEl.textContent = String(totalCount);
+    }
+  }
+
+  function bumpOptimisticQueueCounters(deltaActive) {
+    const liveBadgeEl = document.getElementById('queue-badge-count') || queueBadgeCountEl;
+    const liveDrawerEl = document.getElementById('drawer-count') || drawerCountEl;
+    if (liveBadgeEl) {
+      const cur = parseInt(liveBadgeEl.textContent || '0', 10) || 0;
+      liveBadgeEl.textContent = String(Math.max(0, cur + deltaActive));
+    }
+    if (liveDrawerEl) {
+      const cur = parseInt(liveDrawerEl.textContent || '0', 10) || 0;
+      liveDrawerEl.textContent = String(Math.max(0, cur + deltaActive));
+    }
   }
 
   async function syncFavoritesWithServer() {
@@ -1598,12 +1632,13 @@ if (typeof document !== 'undefined') {
 
   // 8b. Offline Downloaded Library Channel (SPEC-0017 / REQ-PKG-03)
   async function refreshDownloadedCount() {
-    if (!downloadedCountEl) return;
+    const liveDlCountEl = document.getElementById('downloaded-count') || downloadedCountEl;
+    if (!liveDlCountEl) return;
     try {
       const res = await fetch('/api/library/local');
       const data = await res.json();
       if (data && data.ok && typeof data.count === 'number') {
-        downloadedCountEl.textContent = String(data.count);
+        liveDlCountEl.textContent = String(data.count);
       }
     } catch (_e) {
       // Ignore offline count error
@@ -1683,10 +1718,29 @@ if (typeof document !== 'undefined') {
         })
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data && data.success) {
+        if (data.item && (data.item.status === 'queued' || data.item.status === 'downloading')) {
+          bumpOptimisticQueueCounters(1);
+        }
         showToast(`✅ Đã thêm vào hàng đợi: "${song.title}"!`, 'info');
+      } else {
+        const errMsg = (data && data.error && (data.error.message || data.error)) || 'Không thể đưa bài hát vào hàng đợi tải';
+        if (statusBadge) {
+          statusBadge.style.display = 'block';
+          statusBadge.textContent = `⚠️ ${errMsg}`;
+          statusBadge.style.color = 'var(--accent-red)';
+        }
+        showToast(`❌ ${errMsg}`, 'error');
+        if ((res.status === 401 || res.status === 403) && window.authController && typeof window.authController.openLoginModal === 'function') {
+          window.authController.openLoginModal();
+        }
       }
     } catch (err) {
+      if (statusBadge) {
+        statusBadge.style.display = 'block';
+        statusBadge.textContent = '⚠️ Có lỗi kết nối khi thêm vào hàng đợi tải';
+        statusBadge.style.color = 'var(--accent-red)';
+      }
       showToast('❌ Có lỗi xảy ra khi bắt đầu tải bài hát này', 'error');
     } finally {
       setTimeout(() => {
@@ -1730,10 +1784,19 @@ if (typeof document !== 'undefined') {
           isInitialSSEMessage = false;
         }
 
-        // Update Floating Queue Badge & Drawer Header Count
+        // Update Floating Queue Badge & Drawer Header Count (always query live DOM nodes across i18n switches)
         const activeCount = items.filter(i => i.status === 'downloading' || i.status === 'converting' || i.status === 'queued').length;
-        if (queueBadgeCountEl) queueBadgeCountEl.textContent = activeCount;
-        if (drawerCountEl) drawerCountEl.textContent = items.length;
+        updateQueueCounters(activeCount, items.length);
+
+        let newlyCompletedInTick = false;
+        items.forEach(item => {
+          if (item.status === 'completed' && !activeDownloadedIds.has(item.id)) {
+            newlyCompletedInTick = true;
+          }
+        });
+        if (newlyCompletedInTick) {
+          refreshDownloadedCount();
+        }
 
         // Update Elderly Summary Banner in Queue Drawer
         const drawerElderlySummaryEl = document.getElementById('drawer-elderly-summary');
@@ -1782,10 +1845,15 @@ if (typeof document !== 'undefined') {
               div.className = 'drawer-queue-item';
               let statusText = '⏳ Đang chờ...';
               let statusColor = 'var(--accent-gold)';
-              if (item.status === 'downloading') {
+              if (item.status === 'queued') {
+                statusText = item.retries > 0
+                  ? `⏳ Thử lại (${item.retries}/3)...`
+                  : '⏳ Đang chờ...';
+              } else if (item.status === 'downloading') {
                 statusText = `📥 Đang tải ${item.progress}% ${item.speed ? '(' + item.speed + ')' : ''}`;
               } else if (item.status === 'converting') {
-                statusText = '⚙️ Ghép MP3 320kbps';
+                const convPct = item.progress && item.progress >= 85 ? item.progress : 90;
+                statusText = `⚙️ Ghép MP3 320kbps (${convPct}%)`;
               } else if (item.status === 'completed') {
                 statusText = '✅ Đã tải xong';
                 statusColor = 'var(--accent-green)';
@@ -1830,11 +1898,17 @@ if (typeof document !== 'undefined') {
 
             if (statusBadge) {
               statusBadge.style.display = 'block';
-              if (item.status === 'downloading') {
+              if (item.status === 'queued') {
+                statusBadge.textContent = item.retries > 0
+                  ? `⏳ Đang thử tải lại (lần ${item.retries}/3)...`
+                  : '⏳ Đang nằm trong hàng đợi tải...';
+                statusBadge.style.color = 'var(--accent-gold)';
+              } else if (item.status === 'downloading') {
                 statusBadge.textContent = `📥 Đang tải về... (${item.progress}%) ${item.speed ? '• ' + item.speed : ''}`;
                 statusBadge.style.color = 'var(--accent-gold)';
               } else if (item.status === 'converting') {
-                statusBadge.textContent = `⚙️ Đang ghép âm thanh MP3 320kbps... (90%)`;
+                const convPct = item.progress && item.progress >= 85 ? item.progress : 90;
+                statusBadge.textContent = `⚙️ Đang ghép âm thanh MP3 320kbps... (${convPct}%)`;
                 statusBadge.style.color = 'var(--accent-gold)';
               } else if (item.status === 'completed') {
                 statusBadge.textContent = `✅ Đã xong! File đang lưu vào máy tính Bố Mẹ.`;

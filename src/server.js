@@ -50,6 +50,9 @@ app.get('*', (req, res) => {
 
 let server = null;
 if (require.main === module) {
+  if (process.env.TUNEFLOW_DESKTOP_LOCAL === undefined) {
+    process.env.TUNEFLOW_DESKTOP_LOCAL = '1';
+  }
   const { processManager } = require('./engine/process_manager');
   processManager.writePidFile();
 

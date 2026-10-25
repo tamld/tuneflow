@@ -524,7 +524,7 @@ class DownloadQueue {
           args.push('--proxy', YTDLP_PROXY);
         }
         args.push(
-          '-x',
+          '-f', '140/251/bestaudio/best',
           '--no-playlist',
           '--newline',
           '-o', tempRawPath,
@@ -536,6 +536,7 @@ class DownloadQueue {
         const proc = spawn(ytdlpBin, args, {
           windowsHide: true,
           detached: process.platform !== 'win32',
+          stdio: ['ignore', 'pipe', 'pipe'],
           env: getSanitizedEnv(process.env)
         });
         this.activeProcesses.set(item.id, proc);
@@ -545,30 +546,47 @@ class DownloadQueue {
           command: ytdlpBin
         });
 
-        proc.stdout.on('data', (data) => {
-          const line = data.toString('utf8');
-          // Parse yt-dlp percentage: [download]  45.2% of 4.50MiB at 1.20MiB/s ETA 00:02
-          const match = line.match(/\[download\]\s+(\d+(?:\.\d+)?)%/);
-          if (match) {
-            const pct = parseFloat(match[1]);
-            item.progress = Math.min(85, Math.round(pct * 0.85)); // 0-85% for download
-            
-            const speedMatch = line.match(/at\s+([^\s]+)/);
-            if (speedMatch) item.speed = speedMatch[1];
+        let ytdlpStderr = '';
 
-            const etaMatch = line.match(/ETA\s+([^\s]+)/);
-            if (etaMatch) item.eta = etaMatch[1];
+        proc.stdout.on('data', (data) => {
+          const chunk = data.toString('utf8');
+          // Parse all yt-dlp percentage matches in chunk: [download] 45.2% of 4.50MiB at 1.20MiB/s ETA 00:02
+          const matches = Array.from(chunk.matchAll(/\[download\]\s+(\d+(?:\.\d+)?)%/g));
+          if (matches.length > 0) {
+            const lastMatch = matches[matches.length - 1];
+            const pct = parseFloat(lastMatch[1]);
+            item.progress = Math.min(85, Math.max(item.progress || 0, Math.round(pct * 0.85))); // 0-85% for download
+
+            const speedMatches = Array.from(chunk.matchAll(/at\s+([^\s]+)/g));
+            if (speedMatches.length > 0) {
+              item.speed = speedMatches[speedMatches.length - 1][1];
+            }
+
+            const etaMatches = Array.from(chunk.matchAll(/ETA\s+([^\s]+)/g));
+            if (etaMatches.length > 0) {
+              item.eta = etaMatches[etaMatches.length - 1][1];
+            }
 
             this.broadcast(false);
           }
         });
 
-        proc.stderr.on('data', () => {});
+        proc.stderr.on('data', (data) => {
+          ytdlpStderr = (ytdlpStderr + data.toString('utf8')).slice(-2048);
+        });
 
         proc.on('close', (code) => {
           this.activeProcesses.delete(item.id);
-          if (code === 0) resolve();
-          else reject(new Error(`Tải xuống không thành công (mã lỗi ${code})`));
+          if (code === 0) {
+            if ((item.progress || 0) < 85) {
+              item.progress = 85;
+              this.broadcast(false);
+            }
+            resolve();
+          } else {
+            const errDetail = ytdlpStderr.trim() ? `: ${ytdlpStderr.trim().slice(-240)}` : '';
+            reject(new Error(`Tải xuống không thành công (mã lỗi ${code})${errDetail}`));
+          }
         });
 
         proc.on('error', (err) => {
@@ -598,8 +616,16 @@ class DownloadQueue {
           title: item.title,
           artist: item.uploader,
           itemId: item.id,
+          durationSec: Number(item.duration) || 0,
           onProcess: (ffmpegProc) => {
             this.activeProcesses.set(item.id, ffmpegProc);
+          },
+          onProgress: (transcodePct) => {
+            const mapped = Math.min(99, Math.max(90, 86 + Math.round((transcodePct / 100) * 13)));
+            if (mapped > item.progress) {
+              item.progress = mapped;
+              this.broadcast(false);
+            }
           }
         });
       } finally {
@@ -642,6 +668,7 @@ class DownloadQueue {
       if (item.retries < MAX_RETRIES) {
         item.retries++;
         item.status = 'queued'; // Re-queue for retry with existing .part file
+        item.lastError = err.message || 'Lỗi tạm thời khi xử lý bài hát';
         this.broadcast(true);
       } else {
         item.status = 'failed';

@@ -63,6 +63,9 @@ Elderly family members often seek nostalgic music (golden oldies, traditional fo
 | **US-10** | As an admin, I want to view active sessions and revoke compromised logins. | P0 (Must Have) | Admin session manager with group kick-out (`guests`, `users`, `all_except_me`). |
 | **US-11** | As a security officer, I want client IPs and session tokens encrypted at rest. | P0 (Must Have) | AES-256-GCM authenticated encryption in `tuneflow.db`. |
 | **US-12** | As a sysadmin, I want disk space automatically capped to prevent full-disk server crashes. | P0 (Must Have) | Automated FIFO quota pruner (`STORAGE_MAX_MB`). |
+| **US-13** | As an elderly parent, I want the active download counter (`Hàng Đợi (N)`), drawer total (`Hàng Đợi Tải Nhạc (M)`), and offline library counter (`Nhạc Đã Tải (K)`) to update in real time whenever songs are queued, downloading, or completed—even after switching languages. | P0 (Must Have) | Live DOM counter preservation across `TuneFlowI18n.setLanguage()` + optimistic & SSE-driven counter synchronization. |
+| **US-14** | As a Windows desktop user, I want MP3 downloads to progress smoothly from `0% -> 85%` (stream fetch) and `86% -> 99% -> 100%` (320kbps MP3 transcode) without ever stalling at `>83%` due to missing `ffprobe.exe` or blocked pipes. | P0 (Must Have) | Two-stage Windows-resilient pipeline (`yt-dlp -f 140/251/bestaudio/best` raw fetch + `ffmpeg -nostdin` 320kbps MP3 transcode with `time=` progress interpolation). |
+| **US-15** | As an elderly parent, I want clear Vietnamese status feedback on song cards when a download is queued, retrying (`1..3`), or encounters an error, rather than a frozen progress badge. | P0 (Must Have) | Explicit `.song-status-badge` rendering for `queued`, `downloading`, `converting`, `completed`, `cancelled`, and `failed` states plus HTTP error toasts. |
 
 ---
 

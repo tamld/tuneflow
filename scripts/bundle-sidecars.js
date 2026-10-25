@@ -23,7 +23,7 @@ const targetDir = (targetIdx !== -1 && args[targetIdx + 1])
   ? path.resolve(args[targetIdx + 1])
   : path.join(ROOT, 'dist', 'win-unpacked', 'bin');
 
-const includeFfmpeg = args.includes('--include-ffmpeg');
+const includeFfmpeg = args.includes('--include-ffmpeg') || !args.includes('--no-ffmpeg');
 
 function computeFileSha256(filePath) {
   const hash = crypto.createHash('sha256');

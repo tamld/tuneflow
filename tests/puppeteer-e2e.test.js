@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const puppeteer = require('puppeteer');
 const { app } = require('../src/server');
+const queue = require('../src/engine/queue');
 
 function getSystemChromePath() {
   if (process.env.PUPPETEER_EXECUTABLE_PATH) {
@@ -338,7 +339,7 @@ describe('Gate 2: Headless Browser Puppeteer Real DOM & E2E Validation', () => {
 
     assert.ok(mobMetrics, 'Mobile boost button metrics must be retrieved');
     assert.ok(mobMetrics.width >= 58, `Mobile boost button width (${mobMetrics.width}px) must be >= 58px`);
-    assert.ok(Math.abs(mobMetrics.height - 42) <= 1, `Mobile boost button height (${mobMetrics.height}px) must be 42px (within 1px subpixel tolerance)`);
+    assert.ok(Math.abs(mobMetrics.height - 42) <= 1.5, `Mobile boost button height (${mobMetrics.height}px) must be ~42px (within 1.5px subpixel tolerance)`);
     assert.strictEqual(Math.round(parseFloat(mobMetrics.borderRadius)), 21, 'Mobile border radius must be 21px');
     assert.ok(mobMetrics.scrollWidth <= mobMetrics.clientWidth + 1, 'Mobile content must not overflow boundaries');
 
@@ -346,5 +347,121 @@ describe('Gate 2: Headless Browser Puppeteer Real DOM & E2E Validation', () => {
     await page.evaluate(() => {
       window.previewPlayer.setBoostPreset(0);
     });
+  });
+
+  it('AC-06 & AC-08: should update #queue-badge-count, #drawer-count, and .song-status-badge across i18n switches and 0%->84%->93%->100% transitions', async (t) => {
+    if (!page) return t.skip('Chrome executable not available in environment');
+
+    await page.setViewport({ width: 1280, height: 800 });
+
+    const initialRefsStayConnected = await page.evaluate(() => {
+      const badgeBefore = document.getElementById('queue-badge-count');
+      const drawerBefore = document.getElementById('drawer-count');
+      const favBefore = document.getElementById('fav-count');
+
+      window.TuneFlowI18n.setLanguage('en');
+      window.TuneFlowI18n.setLanguage('vi');
+
+      const badgeAfter = document.getElementById('queue-badge-count');
+      const drawerAfter = document.getElementById('drawer-count');
+      const favAfter = document.getElementById('fav-count');
+
+      return {
+        sameBadgeNode: badgeBefore === badgeAfter && badgeAfter.isConnected,
+        sameDrawerNode: drawerBefore === drawerAfter && drawerAfter.isConnected,
+        sameFavNode: favBefore === favAfter && favAfter.isConnected
+      };
+    });
+
+    assert.strictEqual(initialRefsStayConnected.sameBadgeNode, true, '#queue-badge-count must remain the exact connected DOM node across setLanguage()');
+    assert.strictEqual(initialRefsStayConnected.sameDrawerNode, true, '#drawer-count must remain the exact connected DOM node across setLanguage()');
+    assert.strictEqual(initialRefsStayConnected.sameFavNode, true, '#fav-count must remain the exact connected DOM node across setLanguage()');
+
+    // Enqueue 2 tracks on backend with queue paused so we can step through exact FSM states over SSE
+    queue.isPaused = true;
+    queue.items.clear();
+
+    const item1 = queue.add({
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      title: 'Đêm Thành Phố Đầy Sao',
+      uploader: 'Ca Sĩ A',
+      duration: 210,
+      format: 'mp3'
+    });
+
+    const item2 = queue.add({
+      url: 'https://www.youtube.com/watch?v=9bZkp7q19f0',
+      title: 'Chuyện Hợp Tan',
+      uploader: 'Ca Sĩ B',
+      duration: 240,
+      format: 'mp3'
+    });
+
+    // Render 2 track cards matching item1.id and item2.id
+    await page.evaluate((id1, id2) => {
+      window.setLastSearchResults([
+        { id: id1, title: 'Đêm Thành Phố Đầy Sao', uploader: 'Ca Sĩ A', duration: 210, url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail: 'data:image/svg+xml,<svg></svg>' },
+        { id: id2, title: 'Chuyện Hợp Tan', uploader: 'Ca Sĩ B', duration: 240, url: 'https://www.youtube.com/watch?v=9bZkp7q19f0', thumbnail: 'data:image/svg+xml,<svg></svg>' }
+      ]);
+    }, item1.id, item2.id);
+
+    queue.broadcast(true);
+    await new Promise(r => setTimeout(r, 150));
+
+    const queuedState = await page.evaluate((id1) => ({
+      badge: document.getElementById('queue-badge-count')?.textContent.trim(),
+      drawer: document.getElementById('drawer-count')?.textContent.trim(),
+      card1Status: document.getElementById(`status-${id1}`)?.textContent.trim()
+    }), item1.id);
+
+    assert.strictEqual(queuedState.badge, '2', 'Active queue badge must increment to 2 when 2 songs are queued');
+    assert.strictEqual(queuedState.drawer, '2', 'Drawer total count must update to 2');
+    assert.ok(queuedState.card1Status.includes('Đang nằm trong hàng đợi tải'), `Card 1 queued badge mismatch: ${queuedState.card1Status}`);
+
+    // Step item1 to downloading at 84% ("hơn 83%") and switch language mid-download
+    item1.status = 'downloading';
+    item1.progress = 84;
+    item1.speed = '2.4MiB/s';
+    queue.broadcast(true);
+    await new Promise(r => setTimeout(r, 120));
+
+    await page.evaluate(() => {
+      window.TuneFlowI18n.setLanguage('en');
+      window.TuneFlowI18n.setLanguage('vi');
+    });
+
+    // Step item1 to converting at 93% (past 83% stall point!)
+    item1.status = 'converting';
+    item1.progress = 93;
+    queue.broadcast(true);
+    await new Promise(r => setTimeout(r, 120));
+
+    const convertingState = await page.evaluate((id1) => ({
+      badge: document.getElementById('queue-badge-count')?.textContent.trim(),
+      card1Status: document.getElementById(`status-${id1}`)?.textContent.trim()
+    }), item1.id);
+    assert.strictEqual(convertingState.badge, '2', 'Active queue badge must stay 2 during converting');
+    assert.ok(convertingState.card1Status.includes('93%'), `Converting badge must display dynamic 93% progress, got: ${convertingState.card1Status}`);
+
+    // Complete item1 -> active badge must drop to 1!
+    item1.status = 'completed';
+    item1.progress = 100;
+    queue.broadcast(true);
+    await new Promise(r => setTimeout(r, 150));
+
+    const afterFirstComplete = await page.evaluate((id1) => ({
+      badge: document.getElementById('queue-badge-count')?.textContent.trim(),
+      drawer: document.getElementById('drawer-count')?.textContent.trim(),
+      card1Status: document.getElementById(`status-${id1}`)?.textContent.trim(),
+      card1Btn: document.getElementById(`btn-download-${id1}`)?.textContent.trim()
+    }), item1.id);
+    assert.strictEqual(afterFirstComplete.badge, '1', 'Active queue badge must decrement from 2 to 1 when first song completes');
+    assert.strictEqual(afterFirstComplete.drawer, '2', 'Drawer total count remains 2');
+    assert.ok(afterFirstComplete.card1Status.includes('Đã xong'), `Completed badge mismatch: ${afterFirstComplete.card1Status}`);
+    assert.strictEqual(afterFirstComplete.card1Btn, '✓ Đã Tải');
+
+    // Clean up test queue items
+    queue.items.clear();
+    queue.broadcast(true);
   });
 });

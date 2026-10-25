@@ -352,10 +352,23 @@
     const dadText = document.querySelector('#btn-persona-dad .persona-text');
     if (dadText) dadText.textContent = getTranslation('dadPersona');
 
+    function updateLabelPreservingCounterSpan(containerEl, labelText, spanId) {
+      if (!containerEl) return;
+      let spanEl = document.getElementById(spanId) || containerEl.querySelector(`#${spanId}`);
+      const countText = spanEl ? spanEl.textContent : '0';
+      if (!spanEl) {
+        spanEl = document.createElement('span');
+        spanEl.id = spanId;
+        spanEl.textContent = countText;
+      }
+      containerEl.textContent = `${labelText} (`;
+      containerEl.appendChild(spanEl);
+      containerEl.appendChild(document.createTextNode(')'));
+    }
+
     const favBtn = document.getElementById('btn-persona-favorites');
     if (favBtn) {
-      const count = document.getElementById('fav-count')?.textContent || '0';
-      favBtn.querySelector('.persona-text').innerHTML = `${getTranslation('favPersona')} (<span id="fav-count">${count}</span>)`;
+      updateLabelPreservingCounterSpan(favBtn.querySelector('.persona-text'), getTranslation('favPersona'), 'fav-count');
     }
 
     const searchLabelEl = document.querySelector('.search-label');
@@ -400,8 +413,7 @@
     // Drawer
     const drawerHeader = document.querySelector('.drawer-header h3');
     if (drawerHeader) {
-      const count = document.getElementById('drawer-count')?.textContent || '0';
-      drawerHeader.innerHTML = `${getTranslation('drawerTitle')} (<span id="drawer-count">${count}</span>)`;
+      updateLabelPreservingCounterSpan(drawerHeader, getTranslation('drawerTitle'), 'drawer-count');
     }
     const drawerClearBtn = document.getElementById('btn-drawer-clear-done');
     if (drawerClearBtn) drawerClearBtn.textContent = getTranslation('drawerClear');
@@ -478,8 +490,7 @@
 
     const queueBtn = document.getElementById('btn-floating-queue');
     if (queueBtn) {
-      const qCount = document.getElementById('queue-badge-count')?.textContent || '0';
-      queueBtn.innerHTML = `${getTranslation('queue_button')} (<span id="queue-badge-count">${qCount}</span>)`;
+      updateLabelPreservingCounterSpan(queueBtn, getTranslation('queue_button'), 'queue-badge-count');
       queueBtn.title = getTranslation('queue_button_title');
     }
 

@@ -99,6 +99,21 @@ TuneFlow is a full-stack, self-hosted media streaming and downloading platform c
   `Content-Disposition: attachment; filename="<sanitized-title>.mp3"`
 - Files are saved directly into the user's browser `Downloads` directory, eliminating manual server-side file retrieval.
 
+### REQ-FUNC-09: Live DOM Counter Integrity Across i18n & SSE Updates
+- `public/js/i18n.js` shall preserve existing DOM nodes `#queue-badge-count`, `#drawer-count`, and `#fav-count` during language switches (`setLanguage('vi' | 'en')`) instead of replacing parent `.innerHTML` and detaching counter references.
+- `public/js/app.js` shall resolve live DOM counter elements (`#queue-badge-count`, `#drawer-count`, `#fav-count`, `#downloaded-count`) on every optimistic queue addition and SSE broadcast tick:
+  - `#queue-badge-count` reflects `items.filter(i => ['queued', 'downloading', 'converting'].includes(i.status)).length`.
+  - `#drawer-count` reflects `items.length`.
+  - `#downloaded-count` refreshes automatically via `/api/library/local` whenever any queued item transitions to `completed`.
+
+### REQ-FUNC-10: Two-Stage Windows MP3 Pipeline Without `ffprobe.exe` Dependency
+- Stage 1 (`DOWNLOADING`, `0%..85%`): `src/engine/queue.js` shall invoke `yt-dlp` with `-f 140/251/bestaudio/best --no-playlist --newline` (never `-x` / `--extract-audio`, which invokes `FFmpegExtractAudioPP` and fails at `83%–85%` on Windows when `ffprobe.exe` is absent). Multi-line `stdout` chunks shall be parsed with `matchAll(/\[download\]\s+(\d+(?:\.\d+)?)%/g)` using the latest match, reaching `85%` on exit code `0`.
+- Stage 2 (`CONVERTING`, `86%..99% -> 100%`): `src/engine/ffmpeg.js` shall invoke `ffmpeg` with `-nostdin` and `stdio: ['ignore', 'ignore', 'pipe']`, parsing `Duration:` and `time=HH:MM:SS.xx` from `stderr` to interpolate progress from `86%` to `99%` before SHA-256 verification and `100%` completion.
+
+### REQ-FUNC-11: Loopback Desktop Owner Authentication & Explicit Queue Error Feedback
+- On loopback hosts (`127.0.0.1`, `localhost`, `::1`), `public/js/auth.js` shall omit guest headers unless guest mode is explicitly forced (`?guest=1` or `tuneflow_force_guest=1`), and `TuneFlowLauncher.cs` / `src/server.js` shall set `TUNEFLOW_DESKTOP_LOCAL=1` so local operators can queue downloads without silent `401/403` rejections.
+- If `POST /api/queue/add` or `POST /api/queue/batch-add` returns a non-OK response, `public/js/app.js` shall update `.song-status-badge` and display an explicit error toast.
+
 ---
 
 ## 4. API Endpoints Reference
