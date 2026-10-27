@@ -533,7 +533,14 @@ class DownloadQueue {
         );
 
         const ytdlpBin = resolveSidecarBinary('yt-dlp');
-        const proc = spawn(ytdlpBin, args, {
+        // A .js yt-dlp path (e.g. a test shim) is not executable on its own, and launching a
+        // .cmd/.bat wrapper requires shell: true, which Node 20+ rejects on win32 with spawn
+        // EINVAL (CVE-2024-27980 hardening). Run .js targets through the current Node binary
+        // instead so no shell is ever needed and the same code path works on every platform.
+        const ytdlpIsJs = /\.js$/i.test(ytdlpBin);
+        const spawnCommand = ytdlpIsJs ? process.execPath : ytdlpBin;
+        const spawnArgs = ytdlpIsJs ? [ytdlpBin, ...args] : args;
+        const proc = spawn(spawnCommand, spawnArgs, {
           windowsHide: true,
           detached: process.platform !== 'win32',
           stdio: ['ignore', 'pipe', 'pipe'],

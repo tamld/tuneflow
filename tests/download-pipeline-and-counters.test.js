@@ -97,10 +97,11 @@ process.exit(1);
     );
 
     if (process.platform === 'win32') {
-      fakeYtdlpPath = path.join(tmpDir, 'fake-ytdlp.cmd');
-      fs.writeFileSync(fakeYtdlpPath, `@echo off\r\n"${process.execPath}" "${workerJs}" %*\r\n`, 'utf8');
-      fakeYtdlpFailPath = path.join(tmpDir, 'fake-ytdlp-fail.cmd');
-      fs.writeFileSync(fakeYtdlpFailPath, `@echo off\r\n"${process.execPath}" "${failWorkerJs}" %*\r\n`, 'utf8');
+      // Point TUNEFLOW_YTDLP_BIN straight at the .js workers instead of a .cmd shim: spawning a
+      // .cmd requires shell: true, which Node 20+ rejects on win32 with spawn EINVAL. queue.js
+      // detects a .js binary and launches it via process.execPath, so no shell is involved.
+      fakeYtdlpPath = workerJs;
+      fakeYtdlpFailPath = failWorkerJs;
     } else {
       fakeYtdlpPath = path.join(tmpDir, 'fake-ytdlp.sh');
       fs.writeFileSync(fakeYtdlpPath, `#!/bin/sh\nexec "${process.execPath}" "${workerJs}" "$@"\n`, { mode: 0o755 });
