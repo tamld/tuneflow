@@ -1,6 +1,6 @@
 {
   "name": "@tuneflow/extension",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "TuneFlow Manifest V3 browser extension for one-click YouTube URL queuing",
   "main": "../../extension/background.js",
   "type": "commonjs",

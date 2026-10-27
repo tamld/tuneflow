@@ -1,6 +1,6 @@
 {
   "name": "@tuneflow/selfhost",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "TuneFlow self-hosted Docker/Podman container distribution, Traefik ingress, and systemd deployment bundle",
   "type": "commonjs",
   "scripts": {

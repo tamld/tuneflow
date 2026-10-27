@@ -1,6 +1,6 @@
 {
   "name": "@tuneflow/core",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "TuneFlow core download management, yt-dlp execution engine, ffmpeg transcoding wrappers, queue management, and SQLite repositories",
   "main": "../../src/server.js",
   "type": "commonjs",

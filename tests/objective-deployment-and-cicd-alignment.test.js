@@ -59,10 +59,10 @@ describe('Issue #101: Objective Deployment & CI/CD Alignment Suite', () => {
     const manifest = JSON.parse(fs.readFileSync(manifestJsonPath, 'utf8'));
     const gradle = fs.readFileSync(appBuildGradlePath, 'utf8');
 
-    assert.strictEqual(pkg.version, '2.6.1', 'package.json version must be 2.6.1');
-    assert.strictEqual(manifest.version, '2.6.1', 'manifest.json version must be 2.6.1');
-    assert.match(gradle, /versionName\s+["']2\.6\.1["']/, 'build.gradle versionName must be 2.6.1');
-    assert.match(gradle, /versionCode\s+261/, 'build.gradle versionCode must be 261');
+    assert.strictEqual(pkg.version, '2.6.2', 'package.json version must be 2.6.2');
+    assert.strictEqual(manifest.version, '2.6.2', 'manifest.json version must be 2.6.2');
+    assert.match(gradle, /versionName\s+["']2\.6\.2["']/, 'build.gradle versionName must be 2.6.2');
+    assert.match(gradle, /versionCode\s+262/, 'build.gradle versionCode must be 262');
   });
 
   it('should verify Dockerfile uses least privilege security terminology', () => {

@@ -1,6 +1,6 @@
 {
   "name": "@tuneflow/web",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "TuneFlow SilverMelody vanilla JS/CSS audio player UI, state components, and browser presentation layer",
   "main": "../../public/js/app.js",
   "type": "commonjs",

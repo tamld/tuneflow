@@ -1,6 +1,13 @@
 # Nhật Ký Thay Đổi (Changelog)
 Mọi thay đổi đáng chú ý của dự án **TuneFlow** sẽ được ghi chép chi tiết trong tệp này theo chuẩn [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) và tuân thủ [Semantic Versioning](https://semver.org/).
 
+## [2.6.2] - 2026-10-28
+
+- **Windows & Test Hardening**:
+  - Khắc phục lỗi treo bộ đếm hàng đợi trực tiếp và nghẽn tải MP3 ở ngưỡng >83% trên Windows (`US-13..US-15`).
+  - Khởi chạy `.js` `yt-dlp` shims qua `process.execPath` để tránh lỗi `EINVAL` khi spawn `.cmd` trên Node 20+.
+  - Nâng cấp `.g8s/feature-map.yml` lên Spec-Kit v2.0 (`inherits_spec_kit: g8s/offer/profiles/utility@v0.21`).
+
 ## [2.6.1] - 2026-10-24
 
 ### Đã Sửa & Củng Cố (Fixed & Hardened)

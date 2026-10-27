@@ -2,7 +2,7 @@
 ; Requires Inno Setup 6.x (https://jrsoftware.org/isdl.php)
 
 #define MyAppName "TuneFlow"
-#define MyAppVersion "2.6.1"
+#define MyAppVersion "2.6.2"
 #define MyAppPublisher "Tam Le Duc (anh Tam)"
 #define MyAppURL "https://github.com/tamld/tuneflow"
 #define MyAppExeName "TuneFlow.exe"
