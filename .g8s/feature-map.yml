@@ -1,6 +1,10 @@
-schema_version: "1.0"
+schema_version: "2.0"
+inherits_spec_kit: "g8s/offer/profiles/utility@v0.21"
 features:
   - id: FEAT-TF-UX-SINGLE-FRAME
+    collision_domain: "CD-FEAT-TF-UX-SINGLE-FRAME-1"
+    owned_paths:
+      - "docs/feature-1/**"
     title: "Single Focus Frame UX & WCAG AAA Elderly Geometry Gate"
     persona_story: "PRD#SilverMelody-SingleFocusFrame"
     srs_reqs:
@@ -24,6 +28,9 @@ features:
       direct_consumers: []
 
   - id: FEAT-TF-ELDERLY-QUEUE
+    collision_domain: "CD-FEAT-TF-ELDERLY-QUEUE-2"
+    owned_paths:
+      - "docs/feature-2/**"
     title: "Resilient Elderly Download Queue & One-Click Retry"
     persona_story: "PRD#SilverMelody-QueueRecovery"
     srs_reqs:
@@ -48,6 +55,9 @@ features:
         - "FEAT-TF-UX-SINGLE-FRAME"
 
   - id: FEAT-TF-MACOS-STREAM
+    collision_domain: "CD-FEAT-TF-MACOS-STREAM-3"
+    owned_paths:
+      - "docs/feature-3/**"
     title: "macOS WKWebView AVFoundation 512KB Chunked Range Streaming & Desktop Auto-Admin"
     persona_story: "PRD#MacOS-NativePreviewAndAuth"
     srs_reqs:
@@ -73,6 +83,9 @@ features:
         - "FEAT-TF-ELDERLY-QUEUE"
 
   - id: FEAT-TF-SECURITY-SSRF-LRU
+    collision_domain: "CD-FEAT-TF-SECURITY-SSRF-LRU-4"
+    owned_paths:
+      - "docs/feature-4/**"
     title: "Zero-Trust SSRF Private-IP Blocking, SAST/DAST Gates & Bounded LRU Cache"
     persona_story: "PRD#SecOps-ZeroTrustBoundary"
     srs_reqs:
@@ -98,6 +111,9 @@ features:
         - "FEAT-TF-MACOS-STREAM"
 
   - id: FEAT-TF-DOCTOR-LOG
+    collision_domain: "CD-FEAT-TF-DOCTOR-LOG-5"
+    owned_paths:
+      - "docs/feature-5/**"
     title: "Structured Operational Logger with Rotation & Live Doctor Diagnostics"
     persona_story: "PRD#Ops-DoctorAndLogViewer"
     srs_reqs:
